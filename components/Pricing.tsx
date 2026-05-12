@@ -63,7 +63,7 @@ export function Pricing() {
                 borderColor: "rgba(194,249,112,0.25)",
               }}
             >
-              14-day free trial
+              7-day free trial
             </span>
           </div>
 
@@ -113,14 +113,14 @@ export function Pricing() {
           </ul>
 
           <a
-            href="#waitlist"
+            href="/sign-up"
             className="flex w-full items-center justify-center rounded-[9px] bg-accent px-[18px] py-3 text-[14.5px] font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
           >
-            Start free for 14 days <span aria-hidden="true">→</span>
+            Start 7-day free trial <span aria-hidden="true">→</span>
           </a>
           <p className="mt-3.5 text-center font-mono text-[11.5px] text-fg-3">
-            no credit card ·{" "}
-            <b className="font-medium text-fg-2">5-minute setup</b>
+            card required · cancel anytime ·{" "}
+            <b className="font-medium text-fg-2">$0 if you cancel before day 7</b>
           </p>
         </div>
 

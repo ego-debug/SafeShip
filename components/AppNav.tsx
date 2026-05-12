@@ -17,6 +17,7 @@ export function AppNav() {
           <NavTab href="/app/suggestions" label="Suggestions" />
           <NavTab href="/app/tests" label="Tests" />
           <NavTab href="/app/onboarding" label="Setup" />
+          <NavTab href="/app/billing" label="Billing" />
         </div>
       </div>
       <div className="flex items-center gap-3">

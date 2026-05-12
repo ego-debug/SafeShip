@@ -34,8 +34,21 @@ create table if not exists public.users (
   id              text primary key,                       -- Clerk user id (user_xxx)
   email           text not null,
   created_at      timestamptz not null default now(),
-  subscription_status text not null default 'trial'        -- trial | active | canceled
+  subscription_status text not null default 'none'         -- none | trialing | active | past_due | canceled
 );
+
+-- Subscription columns — added via ALTER for forward-compat with v1 schema
+alter table public.users add column if not exists stripe_customer_id     text;
+alter table public.users add column if not exists stripe_subscription_id text;
+alter table public.users add column if not exists current_period_end     timestamptz;
+alter table public.users add column if not exists trial_ends_at          timestamptz;
+
+create unique index if not exists users_stripe_customer_idx
+  on public.users (stripe_customer_id)
+  where stripe_customer_id is not null;
+create unique index if not exists users_stripe_subscription_idx
+  on public.users (stripe_subscription_id)
+  where stripe_subscription_id is not null;
 
 create table if not exists public.projects (
   id          uuid primary key default gen_random_uuid(),

@@ -13,6 +13,11 @@ const realClerkMiddleware = clerkMiddleware((auth, req) => {
     const session = auth();
     if (!session.userId) return session.redirectToSignIn();
   }
+  // Forward the current pathname so server components (specifically
+  // app/app/layout.tsx) can do subscription gating without re-deriving it.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", req.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 // If Clerk env vars aren't set yet (typical local dev before user pastes
@@ -25,7 +30,9 @@ function fallbackMiddleware(req: NextRequest) {
       { status: 503, headers: { "content-type": "text/plain" } },
     );
   }
-  return NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", req.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export default clerkConfigured ? realClerkMiddleware : fallbackMiddleware;

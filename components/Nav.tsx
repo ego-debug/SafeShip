@@ -34,7 +34,7 @@ export function Nav() {
           href="/sign-up"
           className="rounded-lg bg-fg px-[14px] py-2 text-sm font-semibold text-bg shadow-[0_1px_0_rgba(255,255,255,0.5)_inset] transition hover:bg-white hover:-translate-y-px"
         >
-          Start free
+          Start 7-day free trial
         </a>
       </div>
     </nav>

@@ -46,7 +46,8 @@ export default function DocsPage() {
                     className="text-accent hover:text-[#d3ff85]"
                   >
                     safeship.dev/sign-up
-                  </Link>
+                  </Link>{" "}
+                  and start your 7-day free trial (see below)
                 </li>
                 <li>
                   Your API key (looks like <Mono>sk_live_…</Mono>) — find it on
@@ -61,6 +62,45 @@ export default function DocsPage() {
                 </li>
                 <li>A Python 3.9+ project where your AI agent runs</li>
               </ul>
+            </Section>
+
+            <Section id="billing" title="Billing & free trial">
+              <p className="mb-3 text-fg-2">
+                SafeShip is <b className="text-fg">$29 / month</b>, flat, no
+                seats. There&apos;s one plan and a 7-day free trial.
+              </p>
+              <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  <b className="text-fg">Card required upfront.</b> Stripe
+                  holds your card but doesn&apos;t charge for 7 days.
+                </li>
+                <li>
+                  <b className="text-fg">Cancel before day 7 = $0 charged.</b>{" "}
+                  Cancel anytime from the customer portal — no email, no
+                  retention loop.
+                </li>
+                <li>
+                  <b className="text-fg">After 7 days</b>, your card is
+                  auto-charged $29/mo. Cancel anytime — you keep access until
+                  the current period ends. No refunds for partial months.
+                </li>
+                <li>
+                  Manage your subscription at{" "}
+                  <Link
+                    href="/app/billing"
+                    className="text-accent hover:text-[#d3ff85]"
+                  >
+                    /app/billing
+                  </Link>{" "}
+                  — update card, see invoices, or cancel from the Stripe
+                  customer portal.
+                </li>
+              </ul>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                You can&apos;t access <Mono>/app/*</Mono> until your card is on
+                file. We don&apos;t take payment details by phone or email —
+                only through the Stripe checkout link inside the app.
+              </p>
             </Section>
 
             <Section id="install" title="1 — Install the SDK">
@@ -365,6 +405,7 @@ asyncio.run(agent("hello"))`}</CodeBlock>
                 On this page
               </span>
               <TocLink href="#prereqs">Before you start</TocLink>
+              <TocLink href="#billing">Billing & free trial</TocLink>
               <TocLink href="#install">1 — Install the SDK</TocLink>
               <TocLink href="#wrap">2 — Initialize and wrap</TocLink>
               <TocLink href="#steps">3 — Record sub-steps</TocLink>

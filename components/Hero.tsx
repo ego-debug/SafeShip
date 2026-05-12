@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { CodePanel } from "./CodePanel";
-import { WaitlistForm } from "./WaitlistForm";
 
 export function Hero() {
   return (
@@ -13,9 +13,9 @@ export function Hero() {
             className="rounded-full px-2 py-[3px] font-mono text-[11px] tracking-wide text-accent"
             style={{ background: "rgba(194,249,112,0.12)" }}
           >
-            NEW
+            LIVE
           </span>
-          <span>Deploy gating on regression — now in beta</span>
+          <span>7-day free trial · card required · cancel anytime</span>
           <span className="mx-1.5 text-fg-3">→</span>
         </div>
 
@@ -38,29 +38,29 @@ export function Hero() {
         </p>
 
         <div
-          className="mb-7 animate-rise"
+          className="mb-7 flex animate-rise flex-wrap items-center gap-2.5"
           style={{ animationDelay: "0.28s" }}
-          id="waitlist"
         >
-          <WaitlistForm />
+          <Link
+            href="/sign-up"
+            className="rounded-[9px] bg-accent px-[18px] py-3 text-[14.5px] font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
+          >
+            Start 7-day free trial →
+          </Link>
+          <a
+            href="#how"
+            className="inline-flex items-center gap-1.5 rounded-[9px] border border-line-strong px-[18px] py-3 text-[14.5px] text-fg transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.03)]"
+          >
+            See how it works
+            <span className="ml-1.5 font-mono text-[11.5px] text-fg-3">90s</span>
+          </a>
         </div>
 
         <div
           className="flex animate-rise flex-wrap items-center gap-2 text-[13px] text-fg-3"
           style={{ animationDelay: "0.36s" }}
         >
-          <span
-            className="rounded-full border px-2 py-0.5 font-mono text-[11px] tracking-wide text-accent"
-            style={{
-              background: "rgba(194,249,112,0.10)",
-              borderColor: "rgba(194,249,112,0.28)",
-            }}
-          >
-            BETA
-          </span>
-          <span>Built for solo devs shipping agents in production.</span>
-          <span className="text-fg-4">·</span>
-          <span className="font-mono text-xs">$29/mo · no seats</span>
+          <span className="font-mono text-xs">$29/mo · no seats · cancel before day 7 = $0 charged</span>
         </div>
       </div>
 
