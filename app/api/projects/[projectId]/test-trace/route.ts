@@ -1,17 +1,19 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
+import { ingestRun } from "@/lib/ingestion";
 
-// Fakes a "first trace just landed" so the onboarding success state is
-// reachable before the real SDK is wired up. Inserts a synthetic run +
-// 5 trace rows, and stamps projects.first_trace_at if unset.
+// Inserts a synthetic 5-step run for the user's project so the onboarding
+// success state is reachable before any real SDK is wired up. Authenticated
+// via Clerk (not API key) since this is a UI-driven action, but the actual
+// insertion path is identical to the public /v1/traces endpoint.
 
 const SYNTHETIC_STEPS = [
-  { tool_name: "classify_intent", kind: "llm",  duration_ms: 214, status: "ok"  },
-  { tool_name: "fetch_context",   kind: "llm",  duration_ms: 261, status: "ok"  },
-  { tool_name: "search_kb",       kind: "tool", duration_ms: 408, status: "warn" },
-  { tool_name: "draft_reply",     kind: "llm",  duration_ms: 612, status: "ok"  },
-  { tool_name: "policy_check",    kind: "tool", duration_ms:  88, status: "ok"  },
+  { tool_name: "classify_intent", kind: "llm" as const,  duration_ms: 214, status: "ok"   as const },
+  { tool_name: "fetch_context",   kind: "llm" as const,  duration_ms: 261, status: "ok"   as const },
+  { tool_name: "search_kb",       kind: "tool" as const, duration_ms: 408, status: "warn" as const },
+  { tool_name: "draft_reply",     kind: "llm" as const,  duration_ms: 612, status: "ok"   as const },
+  { tool_name: "policy_check",    kind: "tool" as const, duration_ms:  88, status: "ok"   as const },
 ];
 
 export async function POST(
@@ -22,7 +24,6 @@ export async function POST(
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const supabase = getServiceSupabase();
-
   const { data: project, error: projErr } = await supabase
     .from("projects")
     .select("id, first_trace_at")
@@ -36,45 +37,24 @@ export async function POST(
 
   const totalMs = SYNTHETIC_STEPS.reduce((s, x) => s + x.duration_ms, 0);
 
-  const { data: run, error: runErr } = await supabase
-    .from("runs")
-    .insert({
-      project_id: project.id,
-      trigger: "manual",
-      score: 95,
-      status: "ok",
-      duration_ms: totalMs,
-      model: "gpt-5.1-mini",
-    })
-    .select("id")
-    .single();
-
-  if (runErr || !run) {
-    return NextResponse.json({ error: "run_insert_failed" }, { status: 500 });
+  try {
+    const result = await ingestRun(project.id, {
+      run: {
+        trigger: "manual",
+        score: 95,
+        status: "ok",
+        duration_ms: totalMs,
+        model: "gpt-5.1-mini",
+      },
+      steps: SYNTHETIC_STEPS.map((s) => ({
+        ...s,
+        input: { synthetic: true },
+        output: { synthetic: true },
+      })),
+    });
+    return NextResponse.json({ ok: true, ...result });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "ingest_failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  const traceRows = SYNTHETIC_STEPS.map((step, i) => ({
-    run_id: run.id,
-    step_index: i + 1,
-    tool_name: step.tool_name,
-    kind: step.kind,
-    duration_ms: step.duration_ms,
-    status: step.status,
-    input: { synthetic: true },
-    output: { synthetic: true },
-  }));
-
-  const { error: tracesErr } = await supabase.from("traces").insert(traceRows);
-  if (tracesErr) {
-    return NextResponse.json({ error: "traces_insert_failed" }, { status: 500 });
-  }
-
-  if (!project.first_trace_at) {
-    await supabase
-      .from("projects")
-      .update({ first_trace_at: new Date().toISOString() })
-      .eq("id", project.id);
-  }
-
-  return NextResponse.json({ ok: true, run_id: run.id, steps: traceRows.length });
 }
