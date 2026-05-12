@@ -9,7 +9,10 @@ const clerkConfigured = Boolean(
 );
 
 const realClerkMiddleware = clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) auth().protect();
+  if (isProtectedRoute(req)) {
+    const session = auth();
+    if (!session.userId) return session.redirectToSignIn();
+  }
 });
 
 // If Clerk env vars aren't set yet (typical local dev before user pastes
