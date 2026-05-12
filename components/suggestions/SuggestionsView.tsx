@@ -72,9 +72,21 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
         ok?: boolean;
         error?: string;
         generated?: number;
+        rateLimited?: number;
+        retry_after_seconds?: number;
+        limit?: number;
+        window?: string;
         reason?: string;
       };
       if (!r.ok) {
+        if (r.status === 429) {
+          setError(
+            `Rate limit reached. ${data.limit ?? "?"} suggestions allowed per ${
+              data.window ?? "window"
+            } — try again in ${humanWait(data.retry_after_seconds)}.`,
+          );
+          return;
+        }
         setError(
           data.error === "engine_not_configured"
             ? "ANTHROPIC_API_KEY not set in .env.local — add it to run the auto-suggest engine."
@@ -88,6 +100,15 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
     } finally {
       setGenerating(false);
     }
+  }
+
+  function humanWait(seconds: number | undefined): string {
+    if (!seconds || seconds < 0) return "a moment";
+    if (seconds < 60) return `${seconds}s`;
+    const m = Math.round(seconds / 60);
+    if (m < 60) return `${m} min`;
+    const h = Math.round(m / 60);
+    return `${h}h`;
   }
 
   useEffect(() => {

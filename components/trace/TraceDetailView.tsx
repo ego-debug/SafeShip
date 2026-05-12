@@ -314,8 +314,29 @@ function ActionBar({ runId }: { runId: string }) {
     setSuggestErr(null);
     try {
       const r = await fetch(`/api/runs/${runId}/suggest`, { method: "POST" });
-      const data = (await r.json()) as { ok?: boolean; error?: string };
+      const data = (await r.json()) as {
+        ok?: boolean;
+        error?: string;
+        limit?: number;
+        window?: string;
+        retry_after_seconds?: number;
+      };
       if (!r.ok || !data.ok) {
+        if (r.status === 429) {
+          const wait = data.retry_after_seconds
+            ? data.retry_after_seconds < 60
+              ? `${data.retry_after_seconds}s`
+              : data.retry_after_seconds < 3600
+              ? `${Math.round(data.retry_after_seconds / 60)} min`
+              : `${Math.round(data.retry_after_seconds / 3600)}h`
+            : "a moment";
+          setSuggestErr(
+            `Rate limit reached (${data.limit ?? "?"}/${
+              data.window ?? "window"
+            }). Try again in ${wait}.`,
+          );
+          return;
+        }
         setSuggestErr(
           data.error === "engine_not_configured"
             ? "ANTHROPIC_API_KEY not set — add it to .env.local."

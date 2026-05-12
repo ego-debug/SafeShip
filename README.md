@@ -85,6 +85,15 @@ For local development, signing up still works without the webhook configured —
 
 Without this, the app still runs — the Suggestions queue and "Suggest a regression test" button will show a friendly "engine not configured" banner.
 
+**Per-project rate limits** protect the spend cap from abuse. Defaults (tune via env vars):
+
+| Limit | Default | Window |
+|---|---|---|
+| Daily | 50 suggestions / project | rolling 24 hours |
+| Burst | 5 suggestions / project | rolling 5 minutes |
+
+At Sonnet 4.6 prices that's ~$0.75/day worst case per customer. The Claude-touching endpoints return `429 Too Many Requests` with a `Retry-After` header when either limit is hit, and the UI surfaces a "try again in N minutes" message. Override the defaults via `SAFESHIP_SUGGEST_DAILY_LIMIT`, `SAFESHIP_SUGGEST_BURST_LIMIT`, `SAFESHIP_SUGGEST_BURST_WINDOW_SECONDS` — see `.env.local.example`.
+
 ### 5. Run it
 
 ```bash

@@ -14,6 +14,21 @@ export async function POST() {
         { status: 503 },
       );
     }
+
+    // If we generated zero AND every candidate was rate-limited away, return
+    // a 429 so the UI can surface a real "slow down" message instead of a
+    // success-with-zero-results state.
+    if (result.generated === 0 && result.rateLimited > 0) {
+      return NextResponse.json(
+        { error: "rate_limited", ...result },
+        {
+          status: 429,
+          headers: result.retry_after_seconds
+            ? { "retry-after": String(result.retry_after_seconds) }
+            : undefined,
+        },
+      );
+    }
     return NextResponse.json({ ok: true, ...result });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "generate_failed";

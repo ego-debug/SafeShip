@@ -2,6 +2,7 @@ import "server-only";
 import { getServiceSupabase } from "./supabase";
 import { getRunForUser } from "./runs";
 import { suggestFromRun, isSuggestEngineConfigured } from "./suggest";
+import { checkSuggestRateLimit, RateLimitError } from "./rateLimit";
 
 export type PendingSuggestion = {
   id: string;
@@ -94,6 +95,8 @@ export type GenerateResult = {
   generated: number;
   skipped: number;
   errors: number;
+  rateLimited: number;
+  retry_after_seconds?: number;
   reason?: "engine_not_configured" | "no_project" | "no_candidates";
 };
 
@@ -109,7 +112,7 @@ export async function generateSuggestionsForUser(
   limit = 5,
 ): Promise<GenerateResult> {
   if (!isSuggestEngineConfigured()) {
-    return { generated: 0, skipped: 0, errors: 0, reason: "engine_not_configured" };
+    return { generated: 0, skipped: 0, errors: 0, rateLimited: 0, reason: "engine_not_configured" };
   }
 
   const supabase = getServiceSupabase();
@@ -122,7 +125,7 @@ export async function generateSuggestionsForUser(
     .limit(1)
     .maybeSingle();
   if (!project) {
-    return { generated: 0, skipped: 0, errors: 0, reason: "no_project" };
+    return { generated: 0, skipped: 0, errors: 0, rateLimited: 0, reason: "no_project" };
   }
 
   // Find failing runs that don't yet have any suggestion (pending or accepted)
@@ -135,7 +138,7 @@ export async function generateSuggestionsForUser(
     .limit(50);
 
   if (!candidates || candidates.length === 0) {
-    return { generated: 0, skipped: 0, errors: 0, reason: "no_candidates" };
+    return { generated: 0, skipped: 0, errors: 0, rateLimited: 0, reason: "no_candidates" };
   }
 
   const runIds = candidates.map((r) => r.id as string);
@@ -153,7 +156,19 @@ export async function generateSuggestionsForUser(
 
   let generated = 0;
   let errors = 0;
+  let rateLimited = 0;
+  let retryAfter: number | undefined;
+
   for (const runId of todo) {
+    // Per-project rate limit — bail out of the loop (not skip) since every
+    // subsequent attempt in this batch would hit the same limit.
+    const rl = await checkSuggestRateLimit(project.id);
+    if (!rl.ok) {
+      rateLimited = todo.length - (generated + errors);
+      retryAfter = rl.retry_after_seconds;
+      break;
+    }
+
     try {
       const run = await getRunForUser(userId, runId);
       if (!run) continue;
@@ -184,6 +199,8 @@ export async function generateSuggestionsForUser(
   return {
     generated,
     skipped: runIds.length - todo.length,
+    rateLimited,
+    retry_after_seconds: retryAfter,
     errors,
   };
 }
@@ -299,6 +316,9 @@ export async function suggestFromRunId(
     .eq("id", run.project_id)
     .maybeSingle();
   if (!project) throw new Error("not_found");
+
+  const rl = await checkSuggestRateLimit(run.project_id);
+  if (!rl.ok) throw new RateLimitError(rl);
 
   const suggestion = await suggestFromRun(run);
 
