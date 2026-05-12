@@ -3,11 +3,17 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { RunDetail } from "./runs";
 
-// claude-api skill — recommended model: claude-sonnet-4-6 for cost / latency on
-// structured-output tasks like this one. Bump to opus-4-7 if suggestion quality
-// regresses in production evals.
-const MODEL = "claude-sonnet-4-6" as const;
-const MAX_TOKENS = 2048;
+// Configurable via SAFESHIP_SUGGEST_MODEL env var. Defaults to Sonnet 4.6 —
+// good balance of structured-output quality and cost (~$0.01/call with
+// system-prompt caching). Drop to claude-haiku-4-5 for ~3x cheaper if test
+// suggestions look acceptable in your evals; bump to claude-opus-4-7 if
+// quality regresses. Pricing per million tokens (cached 2026-04):
+//   opus-4-7:   $5 in / $25 out   — overkill for this task
+//   sonnet-4-6: $3 in / $15 out   — current default
+//   haiku-4-5:  $1 in / $5  out   — try first if cost matters more than quality
+const MODEL = (process.env.SAFESHIP_SUGGEST_MODEL ||
+  "claude-sonnet-4-6") as string;
+const MAX_TOKENS = Number(process.env.SAFESHIP_SUGGEST_MAX_TOKENS) || 2048;
 
 const SuggestionSchema = z.object({
   name: z
