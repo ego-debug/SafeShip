@@ -85,14 +85,14 @@ For local development, signing up still works without the webhook configured —
 
 Without this, the app still runs — the Suggestions queue and "Suggest a regression test" button will show a friendly "engine not configured" banner.
 
-**Per-project rate limits** protect the spend cap from abuse. Defaults (tune via env vars):
+**Per-project rate limits** protect the spend cap from abuse. Two independent sets — one on the Claude-touching endpoints (cost protection) and one on `/v1/traces` ingestion (DB protection):
 
-| Limit | Default | Window |
-|---|---|---|
-| Daily | 50 suggestions / project | rolling 24 hours |
-| Burst | 5 suggestions / project | rolling 5 minutes |
+| Endpoint group | Daily / project | Burst / project | Override env vars |
+|---|---|---|---|
+| Claude suggestion endpoints | 50 / 24h | 5 / 5min | `SAFESHIP_SUGGEST_DAILY_LIMIT`, `SAFESHIP_SUGGEST_BURST_LIMIT`, `SAFESHIP_SUGGEST_BURST_WINDOW_SECONDS` |
+| `POST /v1/traces` ingestion | 5000 / 24h | 100 / 60s | `SAFESHIP_TRACES_DAILY_LIMIT`, `SAFESHIP_TRACES_BURST_LIMIT`, `SAFESHIP_TRACES_BURST_WINDOW_SECONDS` |
 
-At Sonnet 4.6 prices that's ~$0.75/day worst case per customer. The Claude-touching endpoints return `429 Too Many Requests` with a `Retry-After` header when either limit is hit, and the UI surfaces a "try again in N minutes" message. Override the defaults via `SAFESHIP_SUGGEST_DAILY_LIMIT`, `SAFESHIP_SUGGEST_BURST_LIMIT`, `SAFESHIP_SUGGEST_BURST_WINDOW_SECONDS` — see `.env.local.example`.
+At Sonnet 4.6 prices the Claude daily cap = ~$0.75/day worst case per customer. The traces cap allows ~200 traces/hour sustained (way more than any reasonable agent), but a leaked API key can't bloat the DB by millions of rows overnight. Both endpoint groups return `429 Too Many Requests` with a `Retry-After` header when either limit is hit; the UI surfaces a "try again in N min" message. See `.env.local.example` for the env-var override values.
 
 ### 5. Run it
 
