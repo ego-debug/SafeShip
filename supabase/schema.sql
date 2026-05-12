@@ -133,3 +133,8 @@ alter table public.traces          enable row level security;
 alter table public.suggested_tests enable row level security;
 alter table public.tests           enable row level security;
 alter table public.test_runs       enable row level security;
+
+-- Tell PostgREST to refresh its schema cache after running migrations.
+-- Without this, freshly-created tables sometimes 404 with PGRST205 until
+-- the cache TTL expires. Idempotent — safe to re-run.
+notify pgrst, 'reload schema';
