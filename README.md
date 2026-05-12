@@ -16,7 +16,22 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full product brief.
 - Clerk webhook (`/api/webhooks/clerk`) provisions a Supabase user + default project + API key on sign-up
 - Fallback provisioning on first server render of `/app/onboarding` for local dev where the webhook isn't reachable
 - `/app/onboarding` — real Next.js + Tailwind port of the prototype, shows the user's API key, lets them send a fake test trace to flip to the success state
-- `/app/dashboard` and `/app/tests` — stub pages that link to the HTML prototypes until Stages 4 / 6 ship
+
+**Stage 3a + 4a/b — Real ingestion + Dashboard + Trace Detail (done)**
+- `POST /v1/traces` — public ingestion endpoint, `Authorization: Bearer sk_live_*`
+- Shared insertion logic in `lib/ingestion.ts` powers both the public endpoint and the in-app test-trace stub
+- `/app/dashboard` — regression chart, recent runs, recent failures, all wired to real `runs` + `traces` rows
+- `/app/runs/[runId]` — step-by-step timeline, failing step expanded by default, raw trace JSON sidebar
+
+**Stage 3b — Python SDK (done)**
+- `sdks/python/` — installable `safeloop` package: `safeloop.init()` + `safeloop.wrap()` ship traces to `/v1/traces` from a daemon thread
+- Reliability guarantees enforced by the SDK and verified in pytest:
+  - never crashes the wrapped agent
+  - never blocks on the network
+  - no extra LLM calls
+  - retries 5xx / 429 with exponential backoff
+- GitHub Actions runs the SDK test matrix (Py 3.9 / 3.11 / 3.12) on every push touching `sdks/python/`
+- `/app/tests` — still a stub (Stage 6)
 
 **Reference**
 - `public/designs/*.html` — original HTML prototypes for the six screens (served at `/designs/*.html`)
@@ -85,8 +100,8 @@ Per the build stages in CLAUDE.md:
 
 1. ✅ **Stage 1** — Landing + waitlist
 2. ✅ **Stage 2** — Clerk auth + DB + Onboarding + API key generation
-3. ⏳ **Stage 3** — Python SDK + trace ingestion API
-4. ⏳ **Stage 4** — Dashboard + Trace Detail wired to real data
+3. ✅ **Stage 3** — Python SDK (`sdks/python/`) + `/v1/traces` ingestion
+4. ✅ **Stage 4** — Dashboard + Trace Detail wired to real data
 5. ⏳ **Stage 5** — Auto-suggest engine + Suggested Tests
 6. ⏳ **Stage 6** — Tests List + GitHub Action that blocks PRs on score drop
 
