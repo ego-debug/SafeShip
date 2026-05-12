@@ -95,8 +95,25 @@ create table if not exists public.suggested_tests (
   created_at    timestamptz not null default now()
 );
 
+-- Stage 5 columns — added via ALTER for forward-compat with v1 schema
+alter table public.suggested_tests add column if not exists run_id uuid;
+alter table public.suggested_tests add column if not exists severity text;
+alter table public.suggested_tests add column if not exists rationale text;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'suggested_tests_run_id_fkey'
+  ) then
+    alter table public.suggested_tests
+      add constraint suggested_tests_run_id_fkey
+      foreign key (run_id) references public.runs(id) on delete set null;
+  end if;
+end$$;
+
 create index if not exists suggested_tests_project_idx
   on public.suggested_tests (project_id, status, created_at desc);
+create index if not exists suggested_tests_run_idx
+  on public.suggested_tests (run_id);
 
 create table if not exists public.tests (
   id            uuid primary key default gen_random_uuid(),

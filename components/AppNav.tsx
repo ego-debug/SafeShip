@@ -14,6 +14,7 @@ export function AppNav() {
         </Link>
         <div className="hidden items-center gap-5 text-sm md:flex">
           <NavTab href="/app/dashboard" label="Overview" />
+          <NavTab href="/app/suggestions" label="Suggestions" />
           <NavTab href="/app/tests" label="Tests" />
           <NavTab href="/app/onboarding" label="Setup" />
         </div>

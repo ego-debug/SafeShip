@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { RunDetail, RunDetailStep } from "@/lib/runs";
 
@@ -295,7 +296,10 @@ function IoBlock({ label, data }: { label: string; data: unknown }) {
 }
 
 function ActionBar({ runId }: { runId: string }) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestErr, setSuggestErr] = useState<string | null>(null);
 
   async function copyShareUrl() {
     await navigator.clipboard.writeText(
@@ -305,26 +309,51 @@ function ActionBar({ runId }: { runId: string }) {
     setTimeout(() => setCopied(false), 1500);
   }
 
+  async function generateSuggestion() {
+    setSuggesting(true);
+    setSuggestErr(null);
+    try {
+      const r = await fetch(`/api/runs/${runId}/suggest`, { method: "POST" });
+      const data = (await r.json()) as { ok?: boolean; error?: string };
+      if (!r.ok || !data.ok) {
+        setSuggestErr(
+          data.error === "engine_not_configured"
+            ? "ANTHROPIC_API_KEY not set — add it to .env.local."
+            : data.error ?? "suggest_failed",
+        );
+        return;
+      }
+      router.push("/app/suggestions");
+    } catch {
+      setSuggestErr("network_error");
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
   return (
     <div
       className="sticky bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-strong px-4 py-3 backdrop-blur"
       style={{ background: "rgba(10,10,11,0.85)" }}
     >
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
-          disabled
-          title="Coming in Stage 5"
-          className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4)] opacity-60"
+          onClick={generateSuggestion}
+          disabled={suggesting}
+          className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85] disabled:opacity-60"
         >
-          ✓ Add to regression suite
+          {suggesting ? "Generating…" : "✓ Suggest a regression test"}
         </button>
         <button
           disabled
-          title="Coming in Stage 5"
+          title="Coming with the eval set in a follow-up"
           className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-[rgba(255,255,255,0.02)] px-4 py-2 text-sm text-fg-2 opacity-60"
         >
           Mark as expected behavior
         </button>
+        {suggestErr && (
+          <span className="font-mono text-[11px] text-danger">{suggestErr}</span>
+        )}
       </div>
       <button
         onClick={copyShareUrl}
