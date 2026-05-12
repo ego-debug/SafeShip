@@ -21,6 +21,7 @@ export function OnboardingView({
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<Status>(firstTraceAt ? "success" : "waiting");
   const [sending, setSending] = useState(false);
+  const [lastRunId, setLastRunId] = useState<string | null>(null);
 
   const shownKey = revealed ? apiKey : maskApiKey(apiKey);
 
@@ -52,7 +53,14 @@ export function OnboardingView({
   async function sendTestTrace() {
     setSending(true);
     try {
-      await fetch(`/api/projects/${projectId}/test-trace`, { method: "POST" });
+      const r = await fetch(`/api/projects/${projectId}/test-trace`, {
+        method: "POST",
+      });
+      const data = (await r.json().catch(() => ({}))) as {
+        ok?: boolean;
+        run_id?: string;
+      };
+      if (data.run_id) setLastRunId(data.run_id);
       setStatus("success");
     } finally {
       setSending(false);
@@ -125,9 +133,14 @@ export function OnboardingView({
             >
               View your dashboard →
             </Link>
-            <Link href="/designs/trace-detail.html" className="text-sm text-fg-3 hover:text-fg-2">
-              or inspect this trace step-by-step →
-            </Link>
+            {lastRunId && (
+              <Link
+                href={`/app/runs/${lastRunId}`}
+                className="text-sm text-fg-3 hover:text-fg-2"
+              >
+                or inspect this trace step-by-step →
+              </Link>
+            )}
           </div>
         )}
       </div>
