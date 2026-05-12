@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "safeloop"
+name = "safeship"
 version = "0.1.0"
 description = "Every production failure becomes a regression test. The same bug never ships twice."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
 authors = [
-  { name = "SafeLoop", email = "founder@safeloop.dev" }
+  { name = "SafeShip", email = "founder@safeship.dev" }
 ]
 keywords = ["ai", "agents", "reliability", "tracing", "evals", "regression"]
 classifiers = [
@@ -30,9 +30,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://safeloop.dev"
-Repository = "https://github.com/ego-debug/SafeLoop"
-Issues = "https://github.com/ego-debug/SafeLoop/issues"
+Homepage = "https://safeship.dev"
+Repository = "https://github.com/ego-debug/SafeShip"
+Issues = "https://github.com/ego-debug/SafeShip/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -43,7 +43,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["safeloop"]
+packages = ["safeship"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

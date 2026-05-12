@@ -1,24 +1,24 @@
-"""SafeLoop Python SDK.
+"""SafeShip Python SDK.
 
 Quickstart::
 
-    import safeloop
+    import safeship
 
-    safeloop.init(api_key="sk_live_...")
-    agent = safeloop.wrap(my_agent)
+    safeship.init(api_key="sk_live_...")
+    agent = safeship.wrap(my_agent)
 
-That's it. Every call to ``agent(...)`` ships a trace to SafeLoop's
+That's it. Every call to ``agent(...)`` ships a trace to SafeShip's
 ``/v1/traces`` endpoint. Tracing failures NEVER crash your agent.
 
 Want richer traces? Add explicit steps::
 
     def my_agent(msg):
         intent = classify(msg)
-        safeloop.step(tool_name="classify", kind="llm",
+        safeship.step(tool_name="classify", kind="llm",
                       input=msg, output=intent, duration_ms=140, status="ok")
         ...
 
-See https://safeloop.dev for the dashboard.
+See https://safeship.dev for the dashboard.
 """
 
 from __future__ import annotations
@@ -44,11 +44,11 @@ def init(
     debug: Optional[bool] = None,
     enabled: Optional[bool] = None,
 ) -> None:
-    """Configure the SafeLoop SDK. Call once near process startup.
+    """Configure the SafeShip SDK. Call once near process startup.
 
     Args:
         api_key: Your project's ``sk_live_*`` key. Falls back to the
-            ``SAFELOOP_API_KEY`` env var if omitted.
+            ``SAFESHIP_API_KEY`` env var if omitted.
         endpoint: Override the ingest URL (testing only).
         project_name: Human-readable label sent with each run.
         environment: e.g. ``"prod"``, ``"staging"``, ``"dev"``.

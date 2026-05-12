@@ -57,7 +57,7 @@ export function WaitlistForm() {
         <span>
           {status === "duplicate"
             ? "You're already on the list — we'll be in touch."
-            : "You're in. We'll email you when SafeLoop opens up."}
+            : "You're in. We'll email you when SafeShip opens up."}
         </span>
       </div>
     );

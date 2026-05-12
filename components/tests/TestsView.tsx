@@ -85,7 +85,7 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
             definitions; pass/fail history and coverage will populate once the
             executor lands. CI-side gating already works — see{" "}
             <Link
-              href="https://github.com/ego-debug/SafeLoop#cigithub-action"
+              href="https://github.com/ego-debug/SafeShip#cigithub-action"
               className="text-accent hover:text-[#d3ff85]"
             >
               the README

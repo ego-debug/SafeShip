@@ -33,7 +33,7 @@ export function Hero() {
           style={{ animationDelay: "0.2s" }}
         >
           Every production failure becomes a regression test. Drop in a
-          4-line SDK — SafeLoop captures the trace, writes the assertion,
+          4-line SDK — SafeShip captures the trace, writes the assertion,
           and blocks any future deploy that would reproduce it.
         </p>
 

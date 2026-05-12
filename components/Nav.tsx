@@ -7,7 +7,7 @@ export function Nav() {
       <Link href="/" className="flex items-center gap-[10px] text-fg">
         <BrandMark />
         <span className="text-[15px] font-semibold tracking-tight">
-          SafeLoop
+          SafeShip
         </span>
       </Link>
 

@@ -1,4 +1,4 @@
-# SafeLoop
+# SafeShip
 
 Reliability for AI agents. Drop in a 4-line SDK, get traces of every run, block deploys when the agent regresses.
 
@@ -20,7 +20,7 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full product brief.
 **Stage 3 + 4 — Ingestion + Dashboard + Trace Detail (done)**
 - `POST /v1/traces` — public ingestion endpoint, `Authorization: Bearer sk_live_*`
 - Shared insertion logic in `lib/ingestion.ts` powers both the public endpoint and the in-app test-trace stub
-- `sdks/python/` — installable `safeloop` package: `safeloop.init()` + `safeloop.wrap()` ship traces from a daemon thread; reliability guarantees verified in pytest; CI matrix on Py 3.9 / 3.11 / 3.12
+- `sdks/python/` — installable `safeship` package: `safeship.init()` + `safeship.wrap()` ship traces from a daemon thread; reliability guarantees verified in pytest; CI matrix on Py 3.9 / 3.11 / 3.12
 - `/app/dashboard` — regression chart, recent runs, recent failures, wired to real data
 - `/app/runs/[runId]` — step-by-step timeline, failing step expanded by default, raw trace JSON sidebar
 
@@ -35,8 +35,8 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full product brief.
 **Stage 6 — Tests List + CI gating (done)**
 - `/app/tests` — real port of the prototype: filter chips (All / Active / Muted), per-row kebab menu (Mute / Unmute / Delete), search, sidebar with health donut + coverage + suite info
 - `POST /api/tests/[id]/mute|unmute|delete` — wired to the kebab menu
-- `GET /v1/runs/check` — public CI endpoint; returns 200 if the latest run scored ≥ `min_score`, 422 if it dropped below. See [the action README](./.github/actions/safeloop/README.md) for usage.
-- `.github/actions/safeloop/` — composite GitHub Action customers add to their PR workflow to block deploys on regression
+- `GET /v1/runs/check` — public CI endpoint; returns 200 if the latest run scored ≥ `min_score`, 422 if it dropped below. See [the action README](./.github/actions/safeship/README.md) for usage.
+- `.github/actions/safeship/` — composite GitHub Action customers add to their PR workflow to block deploys on regression
 
 **Reference**
 - `public/designs/*.html` — original HTML prototypes for the six screens (served at `/designs/*.html`)
@@ -68,7 +68,7 @@ cp .env.local.example .env.local
 
 ### 3. Clerk
 
-1. Create an app at https://clerk.com → "Add application" → name it SafeLoop. Enable email + your preferred social providers.
+1. Create an app at https://clerk.com → "Add application" → name it SafeShip. Enable email + your preferred social providers.
 2. **API Keys**: copy **publishable** and **secret** keys into `.env.local`.
 3. **(Optional, production-only) Webhooks → Add endpoint**:
    - URL: `https://YOUR-DOMAIN/api/webhooks/clerk`
@@ -97,22 +97,22 @@ Open `http://localhost:<port>/` → click **Start free** → create an account �
 
 ## CI / GitHub Action
 
-The `safeloop` composite action queries `/v1/runs/check` and fails the workflow if the latest run scored below a threshold. Drop it into any PR workflow:
+The `safeship` composite action queries `/v1/runs/check` and fails the workflow if the latest run scored below a threshold. Drop it into any PR workflow:
 
 ```yaml
 # .github/workflows/deploy.yml in the customer's repo
 jobs:
-  safeloop:
+  safeship:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ego-debug/SafeLoop/.github/actions/safeloop@main
+      - uses: ego-debug/SafeShip/.github/actions/safeship@main
         with:
-          api-key: ${{ secrets.SAFELOOP_API_KEY }}
+          api-key: ${{ secrets.SAFESHIP_API_KEY }}
           min-score: 80
 ```
 
-Full reference: [`./.github/actions/safeloop/README.md`](./.github/actions/safeloop/README.md).
+Full reference: [`./.github/actions/safeship/README.md`](./.github/actions/safeship/README.md).
 
 ## Deploy to Vercel
 

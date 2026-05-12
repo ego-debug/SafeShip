@@ -1,37 +1,37 @@
-# safeloop · Python SDK
+# safeship · Python SDK
 
 > Every production failure becomes a regression test. The same bug never ships twice.
 
 ```bash
-pip install safeloop
+pip install safeship
 ```
 
 ```python
-import safeloop
+import safeship
 
-safeloop.init(api_key="sk_live_...")  # or set SAFELOOP_API_KEY
-agent = safeloop.wrap(my_agent)
+safeship.init(api_key="sk_live_...")  # or set SAFESHIP_API_KEY
+agent = safeship.wrap(my_agent)
 ```
 
-That's it. Every call to `agent(...)` ships a trace to your SafeLoop dashboard.
+That's it. Every call to `agent(...)` ships a trace to your SafeShip dashboard.
 
 ## What gets captured
 
-By default, each call to a wrapped agent produces one **run** containing one synthetic step (the agent itself). To get a step-by-step trace, drop `safeloop.step(...)` calls inside your agent:
+By default, each call to a wrapped agent produces one **run** containing one synthetic step (the agent itself). To get a step-by-step trace, drop `safeship.step(...)` calls inside your agent:
 
 ```python
 def my_agent(message: str) -> str:
     intent = classify(message)
-    safeloop.step(tool_name="classify", kind="llm",
+    safeship.step(tool_name="classify", kind="llm",
                   input=message, output=intent, duration_ms=140, status="ok")
 
     order = lookup_order(intent)
-    safeloop.step(tool_name="lookup_order", kind="tool",
+    safeship.step(tool_name="lookup_order", kind="tool",
                   input=intent, output=order, duration_ms=320, status="ok")
 
     return draft_reply(order)
 
-agent = safeloop.wrap(my_agent)
+agent = safeship.wrap(my_agent)
 agent("where's my refund?")
 ```
 
@@ -41,18 +41,18 @@ If `my_agent` raises, the wrapper records the failure and re-raises — your err
 
 ```python
 import asyncio
-import safeloop
+import safeship
 
-safeloop.init(api_key="sk_live_...")
+safeship.init(api_key="sk_live_...")
 
 async def my_agent(prompt):
     ...
 
-agent = safeloop.wrap(my_agent)
+agent = safeship.wrap(my_agent)
 asyncio.run(agent("hello"))
 ```
 
-`safeloop.wrap` detects coroutine functions automatically; the wrapped callable stays awaitable.
+`safeship.wrap` detects coroutine functions automatically; the wrapped callable stays awaitable.
 
 ## Reliability guarantees
 
@@ -67,8 +67,8 @@ These are enforced by the SDK and verified by the test suite:
 
 | Param | Env var | Default | What |
 |---|---|---|---|
-| `api_key` | `SAFELOOP_API_KEY` | — | Project key, looks like `sk_live_*` |
-| `endpoint` | `SAFELOOP_ENDPOINT` | `https://safeloop.dev/v1/traces` | Ingest URL — override for self-host / local dev |
+| `api_key` | `SAFESHIP_API_KEY` | — | Project key, looks like `sk_live_*` |
+| `endpoint` | `SAFESHIP_ENDPOINT` | `https://safeship.dev/v1/traces` | Ingest URL — override for self-host / local dev |
 | `project_name` | — | — | Display label on the dashboard |
 | `environment` | — | `prod` | `prod` / `staging` / `dev` |
 | `timeout_seconds` | — | `2.0` | Per-request HTTP timeout |
@@ -78,8 +78,8 @@ These are enforced by the SDK and verified by the test suite:
 ## Local development
 
 ```bash
-git clone https://github.com/ego-debug/SafeLoop
-cd SafeLoop/sdks/python
+git clone https://github.com/ego-debug/SafeShip
+cd SafeShip/sdks/python
 pip install -e ".[dev]"
 pytest
 ```

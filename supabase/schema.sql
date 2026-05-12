@@ -1,4 +1,4 @@
--- SafeLoop database schema
+-- SafeShip database schema
 -- Run this in the Supabase SQL editor. Idempotent — safe to re-run.
 
 -- =====================================================================

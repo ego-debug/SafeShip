@@ -9,14 +9,14 @@ export function Footer() {
           <Link href="/" className="mb-3 inline-flex items-center gap-2.5 text-fg-3">
             <BrandMark />
             <span className="text-[15px] font-semibold tracking-tight">
-              SafeLoop
+              SafeShip
             </span>
           </Link>
           <p className="mb-3.5 max-w-[260px] text-[13px] leading-[1.5] text-fg-3">
             Reliability for AI agents.
           </p>
           <p className="font-mono text-[11px] tracking-wide text-fg-4">
-            © 2026 SafeLoop, Inc.
+            © 2026 SafeShip, Inc.
           </p>
         </div>
 
@@ -33,7 +33,7 @@ export function Footer() {
           links={[
             { label: "About", href: "#" },
             { label: "Blog", href: "#" },
-            { label: "Contact", href: "mailto:founder@safeloop.dev" },
+            { label: "Contact", href: "mailto:founder@safeship.dev" },
           ]}
         />
         <FooterCol

@@ -137,7 +137,7 @@ export function OnboardingView({
           <ul className="flex flex-col gap-3 text-sm">
             <SideLink href="#" label="Read the 90-second quickstart" sub="docs · 4 examples" />
             <SideLink href="#" label="Join the Discord" sub="327 builders · usually < 5 min" />
-            <SideLink href="mailto:founder@safeloop.dev" label="Email founder@safeloop.dev" sub="we read every one" />
+            <SideLink href="mailto:founder@safeship.dev" label="Email founder@safeship.dev" sub="we read every one" />
           </ul>
         </SideCard>
         <SideCard title="What happens next">
@@ -349,27 +349,27 @@ function labelForTab(t: Tab) {
 function buildSnippet(tab: Tab, apiKey: string): string {
   if (tab === "python") {
     return [
-      "pip install safeloop",
+      "pip install safeship",
       "",
-      "import safeloop",
-      `safeloop.init(api_key="${apiKey}")`,
-      "safeloop.wrap(my_agent)",
+      "import safeship",
+      `safeship.init(api_key="${apiKey}")`,
+      "safeship.wrap(my_agent)",
     ].join("\n");
   }
   if (tab === "ts") {
     return [
-      "npm install safeloop",
+      "npm install safeship",
       "",
-      "import { safeloop } from 'safeloop'",
-      `safeloop.init({ apiKey: '${apiKey}' })`,
-      "const tracedAgent = safeloop.wrap(myAgent)",
+      "import { safeship } from 'safeship'",
+      `safeship.init({ apiKey: '${apiKey}' })`,
+      "const tracedAgent = safeship.wrap(myAgent)",
     ].join("\n");
   }
   return [
-    "npm install safeloop",
+    "npm install safeship",
     "",
-    "const { safeloop } = require('safeloop')",
-    `safeloop.init({ apiKey: '${apiKey}' })`,
-    "const tracedAgent = safeloop.wrap(myAgent)",
+    "const { safeship } = require('safeship')",
+    `safeship.init({ apiKey: '${apiKey}' })`,
+    "const tracedAgent = safeship.wrap(myAgent)",
   ].join("\n");
 }

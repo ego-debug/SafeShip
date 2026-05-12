@@ -27,7 +27,7 @@ import httpx
 
 from ._config import _Config
 
-_log = logging.getLogger("safeloop")
+_log = logging.getLogger("safeship")
 
 
 class Transport:
@@ -40,7 +40,7 @@ class Transport:
         self._client: Optional[httpx.Client] = None
         self._thread = threading.Thread(
             target=self._run,
-            name="safeloop-transport",
+            name="safeship-transport",
             daemon=True,
         )
         self._thread.start()
@@ -102,7 +102,7 @@ class Transport:
                     headers={
                         "authorization": f"Bearer {self.config.api_key}",
                         "content-type": "application/json",
-                        "user-agent": "safeloop-python/0.1.0",
+                        "user-agent": "safeship-python/0.1.0",
                     },
                 )
                 if resp.status_code < 400:
@@ -124,4 +124,4 @@ class Transport:
 
     def _debug(self, msg: str) -> None:
         if self.config.debug:
-            _log.warning("safeloop: %s", msg)
+            _log.warning("safeship: %s", msg)

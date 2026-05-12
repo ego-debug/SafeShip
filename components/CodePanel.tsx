@@ -17,7 +17,7 @@ export function CodePanel() {
         animationDelay: "0.44s",
       }}
       role="img"
-      aria-label="SafeLoop SDK code snippet and a live trace"
+      aria-label="SafeShip SDK code snippet and a live trace"
     >
       <div
         className="flex items-center gap-[10px] border-b border-line px-[14px] py-[10px]"
@@ -42,16 +42,16 @@ export function CodePanel() {
         <CodeLine n={1}>
           <span className={tokens.kw}>import</span>
           {" { "}
-          <span className={tokens.fn}>safeloop</span>
+          <span className={tokens.fn}>safeship</span>
           {" } "}
           <span className={tokens.kw}>from</span>{" "}
-          <span className={tokens.str}>&quot;safeloop&quot;</span>;
+          <span className={tokens.str}>&quot;safeship&quot;</span>;
         </CodeLine>
         <CodeLine n={2}>{" "}</CodeLine>
         <CodeLine n={3}>
           <span className={tokens.kw}>const</span>{" "}
           <span className={tokens.v}>agent</span> ={" "}
-          <span className={tokens.fn}>safeloop</span>(
+          <span className={tokens.fn}>safeship</span>(
           <span className={tokens.v}>myAgent</span>, {"{"}
         </CodeLine>
         <CodeLine n={4}>

@@ -1,10 +1,10 @@
-# SafeLoop — Project Brief
+# SafeShip — Project Brief
 
 This file is auto-loaded into every Claude Code session. Keep it short, accurate, and current.
 
 ## What we're building
 
-SafeLoop is a reliability tool for solo developers shipping AI agents. It drops into the customer's code via a 4-line SDK, traces every agent run, auto-suggests regression tests from real production failures, and blocks deploys when behavior regresses.
+SafeShip is a reliability tool for solo developers shipping AI agents. It drops into the customer's code via a 4-line SDK, traces every agent run, auto-suggests regression tests from real production failures, and blocks deploys when behavior regresses.
 
 **Tagline:** "Every production failure becomes a regression test. The same bug never ships twice."
 
@@ -29,7 +29,7 @@ Existing tools split in two:
 - **Logging** (Helicone, Langfuse) — records what happened, doesn't prevent it
 - **Evals** (Braintrust, LangSmith) — prevents failures but costs $40–250/mo, requires teams of 5+, and makes you write all tests by hand
 
-SafeLoop is the eval tool, $29/month, where the tests build themselves.
+SafeShip is the eval tool, $29/month, where the tests build themselves.
 
 ## Wedge
 
@@ -53,13 +53,13 @@ The only product that:
 - **Hosting:** Vercel
 - **SDKs:** Python (PyPI) first, TypeScript (npm) second
 - **Email:** Resend
-- **Domain:** safeloop.dev
+- **Domain:** safeship.dev
 
 ## Architecture
 
 Three components:
 
-1. **SDK** (Python + TypeScript). `pip install safeloop` → `safeloop.init(api_key=...)` → `safeloop.wrap(my_agent)`. Sends trace data to our API.
+1. **SDK** (Python + TypeScript). `pip install safeship` → `safeship.init(api_key=...)` → `safeship.wrap(my_agent)`. Sends trace data to our API.
 2. **Web app** (Next.js on Vercel). Marketing site + signed-in product.
 3. **Trace ingestion + auto-suggest pipeline** (Next.js API routes + Claude calls). Receives traces, stores them, periodically generates regression test suggestions.
 

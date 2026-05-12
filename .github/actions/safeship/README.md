@@ -1,15 +1,15 @@
-# SafeLoop GitHub Action
+# SafeShip GitHub Action
 
-Block deploys when your AI agent regresses. Calls SafeLoop's `/v1/runs/check`
+Block deploys when your AI agent regresses. Calls SafeShip's `/v1/runs/check`
 endpoint and fails the workflow if the latest run is below the score threshold.
 
 ## Quick start
 
-In the customer's repo, store the SafeLoop API key as a repository secret:
+In the customer's repo, store the SafeShip API key as a repository secret:
 
 > Repo → **Settings → Secrets and variables → Actions → New repository secret**
-> Name: `SAFELOOP_API_KEY`
-> Value: `sk_live_…` (from SafeLoop → Setup)
+> Name: `SAFESHIP_API_KEY`
+> Value: `sk_live_…` (from SafeShip → Setup)
 
 Then add a step to any workflow you want to gate on regression score:
 
@@ -23,14 +23,14 @@ on:
     branches: [main]
 
 jobs:
-  safeloop:
+  safeship:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Block on agent regression
-        uses: ego-debug/SafeLoop/.github/actions/safeloop@main
+        uses: ego-debug/SafeShip/.github/actions/safeship@main
         with:
-          api-key: ${{ secrets.SAFELOOP_API_KEY }}
+          api-key: ${{ secrets.SAFESHIP_API_KEY }}
           min-score: 80
 ```
 
@@ -42,10 +42,10 @@ the PR from merging (assuming branch protection is configured).
 
 | Input | Default | Description |
 |---|---|---|
-| `api-key` | **required** | Your `sk_live_*` key. Store as `SAFELOOP_API_KEY` secret. |
+| `api-key` | **required** | Your `sk_live_*` key. Store as `SAFESHIP_API_KEY` secret. |
 | `min-score` | `80` | Minimum regression score (0–100). Below this fails the check. |
 | `trigger` | (any) | Only consider runs with this trigger: `deploy` / `production` / `scheduled` / `manual`. |
-| `endpoint` | `https://safeloop.dev` | Override for self-host / staging environments. |
+| `endpoint` | `https://safeship.dev` | Override for self-host / staging environments. |
 | `fail-on-no-runs` | `false` | If the project has zero runs, this controls whether the check fails (`true`) or soft-passes (`false`, default). Soft-pass so first-time PRs aren't blocked before any traces have been sent. |
 
 ## Outputs
@@ -59,30 +59,30 @@ the PR from merging (assuming branch protection is configured).
 ## Typical pattern — only gate after the agent has actually run
 
 A more thorough setup runs the agent against PR changes, posts traces to
-SafeLoop, **then** checks the score:
+SafeShip, **then** checks the score:
 
 ```yaml
 jobs:
-  safeloop:
+  safeship:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - run: pip install safeloop
+      - run: pip install safeship
       - name: Run the agent against PR scenarios
         env:
-          SAFELOOP_API_KEY: ${{ secrets.SAFELOOP_API_KEY }}
+          SAFESHIP_API_KEY: ${{ secrets.SAFESHIP_API_KEY }}
         run: python scripts/run_agent_eval.py    # posts traces via the SDK
       - name: Block on regression
-        uses: ego-debug/SafeLoop/.github/actions/safeloop@main
+        uses: ego-debug/SafeShip/.github/actions/safeship@main
         with:
-          api-key: ${{ secrets.SAFELOOP_API_KEY }}
+          api-key: ${{ secrets.SAFESHIP_API_KEY }}
           min-score: 80
           trigger: deploy
 ```
 
-`scripts/run_agent_eval.py` calls `safeloop.init(...)`, wraps the agent, and
+`scripts/run_agent_eval.py` calls `safeship.init(...)`, wraps the agent, and
 runs a fixed scenario suite (so the score is comparable across PRs). The check
 step then verifies the resulting score before letting the PR merge.
 

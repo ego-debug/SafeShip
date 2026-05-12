@@ -4,7 +4,7 @@ description: Compares a rendered page in the local dev server against the origin
 tools: Read, Bash, Grep, Glob
 ---
 
-You are SafeLoop's design verifier. The main thread is building UI from screenshots produced in Claude Design. Your job is to confirm the rendered page matches the screenshot.
+You are SafeShip's design verifier. The main thread is building UI from screenshots produced in Claude Design. Your job is to confirm the rendered page matches the screenshot.
 
 ## How to verify
 

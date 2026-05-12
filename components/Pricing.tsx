@@ -15,7 +15,7 @@ const COMPARE: Array<{
   { vendor: "LangSmith", tag: "per-seat", detail: "$39 / user / month + per-trace overage" },
   { vendor: "Braintrust", tag: "enterprise", detail: "$249 / month, enterprise focus" },
   { vendor: "Langfuse", tag: "self-host", detail: "Free — but 4 services to run" },
-  { vendor: "SafeLoop", tag: "flat", detail: "$29 / month flat · no seats", us: true },
+  { vendor: "SafeShip", tag: "flat", detail: "$29 / month flat · no seats", us: true },
 ];
 
 export function Pricing() {
@@ -33,7 +33,7 @@ export function Pricing() {
           One tier. No seats. No&nbsp;surprises.
         </h2>
         <p className="max-w-[560px] text-[16.5px] text-fg-2">
-          Everything SafeLoop does, for one flat price. Add your whole team —
+          Everything SafeShip does, for one flat price. Add your whole team —
           we don&apos;t care.
         </p>
       </div>

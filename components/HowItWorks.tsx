@@ -49,10 +49,10 @@ export function HowItWorks() {
                 <span className="overflow-hidden text-ellipsis whitespace-pre text-fg">
                   <span className="text-[#c084fc]">import</span>
                   {" { "}
-                  <span className="text-[#7dd3fc]">safeloop</span>
+                  <span className="text-[#7dd3fc]">safeship</span>
                   {" } "}
                   <span className="text-[#c084fc]">from</span>{" "}
-                  <span className="text-accent">&quot;safeloop&quot;</span>
+                  <span className="text-accent">&quot;safeship&quot;</span>
                 </span>
               </div>
               <div className="flex gap-3">
@@ -64,7 +64,7 @@ export function HowItWorks() {
                 <span className="overflow-hidden text-ellipsis whitespace-pre text-fg">
                   <span className="text-[#c084fc]">export const</span>{" "}
                   <span className="text-[#fde68a]">agent</span> ={" "}
-                  <span className="text-[#7dd3fc]">safeloop</span>(
+                  <span className="text-[#7dd3fc]">safeship</span>(
                   <span className="text-[#fde68a]">myAgent</span>)
                 </span>
               </div>
@@ -168,7 +168,7 @@ export function HowItWorks() {
                 >
                   ✕
                 </span>
-                safeloop · blocked
+                safeship · blocked
               </span>
             </div>
           }

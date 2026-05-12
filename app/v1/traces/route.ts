@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 export async function GET() {
   return NextResponse.json(
     {
-      service: "safeloop",
+      service: "safeship",
       endpoint: "/v1/traces",
       method: "POST",
       auth: "Bearer sk_live_xxx",

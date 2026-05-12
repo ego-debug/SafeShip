@@ -23,7 +23,7 @@ const SuggestionSchema = z.object({
 
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 
-const SYSTEM_PROMPT = `You are SafeLoop's regression-test author. Your job: given a single failed agent run (with the trace of every step), propose ONE regression test that would have caught this exact failure mode, and that would catch the failure if it recurred in production.
+const SYSTEM_PROMPT = `You are SafeShip's regression-test author. Your job: given a single failed agent run (with the trace of every step), propose ONE regression test that would have caught this exact failure mode, and that would catch the failure if it recurred in production.
 
 # What makes a good regression test
 

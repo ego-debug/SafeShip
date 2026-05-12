@@ -31,6 +31,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
       - name: Ruff lint
-        run: ruff check safeloop tests
+        run: ruff check safeship tests
       - name: Pytest
         run: pytest -q

@@ -1,4 +1,4 @@
-"""Instrument an agent callable so every call ships a trace to SafeLoop."""
+"""Instrument an agent callable so every call ships a trace to SafeShip."""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 # Active step list for the in-flight run. Lets nested ``record_step()`` calls
 # attach into the parent run automatically — this is what an SDK-level
-# ``@safeloop.step`` decorator would target later.
+# ``@safeship.step`` decorator would target later.
 _active_steps: ContextVar[Optional[List[Dict[str, Any]]]] = ContextVar(
-    "safeloop_active_steps", default=None
+    "safeship_active_steps", default=None
 )
 
 
@@ -56,7 +56,7 @@ def wrap(agent: F, *, name: Optional[str] = None) -> F:
     the signature of the original; tracing failures never propagate.
     """
     if not callable(agent):
-        raise TypeError("safeloop.wrap expects a callable")
+        raise TypeError("safeship.wrap expects a callable")
 
     is_coro = inspect.iscoroutinefunction(agent)
     label = name or getattr(agent, "__name__", None) or "agent"

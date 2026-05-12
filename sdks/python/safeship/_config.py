@@ -1,4 +1,4 @@
-"""Module-level SafeLoop configuration. Set via ``safeloop.init(...)``."""
+"""Module-level SafeShip configuration. Set via ``safeship.init(...)``."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Optional
 @dataclass
 class _Config:
     api_key: Optional[str] = None
-    endpoint: str = "https://safeloop.dev/v1/traces"
+    endpoint: str = "https://safeship.dev/v1/traces"
     project_name: Optional[str] = None
     environment: str = "prod"
     timeout_seconds: float = 2.0
@@ -46,7 +46,7 @@ def resolve_api_key(explicit: Optional[str]) -> Optional[str]:
     """Resolve the API key from (in order): explicit arg, env var, existing config."""
     if explicit:
         return explicit
-    env = os.environ.get("SAFELOOP_API_KEY")
+    env = os.environ.get("SAFESHIP_API_KEY")
     if env:
         return env
     return _config.api_key
@@ -55,7 +55,7 @@ def resolve_api_key(explicit: Optional[str]) -> Optional[str]:
 def resolve_endpoint(explicit: Optional[str]) -> str:
     if explicit:
         return explicit
-    env = os.environ.get("SAFELOOP_ENDPOINT")
+    env = os.environ.get("SAFESHIP_ENDPOINT")
     if env:
         return env
     return _config.endpoint

@@ -9,7 +9,7 @@ export function AppNav() {
         <Link href="/app/dashboard" className="flex items-center gap-[10px] text-fg">
           <BrandMark />
           <span className="text-[15px] font-semibold tracking-tight">
-            SafeLoop
+            SafeShip
           </span>
         </Link>
         <div className="hidden items-center gap-5 text-sm md:flex">
