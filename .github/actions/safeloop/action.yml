@@ -1,0 +1,117 @@
+name: "SafeLoop"
+description: "Block deploys when your AI agent regresses. Calls SafeLoop's /v1/runs/check endpoint and fails the workflow if the latest run is below the threshold."
+author: "SafeLoop"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  api-key:
+    description: "Your SafeLoop project's API key (sk_live_*). Store as a repository secret and reference like ${{ secrets.SAFELOOP_API_KEY }}."
+    required: true
+  min-score:
+    description: "Minimum regression score (0-100) the latest run must meet. Below this and the check fails."
+    required: false
+    default: "80"
+  trigger:
+    description: "Optional — only consider runs with this trigger (deploy | production | scheduled | manual). Omit to use the most recent run regardless."
+    required: false
+    default: ""
+  endpoint:
+    description: "Override the SafeLoop API base URL (for self-host / staging)."
+    required: false
+    default: "https://safeloop.dev"
+  fail-on-no-runs:
+    description: "When 'true', fail the check if the project has no runs at all. When 'false' (default) treat no-runs as a soft pass so first-time PRs don't break."
+    required: false
+    default: "false"
+
+outputs:
+  passed:
+    description: "'true' if the latest run met the threshold, 'false' otherwise."
+    value: ${{ steps.check.outputs.passed }}
+  score:
+    description: "The score of the latest run (or empty if no runs)."
+    value: ${{ steps.check.outputs.score }}
+  run-id:
+    description: "The id of the latest run that was checked."
+    value: ${{ steps.check.outputs.run-id }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: check
+      shell: bash
+      env:
+        SAFELOOP_API_KEY: ${{ inputs.api-key }}
+        SAFELOOP_MIN_SCORE: ${{ inputs.min-score }}
+        SAFELOOP_TRIGGER: ${{ inputs.trigger }}
+        SAFELOOP_ENDPOINT: ${{ inputs.endpoint }}
+        SAFELOOP_FAIL_ON_NO_RUNS: ${{ inputs.fail-on-no-runs }}
+      run: |
+        set -u
+        url="${SAFELOOP_ENDPOINT%/}/v1/runs/check?min_score=${SAFELOOP_MIN_SCORE}"
+        if [ -n "${SAFELOOP_TRIGGER}" ]; then
+          url="${url}&trigger=${SAFELOOP_TRIGGER}"
+        fi
+
+        response=$(mktemp)
+        http=$(curl -sS -o "$response" -w "%{http_code}" \
+          -H "authorization: Bearer ${SAFELOOP_API_KEY}" \
+          -H "accept: application/json" \
+          "$url" || echo "000")
+
+        echo "::group::SafeLoop response ($http)"
+        cat "$response"
+        echo
+        echo "::endgroup::"
+
+        # Extract a handful of fields without depending on jq being installed.
+        # Light regex; tolerates whitespace and key order.
+        get_json() {
+          grep -oE "\"$1\"[[:space:]]*:[[:space:]]*(\"[^\"]*\"|[^,}]+)" "$response" \
+            | head -1 \
+            | sed -E "s/^\"$1\"[[:space:]]*:[[:space:]]*//" \
+            | sed -E 's/^"//; s/"$//'
+        }
+
+        ok=$(get_json ok)
+        score=$(get_json score)
+        run_id=$(get_json id)
+        msg=$(get_json message)
+        err=$(get_json error)
+
+        echo "score=${score}"   >> "$GITHUB_OUTPUT"
+        echo "run-id=${run_id}" >> "$GITHUB_OUTPUT"
+
+        case "$http" in
+          200)
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::SafeLoop ✓ ${msg}"
+            ;;
+          404)
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            if [ "$SAFELOOP_FAIL_ON_NO_RUNS" = "true" ]; then
+              echo "::error::SafeLoop: ${err}"
+              exit 1
+            else
+              echo "::warning::SafeLoop: ${err} — soft-passing this run (fail-on-no-runs=false)."
+              exit 0
+            fi
+            ;;
+          401)
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::error::SafeLoop auth failed (${err}). Check that the SAFELOOP_API_KEY secret is set correctly."
+            exit 1
+            ;;
+          422)
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::error::SafeLoop blocked the deploy: ${msg}"
+            exit 1
+            ;;
+          *)
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "::error::SafeLoop request failed with HTTP ${http}. Body above."
+            exit 1
+            ;;
+        esac
