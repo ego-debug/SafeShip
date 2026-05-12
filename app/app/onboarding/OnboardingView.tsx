@@ -149,9 +149,9 @@ export function OnboardingView({
         <SideCard title="Need help?">
           <ul className="flex flex-col gap-3 text-sm">
             <SideLink
-              href="https://github.com/ego-debug/SafeShip#first-time-setup"
+              href="/docs"
               label="Read the setup guide"
-              sub="github · open source"
+              sub="install · wrap · ship"
             />
             <SideLink
               href="mailto:founder@safeship.dev"
