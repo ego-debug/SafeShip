@@ -39,9 +39,22 @@ export default function RootLayout({
           colorPrimary: "#c2f970",
           colorBackground: "#0a0a0b",
           colorText: "#f5f5f6",
+          colorTextSecondary: "#b4b4b8",
+          colorTextOnPrimaryBackground: "#0a0a0b",
           colorInputBackground: "rgba(255,255,255,0.02)",
           colorInputText: "#f5f5f6",
+          colorNeutral: "#f5f5f6",
           borderRadius: "10px",
+        },
+        elements: {
+          socialButtonsBlockButton:
+            "border border-line-strong bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.06)]",
+          socialButtonsBlockButtonText: "text-fg font-medium",
+          formButtonPrimary: "text-bg font-semibold",
+          footerActionLink: "text-accent hover:text-[#d3ff85]",
+          identityPreviewEditButton: "text-accent",
+          formFieldLabel: "text-fg-2",
+          formFieldInput: "text-fg",
         },
       }}
     >
