@@ -135,9 +135,16 @@ export function OnboardingView({
       <aside className="flex flex-col gap-6">
         <SideCard title="Need help?">
           <ul className="flex flex-col gap-3 text-sm">
-            <SideLink href="#" label="Read the 90-second quickstart" sub="docs · 4 examples" />
-            <SideLink href="#" label="Join the Discord" sub="327 builders · usually < 5 min" />
-            <SideLink href="mailto:founder@safeship.dev" label="Email founder@safeship.dev" sub="we read every one" />
+            <SideLink
+              href="https://github.com/ego-debug/SafeShip#first-time-setup"
+              label="Read the setup guide"
+              sub="github · open source"
+            />
+            <SideLink
+              href="mailto:founder@safeship.dev"
+              label="Email founder@safeship.dev"
+              sub="solo founder · usually same day"
+            />
           </ul>
         </SideCard>
         <SideCard title="What happens next">
@@ -327,10 +334,13 @@ function SideLink({
   label: string;
   sub: string;
 }) {
+  const isExternal = href.startsWith("http") || href.startsWith("mailto:");
   return (
     <li>
       <a
         href={href}
+        target={isExternal && href.startsWith("http") ? "_blank" : undefined}
+        rel={isExternal && href.startsWith("http") ? "noopener noreferrer" : undefined}
         className="group flex flex-col gap-0.5 rounded-md transition-colors"
       >
         <span className="text-fg-2 group-hover:text-fg">{label} →</span>

@@ -6,7 +6,7 @@ export function AppNav() {
   return (
     <nav className="flex animate-rise items-center justify-between border-b border-line py-[18px]">
       <div className="flex items-center gap-7">
-        <Link href="/app/dashboard" className="flex items-center gap-[10px] text-fg">
+        <Link href="/" className="flex items-center gap-[10px] text-fg" title="Back to safeship.dev">
           <BrandMark />
           <span className="text-[15px] font-semibold tracking-tight">
             SafeShip
