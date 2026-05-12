@@ -6,7 +6,7 @@ This file is auto-loaded into every Claude Code session. Keep it short, accurate
 
 SafeLoop is a reliability tool for solo developers shipping AI agents. It drops into the customer's code via a 4-line SDK, traces every agent run, auto-suggests regression tests from real production failures, and blocks deploys when behavior regresses.
 
-**Tagline:** "Catch your AI agent failing before your users do."
+**Tagline:** "Every production failure becomes a regression test. The same bug never ships twice."
 
 ## Customer
 

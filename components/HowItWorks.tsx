@@ -118,8 +118,8 @@ export function HowItWorks() {
         <StepCard
           step="03"
           tag="CATCH"
-          title="Block bad deploys."
-          desc="When your agent regresses, your PR fails. Before users see it."
+          title="Block the second time."
+          desc="The first failure is yours to fix. After that, your PR fails any time it would ship the same bug again."
           icon={
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
               <path d="M12 3 4 6v6c0 4.5 3.5 8 8 9 4.5-1 8-4.5 8-9V6l-8-3z" />

@@ -1,6 +1,6 @@
 # safeloop · Python SDK
 
-> Catch your AI agent failing before your users do.
+> Every production failure becomes a regression test. The same bug never ships twice.
 
 ```bash
 pip install safeloop

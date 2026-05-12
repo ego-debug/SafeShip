@@ -3,14 +3,14 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SafeLoop — Catch your AI agent failing before your users do.",
+  title: "SafeLoop — The same bug never ships twice.",
   description:
-    "Drop a 4-line SDK into your agent. SafeLoop traces every run, turns production failures into test cases, and blocks the deploy when it regresses.",
+    "Every production failure becomes a regression test. Drop in a 4-line SDK — SafeLoop captures the trace, writes the assertion, and blocks any future deploy that would reproduce it.",
   metadataBase: new URL("https://safeloop.dev"),
   openGraph: {
-    title: "SafeLoop — Reliability for AI agents",
+    title: "SafeLoop — The same bug never ships twice.",
     description:
-      "Catch your AI agent failing before your users do. $29/mo flat. No seats.",
+      "Every production failure becomes a regression test. $29/mo flat, no seats.",
     url: "https://safeloop.dev",
     siteName: "SafeLoop",
     type: "website",

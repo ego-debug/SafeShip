@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "safeloop"
 version = "0.1.0"
-description = "Catch your AI agent failing before your users do."
+description = "Every production failure becomes a regression test. The same bug never ships twice."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
