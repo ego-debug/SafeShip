@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeLoop · Suggested tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-2: #101012;
+    --line: rgba(255,255,255,0.07);
+    --line-strong: rgba(255,255,255,0.12);
+    --fg: #f5f5f6;
+    --fg-2: #b4b4b8;
+    --fg-3: #76767c;
+    --fg-4: #4a4a50;
+    --accent: #c2f970;
+    --accent-dim: #8aac4a;
+    --danger: #ff6b6b;
+    --warn: #f5c14a;
+    --radius: 10px;
+    --maxw: 1480px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: 72px;
+  }
+  .mono { font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* Background */
+  .bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.45;
+  }
+  .bg-noise {
+    position: absolute; inset: 0; opacity: 0.025; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .shell { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 32px; }
+
+  /* App nav */
+  nav.app {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(180deg, #1a1a1c 0%, #0a0a0b 100%);
+    border: 1px solid var(--line-strong);
+    position: relative;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.4px solid var(--accent);
+    transform: translate(-50%, -50%);
+  }
+  .brand-mark::after {
+    width: 14px; height: 14px;
+    border-color: rgba(194,249,112,0.35);
+    border-style: dashed;
+  }
+  .brand-name { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
+  .nav-tabs { display: flex; align-items: center; gap: 4px; margin-left: 12px; }
+  .nav-tabs a {
+    color: var(--fg-3); text-decoration: none; font-size: 13.5px;
+    padding: 7px 12px; border-radius: 7px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-tabs a:hover { color: var(--fg-2); }
+  .nav-tabs a.active { color: var(--fg); background: rgba(255,255,255,0.04); }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    display: grid; place-items: center;
+    color: var(--fg-3); cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .icon-btn:hover { color: var(--fg); border-color: var(--line-strong); }
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .me {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #c2f970, #6fa820);
+    display: grid; place-items: center;
+    color: #0a0a0b; font-size: 11px; font-weight: 700;
+    font-family: "Geist Mono", monospace;
+  }
+
+  /* Top of page header */
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 32px 0 24px;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .page-title-wrap {
+    display: flex; align-items: baseline; gap: 16px;
+  }
+  .page-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  .page-sub {
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-3);
+    letter-spacing: 0.02em;
+  }
+  .page-sub b { color: var(--fg); font-weight: 500; }
+  .page-sub .accent { color: var(--accent); font-weight: 500; }
+  .page-sub .pip {
+    display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--fg-4); margin: 0 8px;
+    vertical-align: middle;
+  }
+  .head-right {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .progress {
+    display: flex; align-items: center; gap: 12px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+  }
+  .progress-bar {
+    width: 160px; height: 4px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar > div {
+    height: 100%;
+    width: 23%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    border-radius: 99px;
+  }
+  .filter-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-2);
+    padding: 7px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .filter-pill:hover { border-color: rgba(255,255,255,0.25); color: var(--fg); }
+  .filter-pill svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .filter-pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(194,249,112,0.5);
+  }
+
+  /* Layout: queue | center card | sidebar */
+  .layout {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) 380px;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (max-width: 1180px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .queue-rail, .sidebar { display: none; }
+  }
+
+  /* Queue rail (left) — stacked card preview giving the "deck" feeling */
+  .queue-rail {
+    position: sticky;
+    top: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding-top: 6px;
+  }
+  .queue-rail .rail-label {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-4);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    margin-top: 8px;
+    margin-bottom: 4px;
+  }
+  .queue-rail .qstub {
+    width: 36px; height: 50px; border-radius: 8px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, #131316 0%, #0d0d0f 100%);
+    position: relative;
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-4);
+    display: grid; place-items: center;
+  }
+  .queue-rail .qstub.next {
+    border-color: rgba(194,249,112,0.3);
+    color: var(--accent-dim);
+  }
+
+  /* Main column */
+  .main-col { min-width: 0; }
+
+  /* Focus card */
+  .card {
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #121215 0%, #0c0c0e 100%);
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset;
+    overflow: hidden;
+    position: relative;
+  }
+  /* Card stack illusion */
+  .stack { position: relative; }
+  .stack::before, .stack::after {
+    content: "";
+    position: absolute;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #101013 0%, #0a0a0c 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .stack::before {
+    left: 14px; right: 14px; top: 14px; bottom: -10px;
+    opacity: 0.6;
+  }
+  .stack::after {
+    left: 28px; right: 28px; top: 28px; bottom: -22px;
+    opacity: 0.3;
+  }
+  .stack > .card { position: relative; z-index: 2; }
+
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+    gap: 18px;
+  }
+  .card-head-left {
+    display: flex; align-items: center; gap: 12px;
+    min-width: 0;
+  }
+  .src-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,107,107,0.3);
+    background: rgba(255,107,107,0.08);
+    display: grid; place-items: center;
+    color: #ff8a8a;
+    flex: none;
+  }
+  .src-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .src-text {
+    min-width: 0;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-3);
+  }
+  .src-text b { color: var(--fg); font-weight: 500; }
+  .src-text a {
+    color: var(--accent-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .src-text a:hover { color: var(--accent); }
+  .src-meta-sep { color: var(--fg-4); margin: 0 8px; }
+  .card-head-right {
+    display: flex; align-items: center; gap: 10px;
+    flex: none;
+  }
+  .sev-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: #ff8a8a;
+    padding: 3px 8px;
+    border: 1px solid rgba(255,107,107,0.25);
+    background: rgba(255,107,107,0.06);
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+  }
+  .sev-tag .pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #ff6b6b;
+    box-shadow: 0 0 8px rgba(255,107,107,0.6);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .card-counter {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-4);
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+  }
+  .card-counter b { color: var(--fg-2); font-weight: 500; }
+
+  /* Summary */
+  .summary-wrap {
+    padding: 24px 26px 22px;
+  }
+  .summary {
+    font-size: 19px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .summary .bad {
+    color: #ff8a8a;
+    font-family: "Geist Mono", monospace;
+    font-size: 17px;
+    font-weight: 500;
+  }
+  .summary .good {
+    color: var(--accent);
+    font-family: "Geist Mono", monospace;
+    font-size: 17px;
+    font-weight: 500;
+  }
+  .summary .ord {
+    font-family: "Geist Mono", monospace;
+    font-size: 16px;
+    color: var(--fg-2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+  }
+  .view-trace {
+    margin-top: 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-3);
+    text-decoration: none;
+    transition: color 0.15s, transform 0.15s;
+  }
+  .view-trace:hover { color: var(--fg); }
+  .view-trace:hover .arrow { transform: translateX(2px); }
+  .view-trace .arrow { transition: transform 0.15s; }
+
+  /* Section divider with label */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 26px;
+    margin: 4px 0 14px;
+  }
+  .divider .lbl {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-3);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .divider .lbl b { color: var(--fg); font-weight: 500; }
+  .divider .line {
+    flex: 1; height: 1px; background: var(--line);
+  }
+  .divider .tag {
+    font-family: "Geist Mono", monospace;
+    font-size: 9.5px;
+    color: var(--accent-dim);
+    padding: 2px 7px;
+    border: 1px solid rgba(194,249,112,0.25);
+    background: rgba(194,249,112,0.05);
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+  }
+
+  /* Plain English assertion */
+  .assertion {
+    margin: 0 26px 18px;
+    padding: 16px 18px 16px 20px;
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, rgba(194,249,112,0.04) 0%, rgba(194,249,112,0.0) 100%),
+      #0d0e0a;
+    border: 1px solid rgba(194,249,112,0.20);
+    position: relative;
+    display: grid;
+    grid-template-columns: 24px minmax(0,1fr);
+    gap: 14px;
+  }
+  .assertion .ico {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: rgba(194,249,112,0.10);
+    border: 1px solid rgba(194,249,112,0.30);
+    display: grid; place-items: center;
+    color: var(--accent);
+    margin-top: 1px;
+  }
+  .assertion .ico svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .assertion p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--fg);
+    letter-spacing: -0.005em;
+  }
+  .assertion p .em {
+    font-family: "Geist Mono", monospace;
+    font-size: 13.5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--fg-2);
+  }
+  .assertion .nb {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--fg-3);
+    line-height: 1.5;
+  }
+
+  /* Code version */
+  .yaml-wrap {
+    margin: 0 26px 6px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #08080a;
+  }
+  .yaml-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,0.015);
+  }
+  .yaml-tabs {
+    display: flex; align-items: center; gap: 2px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+  }
+  .yaml-tabs button {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: inherit;
+    color: var(--fg-4);
+    padding: 5px 9px;
+    border-radius: 5px;
+    letter-spacing: 0.05em;
+    transition: color 0.15s, background 0.15s;
+  }
+  .yaml-tabs button:hover { color: var(--fg-2); }
+  .yaml-tabs button.active { color: var(--fg); background: rgba(255,255,255,0.05); }
+  .yaml-actions {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .yaml-actions button {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+    background: none; border: none; cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    transition: color 0.15s, background 0.15s;
+  }
+  .yaml-actions button:hover { color: var(--fg-2); background: rgba(255,255,255,0.04); }
+  .yaml-body {
+    padding: 14px 16px 16px;
+    overflow-x: auto;
+  }
+  .yaml-body pre {
+    margin: 0;
+    font-family: "Geist Mono", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--fg);
+    white-space: pre;
+  }
+  .yaml-body .k { color: #b89af0; }
+  .yaml-body .s { color: #c2f970; }
+  .yaml-body .n { color: #fde68a; }
+  .yaml-body .o { color: var(--fg-3); }
+  .yaml-body .c { color: var(--fg-4); }
+  .yaml-body .id { color: #7dd3fc; }
+  .yaml-body .ln {
+    color: var(--fg-4);
+    display: inline-block;
+    width: 18px;
+    text-align: right;
+    margin-right: 14px;
+    font-size: 11px;
+    user-select: none;
+  }
+
+  /* Action buttons row */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 22px 26px 22px;
+  }
+  .actions .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
+    position: relative;
+  }
+  .actions .btn .kbd {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    line-height: 1;
+  }
+  .actions .btn-accept {
+    background: linear-gradient(180deg, #cdfd7d 0%, #b9ef5e 100%);
+    color: #0a0a0b;
+    border: 1px solid rgba(0,0,0,0.2);
+    box-shadow:
+      0 0 0 1px rgba(194,249,112,0.35),
+      0 14px 30px -12px rgba(194,249,112,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .actions .btn-accept:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(194,249,112,0.5),
+      0 18px 36px -14px rgba(194,249,112,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .actions .btn-accept:active { transform: translateY(0); }
+  .actions .btn-accept .check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(10,10,11,0.12);
+    display: grid; place-items: center;
+  }
+  .actions .btn-accept .check svg {
+    width: 12px; height: 12px;
+    stroke: #0a0a0b; fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .actions .btn-accept .kbd {
+    background: rgba(10,10,11,0.18);
+    color: #1a1a0e;
+  }
+
+  .actions .btn-skip {
+    background: rgba(255,255,255,0.02);
+    color: var(--fg-2);
+    border: 1px solid var(--line-strong);
+  }
+  .actions .btn-skip:hover {
+    color: var(--fg);
+    border-color: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.04);
+  }
+  .actions .btn-skip .x {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    display: grid; place-items: center;
+  }
+  .actions .btn-skip .x svg {
+    width: 10px; height: 10px;
+    stroke: currentColor; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .actions .btn-skip .kbd {
+    background: rgba(255,255,255,0.06);
+    color: var(--fg-3);
+  }
+
+  /* Why this test? */
+  .why {
+    margin: 0 26px;
+    border-top: 1px dashed var(--line);
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .why-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+    background: none; border: none; cursor: pointer;
+    padding: 14px 0;
+    font-family: inherit;
+    color: var(--fg-2);
+    transition: color 0.15s;
+  }
+  .why-toggle:hover { color: var(--fg); }
+  .why-toggle .left {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .why-toggle .left .spark {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    background: rgba(194,249,112,0.08);
+    border: 1px solid rgba(194,249,112,0.20);
+    display: grid; place-items: center;
+    color: var(--accent);
+  }
+  .why-toggle .left .spark svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .why-toggle .caret {
+    color: var(--fg-4);
+    transition: transform 0.2s;
+  }
+  .why-toggle .caret svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .why.open .why-toggle .caret { transform: rotate(180deg); color: var(--fg-2); }
+  .why-body {
+    display: none;
+    padding: 4px 0 18px;
+  }
+  .why.open .why-body { display: block; }
+  .why-body p {
+    margin: 0 0 10px;
+    font-size: 13.5px;
+    color: var(--fg-2);
+    line-height: 1.6;
+  }
+  .why-body p:last-child { margin-bottom: 0; }
+  .why-body .stat-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .why-stat {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: rgba(255,255,255,0.02);
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-3);
+  }
+  .why-stat b { font-size: 13px; color: var(--fg); font-weight: 600; }
+
+  /* Sidebar: Recently accepted */
+  .sidebar {
+    position: sticky;
+    top: 18px;
+    align-self: start;
+  }
+  .side-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    overflow: hidden;
+  }
+  .side-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .side-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .side-count {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--accent-dim);
+    padding: 2px 7px;
+    border: 1px solid rgba(194,249,112,0.25);
+    background: rgba(194,249,112,0.06);
+    border-radius: 5px;
+  }
+  .accepted {
+    list-style: none;
+    padding: 6px 8px;
+    margin: 0;
+  }
+  .accepted li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    align-items: center;
+    transition: background 0.15s;
+  }
+  .accepted li:hover { background: rgba(255,255,255,0.025); }
+  .accepted .check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(194,249,112,0.12);
+    border: 1px solid rgba(194,249,112,0.30);
+    display: grid; place-items: center;
+    color: var(--accent);
+  }
+  .accepted .check svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .accepted .name {
+    min-width: 0;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .accepted .desc {
+    grid-column: 2 / 3;
+    font-size: 11.5px;
+    color: var(--fg-3);
+    line-height: 1.4;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .accepted .time {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+    white-space: nowrap;
+  }
+  .accepted li.fresh .time { color: var(--accent-dim); }
+
+  .side-foot {
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-3);
+  }
+  .side-foot a {
+    color: var(--fg-2);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .side-foot a:hover { color: var(--fg); }
+
+  /* Streak block under accepted list */
+  .streak {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, rgba(194,249,112,0.04) 0%, rgba(194,249,112,0.0) 100%),
+      #0c0d0a;
+  }
+  .streak-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .streak-num {
+    font-family: "Geist Mono", monospace;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .streak-label {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-3);
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+  }
+  .streak-spark {
+    display: flex; align-items: flex-end; gap: 3px;
+    height: 22px;
+    margin-top: 6px;
+  }
+  .streak-spark span {
+    flex: 1;
+    background: rgba(194,249,112,0.35);
+    border-radius: 1.5px;
+    min-height: 3px;
+  }
+  .streak-spark span:nth-child(1){ height: 30%; }
+  .streak-spark span:nth-child(2){ height: 45%; }
+  .streak-spark span:nth-child(3){ height: 25%; }
+  .streak-spark span:nth-child(4){ height: 60%; }
+  .streak-spark span:nth-child(5){ height: 40%; }
+  .streak-spark span:nth-child(6){ height: 75%; }
+  .streak-spark span:nth-child(7){ height: 55%; opacity: 0.5; }
+  .streak-spark span.today {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(194,249,112,0.5);
+  }
+  .streak-foot {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--fg-3);
+    line-height: 1.5;
+  }
+  .streak-foot b { color: var(--fg); font-weight: 500; }
+
+  /* Bottom keyboard hint */
+  .kbdbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    border-top: 1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(10,10,11,0.6) 0%, rgba(10,10,11,0.92) 60%, #0a0a0b 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .kbdbar-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 12px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 18px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+  }
+  .kbdbar .grp {
+    display: flex; align-items: center; gap: 18px;
+    flex-wrap: wrap;
+  }
+  .kbdbar .hint {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--fg-3);
+  }
+  .kbdbar .hint b { color: var(--fg-2); font-weight: 500; }
+  .key {
+    display: inline-grid; place-items: center;
+    min-width: 22px; height: 22px;
+    padding: 0 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-strong);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg);
+    line-height: 1;
+  }
+  .kbdbar .meta {
+    color: var(--fg-4);
+  }
+  .kbdbar .meta b { color: var(--fg-2); font-weight: 500; }
+
+  /* Accept animation */
+  @keyframes fly-accept {
+    0% { transform: translateX(0) rotate(0); opacity: 1; }
+    100% { transform: translateX(80vw) rotate(20deg); opacity: 0; }
+  }
+  @keyframes fly-skip {
+    0% { transform: translateX(0) rotate(0); opacity: 1; }
+    100% { transform: translateX(-80vw) rotate(-20deg); opacity: 0; }
+  }
+  .stack.flying-accept > .card { animation: fly-accept 0.5s cubic-bezier(.6,.05,.85,.45) forwards; }
+  .stack.flying-skip > .card { animation: fly-skip 0.5s cubic-bezier(.6,.05,.85,.45) forwards; }
+  .flash {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0;
+  }
+  .flash.accept {
+    background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(194,249,112,0.20), transparent 70%);
+  }
+  .flash.skip {
+    background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255,255,255,0.05), transparent 70%);
+  }
+  .flash.on { animation: flashpulse 0.45s ease-out; }
+  @keyframes flashpulse {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* rise */
+  @keyframes rise { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
+  .rise { animation: rise 0.5s cubic-bezier(.2,.7,.2,1) both; }
+  .d1 { animation-delay: 0.04s; }
+  .d2 { animation-delay: 0.10s; }
+  .d3 { animation-delay: 0.18s; }
+  .d4 { animation-delay: 0.24s; }
+</style>
+</head>
+<body>
+
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<div class="shell">
+
+  <!-- App nav -->
+  <nav class="app rise">
+    <div class="nav-left">
+      <a class="brand" href="dashboard.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">SafeLoop</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="dashboard.html">Overview</a>
+        <a href="#">Runs</a>
+        <a href="tests.html" class="active">Tests</a>
+        <a href="#">Deploys</a>
+        <a href="#">Settings</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Docs">
+        <svg viewBox="0 0 24 24"><path d="M6 4h8l4 4v12H6z"/><polyline points="14 4 14 8 18 8"/></svg>
+      </button>
+      <span class="me" aria-label="Account">MN</span>
+    </div>
+  </nav>
+
+  <!-- Page head -->
+  <header class="page-head rise d1">
+    <div>
+      <div class="page-title-wrap">
+        <h1 class="page-title">Suggested tests</h1>
+      </div>
+      <div class="page-sub" style="margin-top:8px">
+        <b>47</b> to review
+        <span class="pip"></span>
+        <span class="accent">4</span> accepted today
+        <span class="pip"></span>
+        auto-generated from production failures
+      </div>
+    </div>
+    <div class="head-right">
+      <div class="progress">
+        <span>Session</span>
+        <div class="progress-bar"><div></div></div>
+        <span><b style="color:var(--fg-2)">11</b> / 47</span>
+      </div>
+      <button class="filter-pill">
+        <span class="dot"></span>
+        support-triage · prod
+        <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Layout -->
+  <main class="layout">
+
+    <!-- Left rail: deck illusion -->
+    <aside class="queue-rail rise d2" aria-hidden="true">
+      <span class="rail-label">Up next</span>
+      <div class="qstub next">02</div>
+      <div class="qstub">03</div>
+      <div class="qstub">04</div>
+      <div class="qstub" style="opacity:0.6">05</div>
+      <div class="qstub" style="opacity:0.35">06</div>
+    </aside>
+
+    <!-- Center column -->
+    <section class="main-col rise d2">
+
+      <div class="stack" id="stack">
+        <article class="card" id="focusCard">
+
+          <!-- Card header -->
+          <div class="card-head">
+            <div class="card-head-left">
+              <div class="src-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2v6"/><path d="M12 22v-6"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M22 12h-6"/><path d="m4.93 19.07 4.24-4.24"/><path d="m14.83 9.17 4.24-4.24"/></svg>
+              </div>
+              <div class="src-text">
+                From <a href="trace-detail.html"><b>run #r_8f3a91…b04c</b></a>
+                <span class="src-meta-sep">·</span>
+                2m ago
+                <span class="src-meta-sep">·</span>
+                support-triage
+              </div>
+            </div>
+            <div class="card-head-right">
+              <span class="sev-tag"><span class="pulse"></span>High severity</span>
+              <span class="card-counter"><b>01</b> / 47</span>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <div class="summary-wrap">
+            <p class="summary">
+              Agent <span class="good">draft_reply</span> output a <span class="bad">$249.00</span> refund instead of the correct <span class="good">$24.99</span> from order <span class="ord">#4821</span>.
+            </p>
+            <a class="view-trace" href="trace-detail.html">
+              View full trace
+              <span class="arrow">→</span>
+            </a>
+          </div>
+
+          <!-- Divider -->
+          <div class="divider">
+            <span class="lbl">SafeLoop's suggested test</span>
+            <span class="line"></span>
+            <span class="tag">New</span>
+          </div>
+
+          <!-- Plain English assertion -->
+          <div class="assertion">
+            <div class="ico">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <p>
+                Refund amounts in agent output must <b>exactly match</b> the order's <span class="em">total</span> field. No invented numbers.
+              </p>
+            </div>
+          </div>
+
+          <!-- Code version -->
+          <div class="yaml-wrap">
+            <div class="yaml-head">
+              <div class="yaml-tabs">
+                <button class="active">YAML</button>
+                <button>Python</button>
+                <button>TypeScript</button>
+              </div>
+              <div class="yaml-actions">
+                <button>⎘ copy</button>
+                <button>edit</button>
+              </div>
+            </div>
+            <div class="yaml-body">
+<pre><span class="ln">1</span><span class="k">test</span><span class="o">:</span> <span class="id">draft_reply.refund_amount_matches_order</span>
+<span class="ln">2</span><span class="k">when</span><span class="o">:</span> step <span class="o">==</span> <span class="s">"draft_reply"</span>
+<span class="ln">3</span><span class="k">assert</span><span class="o">:</span> output.amount <span class="o">==</span> order.total</pre>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="actions">
+            <button class="btn btn-accept" id="acceptBtn">
+              <span class="check">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              Add to regression suite
+              <span class="kbd">Y</span>
+            </button>
+            <button class="btn btn-skip" id="skipBtn">
+              <span class="x">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </span>
+              Skip
+              <span class="kbd">N</span>
+            </button>
+          </div>
+
+          <!-- Why this test? -->
+          <div class="why open" id="why">
+            <button class="why-toggle" id="whyToggle">
+              <span class="left">
+                <span class="spark">
+                  <svg viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 12 L14 15 L12 22 L10 15 L3 12 L10 9 Z"/></svg>
+                </span>
+                Why this test?
+              </span>
+              <span class="caret">
+                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </button>
+            <div class="why-body">
+              <p>
+                This failure pattern-matched <b style="color:var(--fg)">3 other traces</b> this week. The agent has a tendency to hallucinate dollar amounts when generating refund language — especially after the gpt-5.1-mini swap on Tuesday.
+              </p>
+              <p style="color:var(--fg-3)">
+                Asserting structural equality between <span style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--fg-2);background:rgba(255,255,255,0.04);border:1px solid var(--line);padding:1px 5px;border-radius:4px">output.amount</span> and the upstream <span style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--fg-2);background:rgba(255,255,255,0.04);border:1px solid var(--line);padding:1px 5px;border-radius:4px">order.total</span> is cheap, deterministic, and catches the entire class.
+              </p>
+              <div class="stat-row">
+                <span class="why-stat"><b>3</b>matching traces · 7d</span>
+                <span class="why-stat"><b>14/14</b>replay failures</span>
+                <span class="why-stat"><b>~2ms</b>runtime cost</span>
+                <span class="why-stat"><b>0</b>false positives in shadow</span>
+              </div>
+            </div>
+          </div>
+
+        </article>
+      </div>
+
+    </section>
+
+    <!-- Sidebar -->
+    <aside class="sidebar rise d3">
+      <div class="side-card">
+        <div class="side-head">
+          <span class="side-title">Recently accepted</span>
+          <span class="side-count">+4 today</span>
+        </div>
+        <ul class="accepted">
+          <li class="fresh">
+            <span class="check">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span class="name">classify_intent.confidence_threshold</span>
+            <span class="time">2m ago</span>
+            <span class="desc">Intent must score ≥ 0.75 or escalate to human</span>
+          </li>
+          <li>
+            <span class="check">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span class="name">lookup_order.no_silent_404</span>
+            <span class="time">8m ago</span>
+            <span class="desc">Missing order must surface, not return null silently</span>
+          </li>
+          <li>
+            <span class="check">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span class="name">policy_check.must_run_before_send</span>
+            <span class="time">23m ago</span>
+            <span class="desc">queue_for_send is blocked unless policy_check passes</span>
+          </li>
+          <li>
+            <span class="check">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span class="name">draft_reply.no_pii_leak</span>
+            <span class="time">1h ago</span>
+            <span class="desc">Output must not echo card numbers or full emails</span>
+          </li>
+          <li>
+            <span class="check">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span class="name">tool.retry_budget_enforced</span>
+            <span class="time">yesterday</span>
+            <span class="desc">No tool may exceed 3 retries inside a single run</span>
+          </li>
+        </ul>
+        <div class="side-foot">
+          <span>4 added · 0 reverted</span>
+          <a href="tests.html">View suite →</a>
+        </div>
+      </div>
+
+      <!-- Streak / progress -->
+      <div class="streak">
+        <div class="streak-row">
+          <span class="streak-num">+47%</span>
+          <span class="streak-label">coverage this week</span>
+        </div>
+        <div class="streak-spark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span class="today" style="height:90%"></span>
+        </div>
+        <div class="streak-foot">
+          You've turned <b>11 production failures</b> into regression tests since Monday. Keep going — <b>36 left</b> in today's batch.
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+</div>
+
+<!-- Bottom keyboard hint -->
+<div class="kbdbar">
+  <div class="kbdbar-inner">
+    <div class="grp">
+      <span class="hint"><span class="key">Y</span> <b>accept</b></span>
+      <span class="hint"><span class="key">N</span> <b>skip</b></span>
+      <span class="hint"><span class="key">←</span><span class="key">→</span> <b>navigate</b></span>
+      <span class="hint" style="opacity:0.6"><span class="key">E</span> edit</span>
+      <span class="hint" style="opacity:0.6"><span class="key">/</span> search</span>
+    </div>
+    <div class="meta">
+      <b>11</b> reviewed · <b>4</b> accepted · <b>7</b> skipped · avg <b>14s</b> / test
+    </div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+  // Y/N keyboard + button accept/skip animations
+  const stack = document.getElementById('stack');
+  const flash = document.getElementById('flash');
+
+  function pulseAccept() {
+    flash.classList.remove('skip'); flash.classList.add('accept');
+    flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on');
+    stack.classList.remove('flying-skip'); stack.classList.add('flying-accept');
+    setTimeout(() => {
+      stack.classList.remove('flying-accept');
+      const card = stack.querySelector('.card');
+      card.style.animation = 'none';
+      // re-trigger entry
+      requestAnimationFrame(() => { card.style.animation = ''; });
+    }, 520);
+  }
+  function pulseSkip() {
+    flash.classList.remove('accept'); flash.classList.add('skip');
+    flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on');
+    stack.classList.remove('flying-accept'); stack.classList.add('flying-skip');
+    setTimeout(() => {
+      stack.classList.remove('flying-skip');
+      const card = stack.querySelector('.card');
+      card.style.animation = 'none';
+      requestAnimationFrame(() => { card.style.animation = ''; });
+    }, 520);
+  }
+
+  document.getElementById('acceptBtn').addEventListener('click', pulseAccept);
+  document.getElementById('skipBtn').addEventListener('click', pulseSkip);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea')) return;
+    const k = e.key.toLowerCase();
+    if (k === 'y') { e.preventDefault(); pulseAccept(); }
+    else if (k === 'n') { e.preventDefault(); pulseSkip(); }
+  });
+
+  // Why this test? collapse
+  const why = document.getElementById('why');
+  document.getElementById('whyToggle').addEventListener('click', () => {
+    why.classList.toggle('open');
+  });
+
+  // YAML tabs
+  document.querySelectorAll('.yaml-tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.yaml-tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

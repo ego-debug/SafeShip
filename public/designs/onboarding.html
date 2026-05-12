@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeLoop — Welcome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-2: #101012;
+    --line: rgba(255,255,255,0.07);
+    --line-strong: rgba(255,255,255,0.12);
+    --fg: #f5f5f6;
+    --fg-2: #b4b4b8;
+    --fg-3: #76767c;
+    --fg-4: #4a4a50;
+    --accent: #c2f970;
+    --accent-dim: #8aac4a;
+    --danger: #ff6b6b;
+    --warn: #f5c14a;
+    --radius: 10px;
+    --maxw: 1240px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: 80px;
+  }
+  .mono { font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* Background */
+  .bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.45;
+  }
+  .bg-glow {
+    position: absolute; left: 50%; top: -260px; transform: translateX(-50%);
+    width: 1000px; height: 700px;
+    background: radial-gradient(circle at 50% 50%, rgba(194,249,112,0.10), rgba(194,249,112,0.02) 40%, transparent 70%);
+    filter: blur(20px);
+    transition: opacity 0.6s ease;
+  }
+  body.success .bg-glow {
+    background: radial-gradient(circle at 50% 50%, rgba(194,249,112,0.22), rgba(194,249,112,0.04) 40%, transparent 70%);
+  }
+  .bg-noise {
+    position: absolute; inset: 0; opacity: 0.025; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .shell { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 32px; }
+
+  /* Top nav */
+  nav.app {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(180deg, #1a1a1c 0%, #0a0a0b 100%);
+    border: 1px solid var(--line-strong);
+    position: relative;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.4px solid var(--accent);
+    transform: translate(-50%, -50%);
+  }
+  .brand-mark::after {
+    width: 14px; height: 14px;
+    border-color: rgba(194,249,112,0.35);
+    border-style: dashed;
+  }
+  .brand-name { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-crumb {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    letter-spacing: 0.04em;
+    padding-left: 16px;
+    border-left: 1px solid var(--line);
+  }
+  .nav-crumb b { color: var(--fg-2); font-weight: 500; }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .nav-link {
+    color: var(--fg-3);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: var(--fg); }
+  .me {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #c2f970, #6fa820);
+    display: grid; place-items: center;
+    color: #0a0a0b; font-size: 11px; font-weight: 700;
+    font-family: "Geist Mono", monospace;
+  }
+
+  /* Page head */
+  .page-head {
+    padding: 44px 0 18px;
+    text-align: left;
+  }
+  .greet {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--accent-dim);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .greet .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(194,249,112,0.6);
+  }
+  .page-title {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: var(--fg);
+    max-width: 760px;
+    text-wrap: pretty;
+  }
+  .page-title em {
+    font-style: normal;
+    color: var(--accent);
+    font-family: "Geist Mono", monospace;
+    font-size: 30px;
+    font-weight: 500;
+    background: rgba(194,249,112,0.05);
+    border: 1px solid rgba(194,249,112,0.20);
+    padding: 1px 10px;
+    border-radius: 8px;
+    letter-spacing: -0.01em;
+    vertical-align: 3px;
+  }
+  .page-sub {
+    margin-top: 14px;
+    font-size: 15px;
+    color: var(--fg-3);
+    line-height: 1.55;
+    max-width: 620px;
+  }
+
+  /* Stepper */
+  .stepper {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin: 36px 0 32px;
+    padding: 18px 22px;
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #121215 0%, #0c0c0e 100%);
+  }
+  .step {
+    display: flex; align-items: center; gap: 14px;
+    min-width: 0;
+  }
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: rgba(255,255,255,0.02);
+    display: grid; place-items: center;
+    font-family: "Geist Mono", monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-3);
+    flex: none;
+    position: relative;
+    transition: all 0.4s ease;
+  }
+  .step-num svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+    display: none;
+  }
+  .step.done .step-num,
+  .step.active .step-num {
+    background: rgba(194,249,112,0.10);
+    border-color: rgba(194,249,112,0.45);
+    color: var(--accent);
+  }
+  .step.active .step-num {
+    box-shadow: 0 0 0 4px rgba(194,249,112,0.10), 0 0 18px rgba(194,249,112,0.25);
+  }
+  .step.done .step-num span { display: none; }
+  .step.done .step-num svg { display: block; }
+  .step-body {
+    min-width: 0;
+  }
+  .step-eyebrow {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-4);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 3px;
+  }
+  .step.active .step-eyebrow { color: var(--accent-dim); }
+  .step.done .step-eyebrow { color: var(--accent-dim); }
+  .step-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg-3);
+    letter-spacing: -0.005em;
+    line-height: 1.2;
+  }
+  .step.active .step-label { color: var(--fg); }
+  .step.done .step-label { color: var(--fg-2); }
+  .step-rule {
+    height: 1px;
+    background: var(--line);
+    position: relative;
+    width: 100%;
+    min-width: 24px;
+  }
+  .step-rule::after {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition: width 0.6s ease;
+  }
+  .step-rule.done::after { width: 100%; }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 1080px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .sidebar { order: 2; }
+  }
+
+  /* Main column */
+  .main-col { min-width: 0; }
+
+  /* Code card */
+  .code-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #0e0e11 0%, #08080a 100%);
+    overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset;
+  }
+  .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,0.015);
+  }
+  .code-tabs {
+    display: flex; align-items: center; gap: 2px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+  }
+  .code-tabs button {
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: inherit;
+    color: var(--fg-4);
+    padding: 6px 11px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+    transition: color 0.15s, background 0.15s;
+  }
+  .code-tabs button:hover { color: var(--fg-2); }
+  .code-tabs button.active { color: var(--fg); background: rgba(255,255,255,0.05); }
+  .code-actions {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lang-pill {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    letter-spacing: 0.04em;
+  }
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-2);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line-strong);
+    padding: 6px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .copy-btn:hover {
+    color: var(--fg);
+    border-color: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.05);
+  }
+  .copy-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .copy-btn.copied { color: var(--accent); border-color: rgba(194,249,112,0.35); background: rgba(194,249,112,0.06); }
+  .code-body {
+    padding: 22px 24px 24px;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-pane { display: none; }
+  .code-pane.active { display: block; }
+  .code-body pre {
+    margin: 0;
+    font-family: "Geist Mono", monospace;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--fg);
+    white-space: pre;
+  }
+  .code-body .ln {
+    color: var(--fg-4);
+    display: inline-block;
+    width: 22px;
+    text-align: right;
+    margin-right: 18px;
+    font-size: 11.5px;
+    user-select: none;
+  }
+  .code-body .k { color: #b89af0; }
+  .code-body .s { color: #c2f970; }
+  .code-body .n { color: #fde68a; }
+  .code-body .o { color: var(--fg-3); }
+  .code-body .c { color: var(--fg-4); font-style: italic; }
+  .code-body .id { color: #7dd3fc; }
+  .code-body .fn { color: #fde68a; }
+  .code-body .var { color: var(--fg); }
+  .code-body .prompt { color: var(--fg-4); user-select: none; }
+
+  .api-note {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    background: rgba(255,255,255,0.01);
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+  }
+  .api-note .lock {
+    width: 14px; height: 14px;
+    color: var(--accent-dim);
+    flex: none;
+  }
+  .api-note .lock svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .api-note b { color: var(--fg-2); font-weight: 500; }
+  .api-note .reveal {
+    margin-left: auto;
+    color: var(--fg-4);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .api-note .reveal:hover { color: var(--fg-2); }
+
+  /* Status row */
+  .status-row {
+    margin-top: 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .status {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    font-family: "Geist Mono", monospace;
+    font-size: 13px;
+    color: var(--fg-2);
+    transition: all 0.5s ease;
+  }
+  .status .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--fg-3);
+    box-shadow: 0 0 0 0 rgba(118,118,124,0.6);
+    animation: pulse-grey 1.8s ease-in-out infinite;
+    flex: none;
+  }
+  @keyframes pulse-grey {
+    0% { box-shadow: 0 0 0 0 rgba(118,118,124,0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(118,118,124,0); }
+    100% { box-shadow: 0 0 0 0 rgba(118,118,124,0); }
+  }
+  .status .label-text { color: var(--fg-2); }
+  .status .label-text b { color: var(--fg); font-weight: 500; }
+  .status .meta {
+    color: var(--fg-4);
+    border-left: 1px solid var(--line);
+    padding-left: 12px;
+    margin-left: 4px;
+    font-size: 11.5px;
+  }
+
+  body.success .status {
+    border-color: rgba(194,249,112,0.30);
+    background: linear-gradient(180deg, rgba(194,249,112,0.05) 0%, rgba(194,249,112,0.0) 100%), #0d0e0a;
+  }
+  body.success .status .pulse-dot {
+    background: var(--accent);
+    box-shadow: 0 0 12px rgba(194,249,112,0.5);
+    animation: pulse-green 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(194,249,112,0.5); }
+    70% { box-shadow: 0 0 0 12px rgba(194,249,112,0); }
+    100% { box-shadow: 0 0 0 0 rgba(194,249,112,0); }
+  }
+  body.success .status .label-text { color: var(--fg); }
+  body.success .status .label-text b { color: var(--accent); font-weight: 500; }
+
+  .test-trace-btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-2);
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed var(--line-strong);
+    padding: 11px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .test-trace-btn:hover {
+    color: var(--fg);
+    border-color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.04);
+  }
+  .test-trace-btn:disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+  .test-trace-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .test-trace-btn .small { color: var(--fg-4); font-size: 10.5px; }
+  body.success .test-trace-btn { display: none; }
+
+  /* Primary CTA (success only) */
+  .cta-row {
+    margin-top: 22px;
+    display: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+  }
+  body.success .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    opacity: 1;
+    transform: none;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    border-radius: 12px;
+    padding: 14px 22px;
+    border: 1px solid rgba(0,0,0,0.2);
+    cursor: pointer;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    background: linear-gradient(180deg, #cdfd7d 0%, #b9ef5e 100%);
+    color: #0a0a0b;
+    text-decoration: none;
+    box-shadow:
+      0 0 0 1px rgba(194,249,112,0.35),
+      0 14px 30px -12px rgba(194,249,112,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+    transition: transform 0.1s, box-shadow 0.15s;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(194,249,112,0.5),
+      0 18px 36px -14px rgba(194,249,112,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .btn-primary .arrow {
+    transition: transform 0.15s;
+  }
+  .btn-primary:hover .arrow { transform: translateX(3px); }
+  .secondary-link {
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-3);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .secondary-link:hover { color: var(--fg); }
+
+  /* Success summary card */
+  .first-trace {
+    display: none;
+    margin-top: 22px;
+    border: 1px solid rgba(194,249,112,0.20);
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, rgba(194,249,112,0.04) 0%, rgba(194,249,112,0.0) 100%),
+      #0d0e0a;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease 0.15s, transform 0.5s ease 0.15s;
+  }
+  body.success .first-trace {
+    display: block;
+    opacity: 1;
+    transform: none;
+  }
+  .ft-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(194,249,112,0.15);
+  }
+  .ft-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg);
+  }
+  .ft-title .tag {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--accent-dim);
+    padding: 2px 7px;
+    border: 1px solid rgba(194,249,112,0.30);
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+  }
+  .ft-meta {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-3);
+  }
+  .ft-body {
+    padding: 14px 18px 16px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0,1fr));
+    gap: 6px;
+  }
+  .ft-step {
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.015);
+    min-width: 0;
+  }
+  .ft-step .n {
+    font-family: "Geist Mono", monospace;
+    font-size: 9.5px;
+    color: var(--fg-4);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .ft-step .nm {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ft-step .ms {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--accent-dim);
+    margin-top: 4px;
+  }
+
+  /* Sidebar */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+  .side-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    overflow: hidden;
+  }
+  .side-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .side-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .side-emoji {
+    color: var(--fg-3);
+    font-size: 13px;
+  }
+  .help-list {
+    list-style: none;
+    padding: 6px 8px 8px;
+    margin: 0;
+  }
+  .help-list li {
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  .help-list li:hover { background: rgba(255,255,255,0.025); }
+  .help-list a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 10px;
+    color: var(--fg-2);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.15s;
+  }
+  .help-list a:hover { color: var(--fg); }
+  .help-list .ico {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    display: grid; place-items: center;
+    color: var(--fg-3);
+    flex: none;
+  }
+  .help-list .ico svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .help-list a:hover .ico { color: var(--accent); border-color: rgba(194,249,112,0.30); background: rgba(194,249,112,0.06); }
+  .help-list .label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.25;
+  }
+  .help-list .label small {
+    display: block;
+    color: var(--fg-4);
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+  }
+  .help-list .arrow {
+    color: var(--fg-4);
+    font-family: "Geist Mono", monospace;
+    font-size: 13px;
+    transition: transform 0.15s, color 0.15s;
+  }
+  .help-list a:hover .arrow { transform: translateX(2px); color: var(--accent-dim); }
+
+  /* Video thumbnail */
+  .video-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .video-card:hover {
+    border-color: rgba(194,249,112,0.30);
+    transform: translateY(-1px);
+  }
+  .video-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 6px, transparent 6px 14px),
+      linear-gradient(180deg, #1a1a1f 0%, #0d0d0f 100%);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .video-thumb::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(194,249,112,0.10), transparent 70%);
+  }
+  .play-btn {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(10,10,11,0.7);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(194,249,112,0.40);
+    display: grid; place-items: center;
+    color: var(--accent);
+    transition: transform 0.15s, background 0.15s;
+  }
+  .video-card:hover .play-btn {
+    transform: translate(-50%, -50%) scale(1.08);
+    background: rgba(194,249,112,0.15);
+  }
+  .play-btn svg { width: 14px; height: 14px; fill: currentColor; margin-left: 2px; }
+  .video-duration {
+    position: absolute; right: 8px; bottom: 8px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-2);
+    padding: 2px 6px;
+    background: rgba(10,10,11,0.6);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .video-meta {
+    padding: 11px 13px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .video-meta .title {
+    font-size: 12.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .video-meta .sub {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+  }
+
+  /* Skip footer */
+  .skip-row {
+    margin-top: 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+  .skip-row a {
+    color: var(--fg-3);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .skip-row a:hover { color: var(--fg); }
+
+  /* Confetti */
+  .confetti-layer {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 40;
+    overflow: hidden;
+  }
+  .confetti {
+    position: absolute;
+    width: 6px; height: 10px;
+    top: -20px;
+    will-change: transform, opacity;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translate3d(0, -20px, 0) rotate(0deg); opacity: 0; }
+    8% { opacity: 1; }
+    100% { transform: translate3d(var(--dx), 100vh, 0) rotate(var(--rot)); opacity: 0; }
+  }
+
+  /* Entry animations */
+  @keyframes rise { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: none;} }
+  .rise { animation: rise 0.5s cubic-bezier(.2,.7,.2,1) both; }
+  .d1 { animation-delay: 0.05s; }
+  .d2 { animation-delay: 0.12s; }
+  .d3 { animation-delay: 0.20s; }
+  .d4 { animation-delay: 0.28s; }
+
+  /* Demo toggle (top corner) */
+  .demo-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgba(10,10,11,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+  }
+  .demo-toggle button {
+    background: none; border: none; cursor: pointer;
+    color: var(--fg-3);
+    font-family: inherit; font-size: inherit;
+    padding: 5px 11px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.15s, background 0.15s;
+  }
+  .demo-toggle button:hover { color: var(--fg-2); }
+  .demo-toggle button.active {
+    color: #0a0a0b;
+    background: var(--accent);
+    font-weight: 600;
+  }
+  .demo-toggle .label-tip {
+    color: var(--fg-4);
+    padding: 0 8px 0 6px;
+    border-right: 1px solid var(--line);
+    margin-right: 2px;
+    letter-spacing: 0.10em;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<!-- Demo state toggle -->
+<div class="demo-toggle" role="group" aria-label="Demo state">
+  <span class="label-tip">state</span>
+  <button id="stateWaiting" class="active">Waiting</button>
+  <button id="stateSuccess">Success</button>
+</div>
+
+<div class="shell">
+
+  <!-- App nav -->
+  <nav class="app rise">
+    <div class="nav-left">
+      <a class="brand" href="dashboard.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">SafeLoop</span>
+      </a>
+      <span class="nav-crumb">workspace <b>marin-labs</b> · setup</span>
+    </div>
+    <div class="nav-right">
+      <a class="nav-link" href="#">Docs</a>
+      <a class="nav-link" href="#">Support</a>
+      <span class="me" aria-label="Account">MN</span>
+    </div>
+  </nav>
+
+  <!-- Page head -->
+  <header class="page-head rise d1">
+    <div class="greet">
+      <span class="dot"></span>
+      Welcome, Marin
+    </div>
+    <h1 class="page-title">Let's get your first trace in — <em>≈ 5 minutes</em></h1>
+    <p class="page-sub">
+      Drop SafeLoop into your agent code, run it once, and we'll start showing you every step, tool call, and silent failure. No proxies, no replays — just paste and go.
+    </p>
+  </header>
+
+  <!-- Stepper -->
+  <div class="stepper rise d2" id="stepper">
+    <div class="step active" data-step="1">
+      <div class="step-num">
+        <span>1</span>
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-eyebrow">Step 1</div>
+        <div class="step-label">Install SDK</div>
+      </div>
+    </div>
+    <div class="step-rule" data-rule="1"></div>
+    <div class="step" data-step="2">
+      <div class="step-num">
+        <span>2</span>
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-eyebrow">Step 2</div>
+        <div class="step-label">Run your agent</div>
+      </div>
+    </div>
+    <div class="step-rule" data-rule="2"></div>
+    <div class="step" data-step="3">
+      <div class="step-num">
+        <span>3</span>
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-eyebrow">Step 3</div>
+        <div class="step-label">See first trace</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <main class="layout">
+
+    <section class="main-col rise d3">
+
+      <!-- Code card -->
+      <div class="code-card">
+        <div class="code-head">
+          <div class="code-tabs" id="codeTabs">
+            <button class="active" data-tab="python">Python</button>
+            <button data-tab="typescript">TypeScript</button>
+            <button data-tab="node">Node</button>
+          </div>
+          <div class="code-actions">
+            <span class="lang-pill" id="langPill">v0.4.2</span>
+            <button class="copy-btn" id="copyBtn" aria-label="Copy code">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+        <div class="code-body">
+          <div class="code-pane active" data-pane="python">
+<pre><span class="ln">1</span><span class="prompt">$ </span>pip install safeloop
+<span class="ln">2</span><span class="k">import</span> <span class="id">safeloop</span>
+<span class="ln">3</span><span class="id">safeloop</span><span class="o">.</span><span class="fn">init</span><span class="o">(</span><span class="var">api_key</span><span class="o">=</span><span class="s">"sk_live_••••••••••wQ8b"</span><span class="o">)</span>
+<span class="ln">4</span><span class="id">safeloop</span><span class="o">.</span><span class="fn">wrap</span><span class="o">(</span><span class="id">my_agent</span><span class="o">)</span></pre>
+          </div>
+          <div class="code-pane" data-pane="typescript">
+<pre><span class="ln">1</span><span class="prompt">$ </span>npm install @safeloop/sdk
+<span class="ln">2</span><span class="k">import</span> <span class="o">{</span> <span class="id">safeloop</span> <span class="o">}</span> <span class="k">from</span> <span class="s">"@safeloop/sdk"</span><span class="o">;</span>
+<span class="ln">3</span><span class="id">safeloop</span><span class="o">.</span><span class="fn">init</span><span class="o">({</span> <span class="var">apiKey</span><span class="o">:</span> <span class="s">"sk_live_••••••••••wQ8b"</span> <span class="o">});</span>
+<span class="ln">4</span><span class="id">safeloop</span><span class="o">.</span><span class="fn">wrap</span><span class="o">(</span><span class="id">myAgent</span><span class="o">);</span></pre>
+          </div>
+          <div class="code-pane" data-pane="node">
+<pre><span class="ln">1</span><span class="prompt">$ </span>npm install @safeloop/node
+<span class="ln">2</span><span class="k">const</span> <span class="id">safeloop</span> <span class="o">=</span> <span class="fn">require</span><span class="o">(</span><span class="s">"@safeloop/node"</span><span class="o">);</span>
+<span class="ln">3</span><span class="id">safeloop</span><span class="o">.</span><span class="fn">init</span><span class="o">({</span> <span class="var">apiKey</span><span class="o">:</span> <span class="s">"sk_live_••••••••••wQ8b"</span> <span class="o">});</span>
+<span class="ln">4</span><span class="id">safeloop</span><span class="o">.</span><span class="fn">wrap</span><span class="o">(</span><span class="id">myAgent</span><span class="o">);</span></pre>
+          </div>
+        </div>
+        <div class="api-note">
+          <span class="lock">
+            <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </span>
+          Your API key has been <b>pre-filled</b> — visible only to you in this snippet.
+          <a class="reveal" href="#" id="revealKey">Reveal full key →</a>
+        </div>
+      </div>
+
+      <!-- Status row -->
+      <div class="status-row">
+        <div class="status" id="status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="label-text" id="statusText">Waiting for first trace<span class="dots-anim">…</span></span>
+          <span class="meta" id="statusMeta">listening on workspace <b style="color:var(--fg-3)">marin-labs</b></span>
+        </div>
+        <button class="test-trace-btn" id="testTraceBtn">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          Send us a test trace
+          <span class="small">— fake it before you wire it</span>
+        </button>
+      </div>
+
+      <!-- First trace summary (success only) -->
+      <div class="first-trace" id="firstTrace">
+        <div class="ft-head">
+          <div class="ft-title">
+            <span class="tag">First run</span>
+            <span>run #r_test_a14f…22e1 · support-triage</span>
+          </div>
+          <div class="ft-meta">just now · 1.8s · 5 steps · 0 errors</div>
+        </div>
+        <div class="ft-body">
+          <div class="ft-step">
+            <div class="n">01</div>
+            <div class="nm">classify_intent</div>
+            <div class="ms">142 ms</div>
+          </div>
+          <div class="ft-step">
+            <div class="n">02</div>
+            <div class="nm">lookup_order</div>
+            <div class="ms">318 ms</div>
+          </div>
+          <div class="ft-step">
+            <div class="n">03</div>
+            <div class="nm">policy_check</div>
+            <div class="ms">94 ms</div>
+          </div>
+          <div class="ft-step">
+            <div class="n">04</div>
+            <div class="nm">draft_reply</div>
+            <div class="ms">1.1 s</div>
+          </div>
+          <div class="ft-step">
+            <div class="n">05</div>
+            <div class="nm">queue_for_send</div>
+            <div class="ms">71 ms</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-row">
+        <a class="btn-primary" href="dashboard.html">
+          View your dashboard
+          <span class="arrow">→</span>
+        </a>
+        <a class="secondary-link" href="trace-detail.html">or inspect this trace step-by-step →</a>
+      </div>
+
+      <!-- Skip / footer -->
+      <div class="skip-row">
+        <span>step <b style="color:var(--fg-3)" id="stepIndicator">1</b> of 3 · setup auto-saves</span>
+        <a href="dashboard.html">Skip for now →</a>
+      </div>
+
+    </section>
+
+    <!-- Sidebar -->
+    <aside class="sidebar rise d4">
+
+      <div class="side-card">
+        <div class="side-head">
+          <span class="side-title">Need help?</span>
+          <span class="side-emoji" aria-hidden="true">✦</span>
+        </div>
+        <ul class="help-list">
+          <li>
+            <a href="#">
+              <span class="ico">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+              </span>
+              <span class="label">
+                Read the 90-second quickstart
+                <small>docs · 4 examples</small>
+              </span>
+              <span class="arrow">→</span>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <span class="ico">
+                <svg viewBox="0 0 24 24"><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M21 12a9 9 0 0 1-13.5 7.8L3 21l1.2-4.5A9 9 0 1 1 21 12z"/></svg>
+              </span>
+              <span class="label">
+                Join the Discord
+                <small>327 builders · usually &lt; 5 min</small>
+              </span>
+              <span class="arrow">→</span>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:founder@safeloop.dev">
+              <span class="ico">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+              </span>
+              <span class="label">
+                Email founder@safeloop.dev
+                <small>replies same day, hand-typed</small>
+              </span>
+              <span class="arrow">→</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="video-card" role="button" tabindex="0">
+        <div class="video-thumb" aria-hidden="true">
+          <span class="play-btn">
+            <svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          </span>
+          <span class="video-duration">0:90</span>
+        </div>
+        <div class="video-meta">
+          <span class="title">Watch a 90s setup video</span>
+          <span class="sub">walkthrough · from install to first trace</span>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+</div>
+
+<div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+
+<script>
+(function() {
+  // ============ Tabs ============
+  const tabs = document.querySelectorAll('#codeTabs button');
+  const panes = document.querySelectorAll('.code-pane');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      panes.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const target = document.querySelector(`.code-pane[data-pane="${btn.dataset.tab}"]`);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // ============ Copy ============
+  const copyBtn = document.getElementById('copyBtn');
+  const copyLabel = copyBtn.querySelector('.copy-label');
+  copyBtn.addEventListener('click', () => {
+    const activePane = document.querySelector('.code-pane.active pre');
+    const text = activePane ? activePane.innerText.replace(/^\s*\d+\s+/gm, '').replace(/^\$ /gm, '') : '';
+    navigator.clipboard?.writeText(text).catch(()=>{});
+    copyBtn.classList.add('copied');
+    copyLabel.textContent = 'Copied';
+    setTimeout(() => {
+      copyBtn.classList.remove('copied');
+      copyLabel.textContent = 'Copy';
+    }, 1600);
+  });
+
+  // ============ State machine ============
+  const body = document.body;
+  const status = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const statusMeta = document.getElementById('statusMeta');
+  const stepIndicator = document.getElementById('stepIndicator');
+  const stepEls = document.querySelectorAll('.step');
+  const ruleEls = document.querySelectorAll('.step-rule');
+
+  function setState(s) {
+    if (s === 'success') {
+      body.classList.add('success');
+      // steps: 1 done, 2 done, 3 active
+      stepEls[0].classList.remove('active'); stepEls[0].classList.add('done');
+      stepEls[1].classList.remove('active'); stepEls[1].classList.add('done');
+      stepEls[2].classList.remove('done'); stepEls[2].classList.add('active');
+      ruleEls[0].classList.add('done');
+      ruleEls[1].classList.add('done');
+      statusText.innerHTML = '<b>Connected</b> — your first trace just landed. Showing <b style="color:var(--fg)">1 run</b>, <b style="color:var(--fg)">5 steps</b>.';
+      statusMeta.style.display = 'none';
+      stepIndicator.textContent = '3';
+      document.getElementById('stateWaiting').classList.remove('active');
+      document.getElementById('stateSuccess').classList.add('active');
+      fireConfetti();
+    } else {
+      body.classList.remove('success');
+      stepEls[0].classList.add('active'); stepEls[0].classList.remove('done');
+      stepEls[1].classList.remove('active'); stepEls[1].classList.remove('done');
+      stepEls[2].classList.remove('active'); stepEls[2].classList.remove('done');
+      ruleEls[0].classList.remove('done');
+      ruleEls[1].classList.remove('done');
+      statusText.innerHTML = 'Waiting for first trace<span class="dots-anim">…</span>';
+      statusMeta.style.display = '';
+      stepIndicator.textContent = '1';
+      document.getElementById('stateWaiting').classList.add('active');
+      document.getElementById('stateSuccess').classList.remove('active');
+      clearConfetti();
+    }
+  }
+
+  document.getElementById('stateWaiting').addEventListener('click', () => setState('waiting'));
+  document.getElementById('stateSuccess').addEventListener('click', () => setState('success'));
+  document.getElementById('testTraceBtn').addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="animation: spin 0.9s linear infinite"><path d="M21 12a9 9 0 1 1-3-6.7"/></svg> Sending test trace…';
+    setTimeout(() => setState('success'), 1100);
+  });
+
+  // ============ Confetti ============
+  const palette = ['#c2f970', '#8aac4a', '#f5f5f6', '#fde68a', '#7dd3fc'];
+  let confettiTimers = [];
+  function fireConfetti() {
+    const layer = document.getElementById('confettiLayer');
+    layer.innerHTML = '';
+    const count = 36;
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('span');
+      el.className = 'confetti';
+      const startX = 20 + Math.random() * 60; // vw
+      const dx = (Math.random() - 0.5) * 40; // vw
+      const rot = (Math.random() * 720 - 360) + 'deg';
+      const dur = 2.4 + Math.random() * 1.6;
+      const delay = Math.random() * 0.5;
+      const color = palette[i % palette.length];
+      const w = 4 + Math.random() * 4;
+      const h = 8 + Math.random() * 6;
+      el.style.left = startX + 'vw';
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      el.style.background = color;
+      el.style.opacity = '0.85';
+      el.style.borderRadius = (Math.random() > 0.5 ? '1px' : '50%');
+      el.style.setProperty('--dx', dx + 'vw');
+      el.style.setProperty('--rot', rot);
+      el.style.animation = `confetti-fall ${dur}s cubic-bezier(.2,.6,.4,1) ${delay}s forwards`;
+      layer.appendChild(el);
+    }
+  }
+  function clearConfetti() {
+    document.getElementById('confettiLayer').innerHTML = '';
+  }
+
+  // spin keyframe
+  const sk = document.createElement('style');
+  sk.textContent = '@keyframes spin { to { transform: rotate(360deg); } } .dots-anim { display: inline-block; }';
+  document.head.appendChild(sk);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeLoop — Trace · r_8f3a91</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-2: #101012;
+    --line: rgba(255,255,255,0.07);
+    --line-strong: rgba(255,255,255,0.12);
+    --fg: #f5f5f6;
+    --fg-2: #b4b4b8;
+    --fg-3: #76767c;
+    --fg-4: #4a4a50;
+    --accent: #c2f970;
+    --accent-dim: #8aac4a;
+    --danger: #ff6b6b;
+    --warn: #f5c14a;
+    --radius: 10px;
+    --maxw: 1480px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: 96px;
+  }
+  .mono { font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.45;
+  }
+  .bg-noise {
+    position: absolute; inset: 0; opacity: 0.025; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .shell { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 32px; }
+
+  /* App nav (matches dashboard) */
+  nav.app {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(180deg, #1a1a1c 0%, #0a0a0b 100%);
+    border: 1px solid var(--line-strong);
+    position: relative;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.4px solid var(--accent);
+    transform: translate(-50%, -50%);
+  }
+  .brand-mark::after {
+    width: 14px; height: 14px;
+    border-color: rgba(194,249,112,0.35);
+    border-style: dashed;
+  }
+  .brand-name { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
+  .nav-tabs { display: flex; align-items: center; gap: 4px; margin-left: 12px; }
+  .nav-tabs a {
+    color: var(--fg-3); text-decoration: none; font-size: 13.5px;
+    padding: 7px 12px; border-radius: 7px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-tabs a:hover { color: var(--fg-2); }
+  .nav-tabs a.active { color: var(--fg); background: rgba(255,255,255,0.04); }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    display: grid; place-items: center;
+    color: var(--fg-3); cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .icon-btn:hover { color: var(--fg); border-color: var(--line-strong); }
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .me {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #c2f970, #6fa820);
+    display: grid; place-items: center;
+    color: #0a0a0b; font-size: 11px; font-weight: 700;
+    font-family: "Geist Mono", monospace;
+  }
+
+  /* Breadcrumbs */
+  .crumb {
+    display: flex; align-items: center; gap: 10px;
+    padding: 22px 0 12px;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-3);
+    letter-spacing: 0.01em;
+  }
+  .crumb a { color: var(--fg-3); text-decoration: none; transition: color 0.15s; }
+  .crumb a:hover { color: var(--fg); }
+  .crumb .sep { color: var(--fg-4); }
+  .crumb .cur { color: var(--fg); }
+
+  /* Status banner */
+  .banner {
+    display: flex; align-items: stretch;
+    border: 1px solid rgba(255,107,107,0.30);
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, rgba(255,107,107,0.07) 0%, rgba(255,107,107,0.02) 100%),
+      #120d0d;
+    margin: 8px 0 24px;
+    overflow: hidden;
+  }
+  .banner-stripe {
+    width: 4px;
+    background: linear-gradient(180deg, #ff8a8a 0%, #ff6b6b 100%);
+    flex: none;
+  }
+  .banner-body {
+    flex: 1;
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 22px;
+    min-width: 0;
+  }
+  .banner-left {
+    display: flex; align-items: center; gap: 14px;
+    min-width: 0;
+  }
+  .banner-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid rgba(255,107,107,0.4);
+    background: rgba(255,107,107,0.10);
+    display: grid; place-items: center;
+    color: #ff8a8a;
+    flex: none;
+  }
+  .banner-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .banner-text { min-width: 0; }
+  .banner-label {
+    display: block;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: #ff8a8a;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    margin-bottom: 3px;
+  }
+  .banner-title {
+    margin: 0;
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--fg);
+    letter-spacing: -0.005em;
+    line-height: 1.35;
+  }
+  .banner-title .case {
+    font-family: "Geist Mono", monospace;
+    font-size: 13.5px;
+    color: var(--fg-2);
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    margin-left: 4px;
+  }
+  .banner-meta {
+    display: flex; align-items: center; gap: 18px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    flex: none;
+  }
+  .banner-meta b { color: var(--fg-2); font-weight: 500; }
+  .banner-meta .pip {
+    display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--fg-4); margin: 0 4px;
+  }
+
+  /* Layout: timeline + raw trace */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  @media (min-width: 1180px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 420px; gap: 28px; }
+    .layout.collapsed { grid-template-columns: minmax(0, 1fr) 56px; }
+  }
+
+  /* Section title row */
+  .sec-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .sec-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg-2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .sec-meta {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    letter-spacing: 0.02em;
+  }
+  .sec-meta b { color: var(--fg-2); font-weight: 500; }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 11px; top: 8px; bottom: 8px;
+    width: 1px;
+    background: linear-gradient(180deg, var(--line) 0%, var(--line-strong) 12%, var(--line-strong) 88%, var(--line) 100%);
+  }
+
+  .step {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .step:last-child { margin-bottom: 0; }
+
+  /* Node dot */
+  .step .node {
+    position: absolute;
+    left: -28px; top: 18px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1.5px solid var(--accent);
+    display: grid; place-items: center;
+    color: var(--accent);
+    z-index: 1;
+  }
+  .step .node svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .step.fail .node {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: #1a0d0d;
+    box-shadow: 0 0 0 4px rgba(255,107,107,0.12);
+  }
+
+  .step-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    overflow: hidden;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .step:not(.fail):not(.expanded) .step-card { cursor: pointer; }
+  .step:not(.fail):not(.expanded) .step-card:hover { border-color: rgba(255,255,255,0.20); }
+  .step.fail .step-card {
+    border-color: rgba(255,107,107,0.45);
+    border-width: 1.5px;
+    background:
+      linear-gradient(180deg, rgba(255,107,107,0.04) 0%, rgba(255,107,107,0.01) 100%),
+      linear-gradient(180deg, #131012 0%, #0c0c0e 100%);
+    box-shadow:
+      0 0 0 1px rgba(255,107,107,0.08),
+      0 24px 50px -30px rgba(255,107,107,0.30);
+  }
+
+  .step-row {
+    display: grid;
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr) minmax(0, 1fr) 76px 24px;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+  }
+  .step-name {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 0;
+  }
+  .step-num {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-4);
+    width: 22px;
+    text-align: right;
+    flex: none;
+  }
+  .step-tool {
+    font-family: "Geist Mono", monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .step.fail .step-tool { color: #ff8a8a; }
+  .step-tool .kind {
+    color: var(--fg-4);
+    font-weight: 400;
+    margin-right: 6px;
+  }
+
+  .snippet {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+    line-height: 1.45;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-width: 0;
+  }
+  .snippet .lbl {
+    color: var(--fg-4);
+    margin-right: 6px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .step.fail .snippet { color: var(--fg-2); }
+
+  .step-dur {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+    text-align: right;
+    font-feature-settings: "tnum";
+  }
+  .step-dur .unit { color: var(--fg-4); margin-left: 2px; }
+  .step.slow .step-dur { color: var(--warn); }
+
+  .step-caret {
+    color: var(--fg-4);
+    display: grid; place-items: center;
+    transition: transform 0.15s, color 0.15s;
+  }
+  .step-caret svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .step.expanded .step-caret { transform: rotate(180deg); color: var(--fg-2); }
+
+  /* Expanded body */
+  .step-body {
+    display: none;
+    padding: 6px 20px 20px;
+    border-top: 1px dashed var(--line);
+  }
+  .step.expanded .step-body { display: block; }
+
+  .field {
+    margin-top: 16px;
+  }
+  .field-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .field-label {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-3);
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+  }
+  .field-action {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+    cursor: pointer;
+    background: none; border: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .field-action:hover { color: var(--fg-2); background: rgba(255,255,255,0.04); }
+  .codeblock {
+    font-family: "Geist Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--fg);
+    background: #08080a;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .codeblock .k { color: #b89af0; }
+  .codeblock .s { color: #c2f970; }
+  .codeblock .n { color: #fde68a; }
+  .codeblock .c { color: var(--fg-4); }
+  .codeblock .err { color: #ff8a8a; font-weight: 500; }
+  .codeblock .ok { color: var(--accent); }
+
+  /* What went wrong callout */
+  .wrong {
+    margin-top: 18px;
+    border: 1px solid rgba(255,107,107,0.30);
+    border-radius: 10px;
+    background:
+      linear-gradient(180deg, rgba(255,107,107,0.06) 0%, rgba(255,107,107,0.01) 100%),
+      #100a0b;
+    padding: 14px 16px 14px 18px;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .wrong .ico {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.30);
+    display: grid; place-items: center;
+    color: #ff8a8a;
+    margin-top: 1px;
+  }
+  .wrong .ico svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .wrong h5 {
+    margin: 0 0 6px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: #ff8a8a;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .wrong p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--fg);
+    line-height: 1.55;
+  }
+  .wrong p .em {
+    font-family: "Geist Mono", monospace;
+    font-size: 12.5px;
+    color: var(--fg-2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+  }
+  .wrong p .bad { color: #ff8a8a; }
+  .wrong p .good { color: var(--accent); }
+  .wrong .hint {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--fg-3);
+    font-style: italic;
+  }
+
+  /* Diff */
+  .diff {
+    margin-top: 18px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #08080a;
+  }
+  .diff-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(255,255,255,0.015);
+  }
+  .diff-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .diff-title .tag {
+    font-size: 9.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,107,107,0.10);
+    border: 1px solid rgba(255,107,107,0.25);
+    color: #ff8a8a;
+    text-transform: none;
+    letter-spacing: 0.04em;
+  }
+  .diff-models {
+    display: flex; align-items: center; gap: 8px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+  }
+  .diff-models .m {
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    color: var(--fg-2);
+  }
+  .diff-models .m.bad { color: #ff8a8a; border-color: rgba(255,107,107,0.25); }
+  .diff-models .m.good { color: var(--accent-dim); border-color: rgba(194,249,112,0.25); }
+  .diff-body {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .diff-line {
+    display: grid;
+    grid-template-columns: 28px 14px minmax(0, 1fr);
+    align-items: baseline;
+    font-family: "Geist Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    padding: 0 14px;
+  }
+  .diff-line .ln {
+    color: var(--fg-4);
+    text-align: right;
+    padding-right: 8px;
+    user-select: none;
+    font-size: 10.5px;
+  }
+  .diff-line .mk { color: var(--fg-4); font-weight: 600; }
+  .diff-line .code { color: var(--fg); white-space: pre-wrap; word-break: break-word; }
+  .diff-line.add { background: rgba(194,249,112,0.06); }
+  .diff-line.add .mk { color: var(--accent); }
+  .diff-line.add .code { color: #e9ffc1; }
+  .diff-line.del { background: rgba(255,107,107,0.07); }
+  .diff-line.del .mk { color: #ff8a8a; }
+  .diff-line.del .code { color: #ffcfcf; }
+  .diff-line.ctx .code { color: var(--fg-3); }
+  .diff-line .hi-bad { background: rgba(255,107,107,0.22); padding: 0 3px; border-radius: 3px; color: #fff; }
+  .diff-line .hi-good { background: rgba(194,249,112,0.22); padding: 0 3px; border-radius: 3px; color: #0a0a0b; font-weight: 600; }
+  .diff-foot {
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-3);
+  }
+  .diff-foot .verdict {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #ff8a8a;
+  }
+  .diff-foot .verdict::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(255,107,107,0.5);
+  }
+  .diff-foot a {
+    color: var(--fg-2);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .diff-foot a:hover { color: var(--fg); }
+
+  /* Raw trace panel */
+  .raw {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    overflow: hidden;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+  }
+  .raw-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    flex: none;
+  }
+  .raw-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: -0.005em;
+  }
+  .raw-title .badge {
+    font-family: "Geist Mono", monospace;
+    font-size: 10px;
+    color: var(--fg-4);
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+  .raw-actions { display: flex; align-items: center; gap: 4px; }
+  .raw-actions .icon-btn { width: 26px; height: 26px; border-radius: 6px; }
+  .raw-actions .icon-btn svg { width: 12px; height: 12px; }
+  .raw-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px 16px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--fg-2);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  .raw-body::-webkit-scrollbar { width: 8px; }
+  .raw-body::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+  .raw-body pre { margin: 0; white-space: pre; }
+  .raw-body .k { color: #b89af0; }
+  .raw-body .s { color: #c2f970; }
+  .raw-body .n { color: #fde68a; }
+  .raw-body .b { color: #7dd3fc; }
+  .raw-body .null { color: var(--fg-4); font-style: italic; }
+  .raw-body .err { color: #ff8a8a; }
+  .raw-body .fold {
+    color: var(--fg-4);
+    font-size: 10px;
+    margin-left: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .raw-body .fold:hover { color: var(--fg-2); }
+
+  /* Collapsed raw */
+  .raw.collapsed {
+    align-items: stretch;
+  }
+  .raw.collapsed .raw-head {
+    flex-direction: column;
+    padding: 14px 0;
+    border-bottom: none;
+    gap: 12px;
+  }
+  .raw.collapsed .raw-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    color: var(--fg-2);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .raw.collapsed .raw-title .badge { display: none; }
+  .raw.collapsed .raw-actions { flex-direction: column; }
+  .raw.collapsed .raw-body { display: none; }
+
+  /* Fixed action bar */
+  .actionbar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 50;
+    border-top: 1px solid var(--line-strong);
+    background:
+      linear-gradient(180deg, rgba(10,10,11,0.85) 0%, rgba(10,10,11,0.96) 50%, #0a0a0b 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .actionbar-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px;
+  }
+  .actionbar .left {
+    display: flex; align-items: center; gap: 14px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+  }
+  .actionbar .left b { color: var(--fg-2); font-weight: 500; }
+  .actionbar .left .id {
+    color: var(--fg-2);
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .actionbar .right { display: flex; align-items: center; gap: 12px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: inherit; font-size: 13.5px; font-weight: 500;
+    border-radius: 9px; padding: 10px 16px;
+    border: 1px solid transparent; cursor: pointer;
+    text-decoration: none; line-height: 1;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  }
+  .btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-muted { background: transparent; color: var(--fg-2); border-color: var(--line-strong); }
+  .btn-muted:hover { color: var(--fg); border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0a0b; font-weight: 600;
+    border: 1px solid rgba(0,0,0,0.2);
+    box-shadow: 0 0 0 1px rgba(194,249,112,0.3), 0 10px 24px -10px rgba(194,249,112,0.40);
+  }
+  .btn-primary:hover { background: #d3ff85; transform: translateY(-1px); }
+  .btn-primary svg { stroke-width: 2.4; }
+
+  .share-link {
+    color: var(--fg-3);
+    text-decoration: none;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    display: inline-flex; align-items: center; gap: 5px;
+    transition: color 0.15s;
+  }
+  .share-link:hover { color: var(--fg); }
+  .share-link svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* fade in */
+  @keyframes rise { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
+  .rise { animation: rise 0.5s cubic-bezier(.2,.7,.2,1) both; }
+  .d1 { animation-delay: 0.04s; }
+  .d2 { animation-delay: 0.10s; }
+  .d3 { animation-delay: 0.18s; }
+  .d4 { animation-delay: 0.24s; }
+</style>
+</head>
+<body>
+
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<div class="shell">
+
+  <!-- App nav -->
+  <nav class="app rise">
+    <div class="nav-left">
+      <a class="brand" href="dashboard.html">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">SafeLoop</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="dashboard.html" class="active">Overview</a>
+        <a href="#">Runs</a>
+        <a href="tests.html">Tests</a>
+        <a href="#">Deploys</a>
+        <a href="#">Settings</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Docs">
+        <svg viewBox="0 0 24 24"><path d="M6 4h8l4 4v12H6z"/><polyline points="14 4 14 8 18 8"/></svg>
+      </button>
+      <span class="me" aria-label="Account">MN</span>
+    </div>
+  </nav>
+
+  <!-- Breadcrumbs -->
+  <div class="crumb rise d1">
+    <a href="dashboard.html">Dashboard</a>
+    <span class="sep">/</span>
+    <a href="#">Runs</a>
+    <span class="sep">/</span>
+    <span class="cur">Run #r_8f3a91…b04c</span>
+  </div>
+
+  <!-- Status banner -->
+  <div class="banner rise d1">
+    <div class="banner-stripe"></div>
+    <div class="banner-body">
+      <div class="banner-left">
+        <div class="banner-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+        </div>
+        <div class="banner-text">
+          <span class="banner-label">Failed regression test</span>
+          <h2 class="banner-title">
+            <span class="case">draft_reply should not hallucinate refund amounts</span>
+          </h2>
+        </div>
+      </div>
+      <div class="banner-meta">
+        <span><b>support-triage</b> · prod</span>
+        <span class="pip"></span>
+        <span>gpt-5.1-mini</span>
+        <span class="pip"></span>
+        <span>3,184 ms</span>
+        <span class="pip"></span>
+        <span>2m ago</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="layout rise d2" id="layout">
+
+    <!-- Timeline column -->
+    <div class="timeline-col">
+      <div class="sec-head">
+        <span class="sec-title">Agent timeline</span>
+        <span class="sec-meta"><b>5</b> steps · <b>4</b> passed · <b style="color:#ff8a8a">1</b> failed</span>
+      </div>
+
+      <div class="timeline">
+
+        <!-- STEP 1 -->
+        <div class="step">
+          <div class="node" aria-label="passed">
+            <svg viewBox="0 0 14 14"><polyline points="3 7.5 6 10.2 11 4.5"/></svg>
+          </div>
+          <div class="step-card">
+            <div class="step-row">
+              <div class="step-name">
+                <span class="step-num">01</span>
+                <span class="step-tool"><span class="kind">llm</span>classify_intent</span>
+              </div>
+              <div class="snippet">
+                <span class="lbl">in</span>"Hi, I was double charged on my order from last week, can I get a refund?"
+              </div>
+              <div class="snippet">
+                <span class="lbl">out</span>{ "intent": "refund_request", "confidence": 0.94 }
+              </div>
+              <div class="step-dur">142<span class="unit">ms</span></div>
+              <div class="step-caret">
+                <svg viewBox="0 0 12 12"><polyline points="3 5 6 8 9 5"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step">
+          <div class="node" aria-label="passed">
+            <svg viewBox="0 0 14 14"><polyline points="3 7.5 6 10.2 11 4.5"/></svg>
+          </div>
+          <div class="step-card">
+            <div class="step-row">
+              <div class="step-name">
+                <span class="step-num">02</span>
+                <span class="step-tool"><span class="kind">tool</span>lookup_order</span>
+              </div>
+              <div class="snippet">
+                <span class="lbl">in</span>{ "user_id": "u_77a2", "query": "last_order" }
+              </div>
+              <div class="snippet">
+                <span class="lbl">out</span>{ "order_id": "4821", "total": 24.99, "items": 2, "status": "shipped" }
+              </div>
+              <div class="step-dur">87<span class="unit">ms</span></div>
+              <div class="step-caret">
+                <svg viewBox="0 0 12 12"><polyline points="3 5 6 8 9 5"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3 — FAILED, expanded -->
+        <div class="step fail expanded">
+          <div class="node" aria-label="failed">
+            <svg viewBox="0 0 14 14"><line x1="4" y1="4" x2="10" y2="10"/><line x1="10" y1="4" x2="4" y2="10"/></svg>
+          </div>
+          <div class="step-card">
+            <div class="step-row">
+              <div class="step-name">
+                <span class="step-num">03</span>
+                <span class="step-tool"><span class="kind">llm</span>draft_reply</span>
+              </div>
+              <div class="snippet">
+                <span class="lbl">in</span>{ intent, order: #4821, total: $24.99 } → "compose refund confirmation"
+              </div>
+              <div class="snippet">
+                <span class="lbl">out</span>"…we've issued a refund of <span style="color:#ff8a8a">$249.00</span> to your card…"
+              </div>
+              <div class="step-dur">1,847<span class="unit">ms</span></div>
+              <div class="step-caret">
+                <svg viewBox="0 0 12 12"><polyline points="3 5 6 8 9 5"/></svg>
+              </div>
+            </div>
+
+            <!-- Expanded body -->
+            <div class="step-body">
+
+              <div class="field">
+                <div class="field-head">
+                  <span class="field-label">Full input</span>
+                  <button class="field-action">⎘ copy</button>
+                </div>
+                <div class="codeblock"><span class="c">// system + user composed prompt</span>
+{
+  <span class="k">"intent"</span>: <span class="s">"refund_request"</span>,
+  <span class="k">"order"</span>: {
+    <span class="k">"order_id"</span>: <span class="s">"4821"</span>,
+    <span class="k">"total"</span>: <span class="n">24.99</span>,
+    <span class="k">"currency"</span>: <span class="s">"USD"</span>,
+    <span class="k">"items"</span>: <span class="n">2</span>
+  },
+  <span class="k">"instruction"</span>: <span class="s">"Compose a short, friendly refund confirmation. Quote the exact order total. Do not invent additional fees."</span>
+}</div>
+              </div>
+
+              <div class="field">
+                <div class="field-head">
+                  <span class="field-label">Full output</span>
+                  <button class="field-action">⎘ copy</button>
+                </div>
+                <div class="codeblock">"Hi there — thanks for reaching out! I've gone ahead and issued a refund of <span class="err">$249.00</span> back to the card on file for order <span class="ok">#4821</span>. You should see it land within 3–5 business days. Sorry for the inconvenience, and let me know if anything else looks off!"</div>
+              </div>
+
+              <!-- What went wrong -->
+              <div class="wrong">
+                <div class="ico">
+                  <svg viewBox="0 0 24 24"><path d="M12 3 L22 20 L2 20 Z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="17" r="0.8" fill="currentColor"/></svg>
+                </div>
+                <div>
+                  <h5>What went wrong</h5>
+                  <p>
+                    Expected refund amount <span class="em good">$24.99</span> based on <span class="em">order #4821</span>, but the agent output <span class="em bad">$249.00</span> — a <b>10×</b> overstatement.
+                  </p>
+                  <p class="hint">
+                    Likely cause: the model dropped the decimal point from the <code style="font-family:'Geist Mono',monospace;font-size:12px;background:rgba(255,255,255,0.04);padding:1px 5px;border-radius:3px;">total</code> field while parsing the prompt and appended an extra zero. Pattern matches 3 other refund-related failures in the last 24h.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Diff -->
+              <div class="diff">
+                <div class="diff-head">
+                  <div class="diff-title">
+                    Output diff <span class="tag">regression introduced by model swap</span>
+                  </div>
+                  <div class="diff-models">
+                    <span class="m good">– gpt-5.0</span>
+                    <span class="m bad">+ gpt-5.1-mini</span>
+                  </div>
+                </div>
+                <div class="diff-body">
+                  <div class="diff-line ctx"><span class="ln">1</span><span class="mk"> </span><span class="code">"Hi there — thanks for reaching out! I've gone ahead and</span></div>
+                  <div class="diff-line del"><span class="ln">2</span><span class="mk">-</span><span class="code">issued a refund of <span class="hi-good">$24.99</span> back to the card on file for order #4821.</span></div>
+                  <div class="diff-line add"><span class="ln">2</span><span class="mk">+</span><span class="code">issued a refund of <span class="hi-bad">$249.00</span> back to the card on file for order #4821.</span></div>
+                  <div class="diff-line ctx"><span class="ln">3</span><span class="mk"> </span><span class="code">You should see it land within 3–5 business days. Sorry</span></div>
+                  <div class="diff-line ctx"><span class="ln">4</span><span class="mk"> </span><span class="code">for the inconvenience, and let me know if anything else</span></div>
+                  <div class="diff-line ctx"><span class="ln">5</span><span class="mk"> </span><span class="code">looks off!"</span></div>
+                </div>
+                <div class="diff-foot">
+                  <span class="verdict">Same prompt · different model · failing on 14/14 replays</span>
+                  <a href="#">Open in diff viewer →</a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step">
+          <div class="node" aria-label="passed">
+            <svg viewBox="0 0 14 14"><polyline points="3 7.5 6 10.2 11 4.5"/></svg>
+          </div>
+          <div class="step-card">
+            <div class="step-row">
+              <div class="step-name">
+                <span class="step-num">04</span>
+                <span class="step-tool"><span class="kind">tool</span>policy_check</span>
+              </div>
+              <div class="snippet">
+                <span class="lbl">in</span>{ "draft": "…refund of $249.00…", "ruleset": "support.v3" }
+              </div>
+              <div class="snippet">
+                <span class="lbl">out</span>{ "passed": true, "flags": [] }  <span style="color:var(--fg-4)">// downstream check missed numeric mismatch</span>
+              </div>
+              <div class="step-dur">61<span class="unit">ms</span></div>
+              <div class="step-caret">
+                <svg viewBox="0 0 12 12"><polyline points="3 5 6 8 9 5"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5 -->
+        <div class="step">
+          <div class="node" aria-label="passed">
+            <svg viewBox="0 0 14 14"><polyline points="3 7.5 6 10.2 11 4.5"/></svg>
+          </div>
+          <div class="step-card">
+            <div class="step-row">
+              <div class="step-name">
+                <span class="step-num">05</span>
+                <span class="step-tool"><span class="kind">tool</span>queue_for_send</span>
+              </div>
+              <div class="snippet">
+                <span class="lbl">in</span>{ "channel": "email", "thread_id": "th_19c4" }
+              </div>
+              <div class="snippet">
+                <span class="lbl">out</span>{ "queued": true, "scheduled_at": "2026-05-12T14:21:08Z" }
+              </div>
+              <div class="step-dur">23<span class="unit">ms</span></div>
+              <div class="step-caret">
+                <svg viewBox="0 0 12 12"><polyline points="3 5 6 8 9 5"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Raw trace sidebar -->
+    <aside class="raw" id="raw">
+      <div class="raw-head">
+        <div class="raw-title">
+          Raw trace
+          <span class="badge">JSON · 4.2 KB</span>
+        </div>
+        <div class="raw-actions">
+          <button class="icon-btn" aria-label="Copy JSON" title="Copy">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </button>
+          <button class="icon-btn" aria-label="Download" title="Download">
+            <svg viewBox="0 0 24 24"><path d="M12 4v12"/><polyline points="7 11 12 16 17 11"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+          </button>
+          <button class="icon-btn" id="rawToggle" aria-label="Collapse raw" title="Collapse">
+            <svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="raw-body" id="rawBody"><pre>{
+  <span class="k">"run_id"</span>: <span class="s">"r_8f3a91b04c"</span>,
+  <span class="k">"project"</span>: <span class="s">"support-triage"</span>,
+  <span class="k">"env"</span>: <span class="s">"prod"</span>,
+  <span class="k">"started_at"</span>: <span class="s">"2026-05-12T14:18:54.211Z"</span>,
+  <span class="k">"duration_ms"</span>: <span class="n">3184</span>,
+  <span class="k">"status"</span>: <span class="err">"failed"</span>,
+  <span class="k">"failure"</span>: {
+    <span class="k">"test"</span>: <span class="s">"draft_reply.no_hallucinated_refund"</span>,
+    <span class="k">"step"</span>: <span class="n">3</span>,
+    <span class="k">"expected"</span>: <span class="s">"$24.99"</span>,
+    <span class="k">"actual"</span>: <span class="s">"$249.00"</span>,
+    <span class="k">"severity"</span>: <span class="s">"high"</span>
+  },
+  <span class="k">"model"</span>: {
+    <span class="k">"name"</span>: <span class="s">"gpt-5.1-mini"</span>,
+    <span class="k">"temperature"</span>: <span class="n">0.2</span>,
+    <span class="k">"prev"</span>: <span class="s">"gpt-5.0"</span>
+  },
+  <span class="k">"trigger"</span>: <span class="s">"deploy"</span>,
+  <span class="k">"deploy"</span>: {
+    <span class="k">"sha"</span>: <span class="s">"a4f7c2e"</span>,
+    <span class="k">"by"</span>: <span class="s">"marin.n@safeloop.dev"</span>
+  },
+  <span class="k">"steps"</span>: [
+    {
+      <span class="k">"i"</span>: <span class="n">1</span>,
+      <span class="k">"tool"</span>: <span class="s">"classify_intent"</span>,
+      <span class="k">"kind"</span>: <span class="s">"llm"</span>,
+      <span class="k">"ok"</span>: <span class="b">true</span>,
+      <span class="k">"ms"</span>: <span class="n">142</span>,
+      <span class="k">"in"</span>: <span class="s">"Hi, I was double charged…"</span>,
+      <span class="k">"out"</span>: { <span class="k">"intent"</span>: <span class="s">"refund_request"</span>, <span class="k">"confidence"</span>: <span class="n">0.94</span> }
+    },
+    {
+      <span class="k">"i"</span>: <span class="n">2</span>,
+      <span class="k">"tool"</span>: <span class="s">"lookup_order"</span>,
+      <span class="k">"kind"</span>: <span class="s">"tool"</span>,
+      <span class="k">"ok"</span>: <span class="b">true</span>,
+      <span class="k">"ms"</span>: <span class="n">87</span>,
+      <span class="k">"in"</span>: { <span class="k">"user_id"</span>: <span class="s">"u_77a2"</span> },
+      <span class="k">"out"</span>: {
+        <span class="k">"order_id"</span>: <span class="s">"4821"</span>,
+        <span class="k">"total"</span>: <span class="n">24.99</span>,
+        <span class="k">"items"</span>: <span class="n">2</span>,
+        <span class="k">"status"</span>: <span class="s">"shipped"</span>
+      }
+    },
+    {
+      <span class="k">"i"</span>: <span class="n">3</span>,
+      <span class="k">"tool"</span>: <span class="s">"draft_reply"</span>,
+      <span class="k">"kind"</span>: <span class="s">"llm"</span>,
+      <span class="k">"ok"</span>: <span class="err">false</span>,
+      <span class="k">"ms"</span>: <span class="n">1847</span>,
+      <span class="k">"assertion"</span>: <span class="s">"output.contains($24.99)"</span>,
+      <span class="k">"matched"</span>: <span class="err">false</span>,
+      <span class="k">"in"</span>: { <span class="c">/* … see expanded view */</span> },
+      <span class="k">"out"</span>: <span class="s">"…issued a refund of $249.00…"</span>,
+      <span class="k">"diff_against"</span>: <span class="s">"r_18b720c5d3 · gpt-5.0"</span>
+    },
+    {
+      <span class="k">"i"</span>: <span class="n">4</span>,
+      <span class="k">"tool"</span>: <span class="s">"policy_check"</span>,
+      <span class="k">"kind"</span>: <span class="s">"tool"</span>,
+      <span class="k">"ok"</span>: <span class="b">true</span>,
+      <span class="k">"ms"</span>: <span class="n">61</span>,
+      <span class="k">"out"</span>: { <span class="k">"passed"</span>: <span class="b">true</span>, <span class="k">"flags"</span>: [] }
+    },
+    {
+      <span class="k">"i"</span>: <span class="n">5</span>,
+      <span class="k">"tool"</span>: <span class="s">"queue_for_send"</span>,
+      <span class="k">"kind"</span>: <span class="s">"tool"</span>,
+      <span class="k">"ok"</span>: <span class="b">true</span>,
+      <span class="k">"ms"</span>: <span class="n">23</span>,
+      <span class="k">"out"</span>: { <span class="k">"queued"</span>: <span class="b">true</span> }
+    }
+  ],
+  <span class="k">"tokens"</span>: { <span class="k">"in"</span>: <span class="n">412</span>, <span class="k">"out"</span>: <span class="n">98</span>, <span class="k">"cost_usd"</span>: <span class="n">0.0021</span> },
+  <span class="k">"tags"</span>: [<span class="s">"refund"</span>, <span class="s">"numeric"</span>, <span class="s">"hallucination"</span>, <span class="s">"regression"</span>],
+  <span class="k">"parent_test"</span>: <span class="s">"draft_reply.suite"</span>,
+  <span class="k">"replay_url"</span>: <span class="s">"https://safeloop.dev/r/8f3a91b04c"</span>
+}</pre></div>
+    </aside>
+
+  </div>
+
+</div>
+
+<!-- Fixed bottom action bar -->
+<div class="actionbar">
+  <div class="actionbar-inner">
+    <div class="left">
+      <span>Run <span class="id">r_8f3a91…b04c</span></span>
+      <span>·</span>
+      <a class="share-link" href="#" id="shareLink">
+        <svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.5-1.5"/></svg>
+        Share trace →
+      </a>
+    </div>
+    <div class="right">
+      <button class="btn btn-muted">Mark as expected behavior</button>
+      <button class="btn btn-primary">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add this case to regression suite
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Step expand/collapse
+  document.querySelectorAll('.step').forEach(step => {
+    const row = step.querySelector('.step-row');
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.field-action')) return;
+      step.classList.toggle('expanded');
+    });
+  });
+
+  // Raw trace collapse
+  const layout = document.getElementById('layout');
+  const raw = document.getElementById('raw');
+  const rawToggle = document.getElementById('rawToggle');
+  rawToggle.addEventListener('click', () => {
+    raw.classList.toggle('collapsed');
+    layout.classList.toggle('collapsed');
+    const svg = rawToggle.querySelector('svg');
+    if (raw.classList.contains('collapsed')) {
+      svg.innerHTML = '<polyline points="9 6 15 12 9 18"/>';
+    } else {
+      svg.innerHTML = '<polyline points="15 6 9 12 15 18"/>';
+    }
+  });
+
+  // Share toast
+  document.getElementById('shareLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    const orig = e.currentTarget.innerHTML;
+    e.currentTarget.innerHTML = '✓ Link copied to clipboard';
+    e.currentTarget.style.color = 'var(--accent)';
+    setTimeout(() => {
+      e.currentTarget.innerHTML = orig;
+      e.currentTarget.style.color = '';
+    }, 1600);
+  });
+</script>
+
+</body>
+</html>

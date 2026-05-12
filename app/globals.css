@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
+
+@layer base {
+  html,
+  body {
+    @apply bg-bg text-fg;
+  }
+  body {
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
+  }
+
+  .bg-radial-glow {
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(194, 249, 112, 0.1),
+      rgba(194, 249, 112, 0.02) 40%,
+      transparent 70%
+    );
+  }
+
+  .underline-highlight {
+    position: relative;
+    display: inline-block;
+  }
+  .underline-highlight::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 8px;
+    background: linear-gradient(
+      90deg,
+      rgba(194, 249, 112, 0) 0%,
+      rgba(194, 249, 112, 0.35) 50%,
+      rgba(194, 249, 112, 0) 100%
+    );
+    border-radius: 2px;
+    z-index: -1;
+  }
+}

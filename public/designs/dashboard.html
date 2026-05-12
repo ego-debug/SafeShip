@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeLoop — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-2: #101012;
+    --line: rgba(255,255,255,0.07);
+    --line-strong: rgba(255,255,255,0.12);
+    --fg: #f5f5f6;
+    --fg-2: #b4b4b8;
+    --fg-3: #76767c;
+    --fg-4: #4a4a50;
+    --accent: #c2f970;
+    --accent-dim: #8aac4a;
+    --danger: #ff6b6b;
+    --warn: #f5c14a;
+    --radius: 10px;
+    --maxw: 1280px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .mono { font-family: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* Background */
+  .bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.5;
+  }
+  .bg-noise {
+    position: absolute; inset: 0; opacity: 0.025; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  .shell { position: relative; z-index: 1; max-width: var(--maxw); margin: 0 auto; padding: 0 32px; }
+
+  /* App nav */
+  nav.app {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(180deg, #1a1a1c 0%, #0a0a0b 100%);
+    border: 1px solid var(--line-strong);
+    position: relative;
+  }
+  .brand-mark::before, .brand-mark::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.4px solid var(--accent);
+    transform: translate(-50%, -50%);
+  }
+  .brand-mark::after {
+    width: 14px; height: 14px;
+    border-color: rgba(194,249,112,0.35);
+    border-style: dashed;
+  }
+  .brand-name { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
+  .nav-tabs { display: flex; align-items: center; gap: 4px; margin-left: 12px; }
+  .nav-tabs a {
+    color: var(--fg-3); text-decoration: none; font-size: 13.5px;
+    padding: 7px 12px; border-radius: 7px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-tabs a:hover { color: var(--fg-2); }
+  .nav-tabs a.active { color: var(--fg); background: rgba(255,255,255,0.04); }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    display: grid; place-items: center;
+    color: var(--fg-3); cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .icon-btn:hover { color: var(--fg); border-color: var(--line-strong); }
+  .icon-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .me {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #c2f970, #6fa820);
+    display: grid; place-items: center;
+    color: #0a0a0b; font-size: 11px; font-weight: 700;
+    font-family: "Geist Mono", monospace;
+  }
+
+  /* Top toolbar */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0 22px;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .tb-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .tb-right { display: flex; align-items: center; gap: 10px; }
+
+  .selector {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 12px 9px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px;
+    background: rgba(255,255,255,0.02);
+    color: var(--fg); font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .selector:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); }
+  .selector .proj-mark {
+    width: 16px; height: 16px; border-radius: 4px;
+    background: linear-gradient(135deg, #c2f970, #6fa820);
+    flex: none;
+  }
+  .selector .proj-name { letter-spacing: -0.005em; }
+  .selector .caret {
+    color: var(--fg-3);
+    margin-left: 4px;
+    font-size: 11px;
+    display: inline-flex;
+  }
+  .selector .caret svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .selector small {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-4);
+    padding-left: 8px;
+    border-left: 1px solid var(--line);
+    margin-left: 2px;
+  }
+
+  .date-filter {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--fg-2); font-size: 13.5px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .date-filter:hover { border-color: var(--line-strong); color: var(--fg); }
+  .date-filter svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .date-filter .caret-sm { color: var(--fg-4); font-size: 10px; margin-left: 2px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: inherit; font-size: 13.5px; font-weight: 500;
+    border-radius: 9px; padding: 9px 14px;
+    border: 1px solid transparent; cursor: pointer;
+    text-decoration: none; line-height: 1;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  }
+  .btn-outline { background: transparent; color: var(--fg); border-color: var(--line-strong); }
+  .btn-outline:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.03); }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0a0b; font-weight: 600;
+    border: 1px solid rgba(0,0,0,0.2);
+    box-shadow: 0 0 0 1px rgba(194,249,112,0.3), 0 8px 22px -10px rgba(194,249,112,0.4);
+  }
+  .btn-primary:hover { background: #d3ff85; transform: translateY(-1px); }
+  .btn-primary .plus { font-size: 15px; font-weight: 500; line-height: 1; margin-right: 2px; }
+
+  /* Page title */
+  .page-head {
+    display: flex; align-items: baseline; gap: 14px;
+    padding: 8px 0 14px;
+  }
+  .page-title {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+  }
+  .page-sub {
+    margin: 0;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px;
+    color: var(--fg-4);
+    letter-spacing: 0.02em;
+  }
+  .page-sub b { color: var(--fg-2); font-weight: 500; }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 8px;
+  }
+  @media (min-width: 1040px) {
+    .main-grid { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 22px; }
+  }
+
+  .panel {
+    position: relative;
+    border: 1px solid var(--line-strong);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 60px -28px rgba(0,0,0,0.55);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .panel-title { font-size: 14px; font-weight: 600; color: var(--fg); letter-spacing: -0.005em; }
+  .panel-title-row {
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  .panel-meta {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    letter-spacing: 0.02em;
+  }
+  .panel-meta b { color: var(--fg-2); font-weight: 500; }
+  .panel-head .actions { display: flex; align-items: center; gap: 6px; }
+  .seg {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: rgba(0,0,0,0.2);
+  }
+  .seg button {
+    font-family: "Geist Mono", monospace; font-size: 11px;
+    color: var(--fg-3);
+    border: none; background: transparent;
+    padding: 5px 9px; border-radius: 5px;
+    cursor: pointer; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .seg button.on {
+    background: rgba(255,255,255,0.06);
+    color: var(--fg);
+  }
+
+  /* Chart panel */
+  .chart-body { padding: 22px 22px 18px; }
+  .chart-headline {
+    display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px;
+  }
+  .chart-score {
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--fg);
+    font-feature-settings: "tnum";
+  }
+  .chart-score .small {
+    font-size: 22px;
+    color: var(--fg-3);
+    margin-left: 4px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .delta {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.25);
+    color: #ff8a8a;
+    font-family: "Geist Mono", monospace;
+    font-size: 12px; font-weight: 500;
+  }
+  .chart-caption {
+    margin: 6px 0 18px;
+    font-size: 13.5px; color: var(--fg-2);
+  }
+  .chart-caption b { color: var(--fg); font-weight: 500; }
+  .chart-caption .red { color: #ff8a8a; }
+
+  .chart-svg { width: 100%; height: 260px; display: block; }
+
+  .x-axis {
+    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+    margin-top: 8px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+    letter-spacing: 0.04em;
+  }
+  .x-axis span { text-align: center; }
+  .x-axis span.flagged { color: #ff8a8a; }
+
+  /* Runs panel */
+  .runs-list { padding: 8px 0; }
+  .run-row {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 92px) minmax(0, 1fr) 44px minmax(0, 78px);
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .run-row:last-child { border-bottom: none; }
+  .run-row:hover { background: rgba(255,255,255,0.015); }
+  .status-dot { display: grid; place-items: center; }
+  .status-dot svg { width: 14px; height: 14px; }
+  .status-ok { color: var(--accent); }
+  .status-warn { color: var(--warn); }
+  .status-fail { color: var(--danger); }
+  .run-id {
+    font-family: "Geist Mono", monospace;
+    font-size: 12.5px;
+    color: var(--fg-2);
+    letter-spacing: 0.01em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .run-id .hash { color: var(--fg-4); }
+  .run-mid {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 0;
+  }
+  .trigger {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid;
+    flex: none;
+  }
+  .trig-deploy { color: #d3a3ff; border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.08); }
+  .trig-sched { color: #7dd3fc; border-color: rgba(125,211,252,0.3); background: rgba(125,211,252,0.08); }
+  .trig-prod { color: #fde68a; border-color: rgba(253,230,138,0.3); background: rgba(253,230,138,0.08); }
+  .run-ts {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    text-align: right;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .run-score {
+    font-family: "Geist Mono", monospace;
+    font-size: 13px; font-weight: 500;
+    color: var(--fg);
+    text-align: right;
+    font-feature-settings: "tnum";
+  }
+  .run-score.bad { color: #ff8a8a; }
+  .run-score.warn { color: #f5c14a; }
+  .runs-foot {
+    padding: 12px 22px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+  }
+  .runs-foot a {
+    color: var(--fg-2);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .runs-foot a:hover { color: var(--fg); }
+
+  /* Failures */
+  .fail-section { margin-top: 28px; padding-bottom: 56px; }
+  .fail-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .fail-head h3 {
+    margin: 0;
+    font-size: 16px; font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .fail-head .count {
+    margin-left: 10px;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-4);
+    letter-spacing: 0.04em;
+  }
+  .fail-head a {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .fail-head a:hover { color: var(--fg); }
+  .fail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 760px) {
+    .fail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  }
+  .fail-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #111114 0%, #0c0c0e 100%);
+    padding: 16px 18px 16px;
+    display: flex; flex-direction: column;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .fail-card:hover { border-color: rgba(255,107,107,0.25); transform: translateY(-2px); }
+  .fail-head-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .fail-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ff8a8a;
+  }
+  .fail-tag::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(255,107,107,0.5);
+  }
+  .fail-when {
+    font-family: "Geist Mono", monospace;
+    font-size: 10.5px;
+    color: var(--fg-4);
+  }
+  .fail-title {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    line-height: 1.3;
+  }
+  .fail-where {
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    color: var(--fg-3);
+    margin: 0 0 14px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .fail-where .arrow { color: var(--fg-4); padding: 0 4px; }
+  .fail-where .node { color: var(--fg-2); }
+  .fail-where .err { color: #ff8a8a; }
+  .fail-foot {
+    margin-top: auto;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .fail-stat {
+    font-family: "Geist Mono", monospace;
+    font-size: 11px;
+    color: var(--fg-4);
+  }
+  .fail-stat b { color: var(--fg-2); font-weight: 500; }
+  .view-trace {
+    color: var(--accent);
+    text-decoration: none;
+    font-family: "Geist Mono", monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: color 0.15s;
+  }
+  .view-trace:hover { color: #d3ff85; }
+  .view-trace .arr { padding-left: 4px; }
+
+  /* fade in */
+  @keyframes rise { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
+  .rise { animation: rise 0.5s cubic-bezier(.2,.7,.2,1) both; }
+  .d1 { animation-delay: 0.04s; }
+  .d2 { animation-delay: 0.10s; }
+  .d3 { animation-delay: 0.18s; }
+  .d4 { animation-delay: 0.24s; }
+</style>
+</head>
+<body>
+
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<div class="shell">
+
+  <nav class="app rise">
+    <div class="nav-left">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">SafeLoop</span>
+      </a>
+      <div class="nav-tabs">
+        <a href="dashboard.html" class="active">Overview</a>
+        <a href="#">Runs</a>
+        <a href="tests.html">Tests</a>
+        <a href="#">Deploys</a>
+        <a href="#">Settings</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="icon-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Docs">
+        <svg viewBox="0 0 24 24"><path d="M6 4h8l4 4v12H6z"/><polyline points="14 4 14 8 18 8"/></svg>
+      </button>
+      <span class="me" aria-label="Account">MN</span>
+    </div>
+  </nav>
+
+  <!-- Toolbar: project · date filter · new test -->
+  <div class="toolbar rise d1">
+    <div class="tb-left">
+      <button class="selector" aria-label="Switch project">
+        <span class="proj-mark" aria-hidden="true"></span>
+        <span class="proj-name">support-triage</span>
+        <small>prod</small>
+        <span class="caret"><svg viewBox="0 0 10 10"><polyline points="2 4 5 7 8 4"/></svg></span>
+      </button>
+      <button class="date-filter">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+        Last 7 days
+        <span class="caret-sm">▾</span>
+      </button>
+    </div>
+    <div class="tb-right">
+      <button class="btn btn-outline" aria-label="Filter">Filters</button>
+      <button class="btn btn-primary"><span class="plus">+</span> New test</button>
+    </div>
+  </div>
+
+  <!-- Page heading -->
+  <div class="page-head rise d2">
+    <h1 class="page-title">Overview</h1>
+    <p class="page-sub"><b>4,829</b> runs · last sync <b>just now</b></p>
+  </div>
+
+  <!-- Main grid: chart + runs -->
+  <div class="main-grid">
+
+    <!-- Regression chart -->
+    <section class="panel rise d2">
+      <div class="panel-head">
+        <div class="panel-title-row">
+          <span class="panel-title">Regression score</span>
+          <span class="panel-meta">0 – 100 · higher is better</span>
+        </div>
+        <div class="actions">
+          <div class="seg">
+            <button class="on">Score</button>
+            <button>Pass %</button>
+            <button>Latency</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-body">
+        <div class="chart-headline">
+          <span class="chart-score">73<span class="small">/100</span></span>
+          <span class="delta">▼ 22</span>
+        </div>
+        <p class="chart-caption">Dropped <span class="red"><b>22 points</b> on May 10</span> · <b>draft_reply</b> regressed after gpt-5.1-mini swap.</p>
+
+        <svg class="chart-svg" viewBox="0 0 700 260" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="area-ok" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#c2f970" stop-opacity="0.20"/>
+              <stop offset="100%" stop-color="#c2f970" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="area-bad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff6b6b" stop-opacity="0.30"/>
+              <stop offset="100%" stop-color="#ff6b6b" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="line-ok" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="#c2f970"/>
+              <stop offset="62%" stop-color="#c2f970"/>
+              <stop offset="78%" stop-color="#ff6b6b"/>
+              <stop offset="100%" stop-color="#ff6b6b"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Gridlines (100, 75, 50, 25) -->
+          <g stroke="rgba(255,255,255,0.05)" stroke-width="1">
+            <line x1="0" y1="20"  x2="700" y2="20"/>
+            <line x1="0" y1="80"  x2="700" y2="80"/>
+            <line x1="0" y1="140" x2="700" y2="140"/>
+            <line x1="0" y1="200" x2="700" y2="200"/>
+          </g>
+          <!-- Y labels -->
+          <g font-family="Geist Mono, monospace" font-size="10" fill="#4a4a50">
+            <text x="6" y="24">100</text>
+            <text x="6" y="84">75</text>
+            <text x="6" y="144">50</text>
+            <text x="6" y="204">25</text>
+          </g>
+
+          <!-- Threshold line (deploy gate at 80) -->
+          <line x1="0" y1="68" x2="700" y2="68" stroke="rgba(245,193,74,0.35)" stroke-width="1" stroke-dasharray="4 6"/>
+          <text x="690" y="62" font-family="Geist Mono, monospace" font-size="10" fill="#a98735" text-anchor="end">gate · 80</text>
+
+          <!-- 7 points across (50 → 650 px), score values: 96, 95, 97, 94, 95, 73, 73
+               y(score) = 20 + (100-score) * 1.92 (so 100=>20, 25=>164, full chart 0..100 mapped to y 20..212) -->
+          <!-- Area under the line, healthy section -->
+          <path d="M 50 27.68 L 150 29.6 L 250 25.76 L 350 31.52 L 450 29.6 L 550 81.56 L 650 81.56 L 650 232 L 50 232 Z"
+                fill="url(#area-ok)"/>
+          <!-- Red wedge highlighting the drop (from day 5 to day 7) -->
+          <path d="M 450 29.6 L 550 81.56 L 650 81.56 L 650 232 L 450 232 Z"
+                fill="url(#area-bad)" opacity="0.7"/>
+
+          <!-- Main line (healthy segment) -->
+          <polyline
+            points="50,27.68 150,29.6 250,25.76 350,31.52 450,29.6 550,81.56 650,81.56"
+            fill="none" stroke="url(#line-ok)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+          <!-- Vertical marker at drop day -->
+          <line x1="550" y1="20" x2="550" y2="212" stroke="rgba(255,107,107,0.30)" stroke-width="1" stroke-dasharray="3 4"/>
+
+          <!-- Points -->
+          <g>
+            <circle cx="50"  cy="27.68" r="3.5" fill="#c2f970" stroke="#0a0a0b" stroke-width="2"/>
+            <circle cx="150" cy="29.6"  r="3.5" fill="#c2f970" stroke="#0a0a0b" stroke-width="2"/>
+            <circle cx="250" cy="25.76" r="3.5" fill="#c2f970" stroke="#0a0a0b" stroke-width="2"/>
+            <circle cx="350" cy="31.52" r="3.5" fill="#c2f970" stroke="#0a0a0b" stroke-width="2"/>
+            <circle cx="450" cy="29.6"  r="3.5" fill="#c2f970" stroke="#0a0a0b" stroke-width="2"/>
+            <!-- Drop point — flagged -->
+            <circle cx="550" cy="81.56" r="6.5" fill="rgba(255,107,107,0.18)" stroke="none"/>
+            <circle cx="550" cy="81.56" r="4.2" fill="#ff6b6b" stroke="#0a0a0b" stroke-width="2"/>
+            <circle cx="650" cy="81.56" r="3.5" fill="#ff6b6b" stroke="#0a0a0b" stroke-width="2"/>
+          </g>
+
+          <!-- Score labels on key points -->
+          <g font-family="Geist Mono, monospace" font-size="10.5" fill="#76767c">
+            <text x="50" y="18" text-anchor="middle">96</text>
+            <text x="350" y="22" text-anchor="middle">94</text>
+          </g>
+          <!-- Drop callout -->
+          <g>
+            <rect x="510" y="92" width="80" height="22" rx="4" fill="#1a0d0d" stroke="rgba(255,107,107,0.4)"/>
+            <text x="550" y="107" text-anchor="middle" font-family="Geist Mono, monospace" font-size="11" fill="#ff8a8a">73 ▼ 22</text>
+          </g>
+        </svg>
+
+        <div class="x-axis">
+          <span>MAY 04</span>
+          <span>MAY 05</span>
+          <span>MAY 06</span>
+          <span>MAY 07</span>
+          <span>MAY 08</span>
+          <span class="flagged">MAY 10</span>
+          <span class="flagged">MAY 11</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent runs -->
+    <section class="panel rise d3">
+      <div class="panel-head">
+        <div class="panel-title-row">
+          <span class="panel-title">Recent runs</span>
+          <span class="panel-meta">last <b>6</b></span>
+        </div>
+        <div class="actions">
+          <button class="icon-btn" aria-label="Filter runs">
+            <svg viewBox="0 0 24 24"><polygon points="3 4 21 4 14 13 14 20 10 20 10 13 3 4"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="runs-list">
+        <!-- Row template:
+          status icon · run id · trigger + score · ts · -->
+
+        <div class="run-row">
+          <span class="status-dot status-fail" aria-label="failed">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="6"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5"/></svg>
+          </span>
+          <span class="run-id"><span class="hash">#</span>r_8f3a91…b04c</span>
+          <span class="run-mid">
+            <span class="trigger trig-deploy">deploy</span>
+          </span>
+          <span class="run-score bad">73</span>
+          <span class="run-ts">2m ago</span>
+        </div>
+
+        <div class="run-row">
+          <span class="status-dot status-warn" aria-label="warning">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1.5 L13 12 H1 Z"/><line x1="7" y1="6" x2="7" y2="9"/><circle cx="7" cy="11" r="0.6" fill="currentColor"/></svg>
+          </span>
+          <span class="run-id"><span class="hash">#</span>r_2c4e07…91ff</span>
+          <span class="run-mid">
+            <span class="trigger trig-prod">production</span>
+          </span>
+          <span class="run-score warn">81</span>
+          <span class="run-ts">14m ago</span>
+        </div>
+
+        <div class="run-row">
+          <span class="status-dot status-ok" aria-label="passed">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="6"/><polyline points="4 7.4 6.2 9.4 10 5"/></svg>
+          </span>
+          <span class="run-id"><span class="hash">#</span>r_b91d44…ae20</span>
+          <span class="run-mid">
+            <span class="trigger trig-sched">scheduled</span>
+          </span>
+          <span class="run-score">95</span>
+          <span class="run-ts">1h ago</span>
+        </div>
+
+        <div class="run-row">
+          <span class="status-dot status-ok" aria-label="passed">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="6"/><polyline points="4 7.4 6.2 9.4 10 5"/></svg>
+          </span>
+          <span class="run-id"><span class="hash">#</span>r_06aa12…7d11</span>
+          <span class="run-mid">
+            <span class="trigger trig-prod">production</span>
+          </span>
+          <span class="run-score">96</span>
+          <span class="run-ts">2h ago</span>
+        </div>
+
+        <div class="run-row">
+          <span class="status-dot status-ok" aria-label="passed">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="6"/><polyline points="4 7.4 6.2 9.4 10 5"/></svg>
+          </span>
+          <span class="run-id"><span class="hash">#</span>r_f4cd56…2a88</span>
+          <span class="run-mid">
+            <span class="trigger trig-deploy">deploy</span>
+          </span>
+          <span class="run-score">94</span>
+          <span class="run-ts">5h ago</span>
+        </div>
+
+        <div class="run-row">
+          <span class="status-dot status-ok" aria-label="passed">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="6"/><polyline points="4 7.4 6.2 9.4 10 5"/></svg>
+          </span>
+          <span class="run-id"><span class="hash">#</span>r_18b720…c5d3</span>
+          <span class="run-mid">
+            <span class="trigger trig-sched">scheduled</span>
+          </span>
+          <span class="run-score">97</span>
+          <span class="run-ts">yesterday</span>
+        </div>
+      </div>
+
+      <div class="runs-foot">
+        <span>142 runs in the last 7 days</span>
+        <a href="#">View all →</a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Recent failures -->
+  <section class="fail-section rise d4">
+    <div class="fail-head">
+      <h3>Recent failures <span class="count">3 unresolved</span></h3>
+      <a href="trace-detail.html">View all failures →</a>
+    </div>
+
+    <div class="fail-grid">
+
+      <article class="fail-card">
+        <div class="fail-head-row">
+          <span class="fail-tag">draft_reply</span>
+          <span class="fail-when">2m ago</span>
+        </div>
+        <h4 class="fail-title">Hallucinated refund amount on order lookup.</h4>
+        <p class="fail-where">
+          <span class="node">draft_reply</span><span class="arrow">›</span><span class="err">expected $24.99, got $249.00</span>
+        </p>
+        <div class="fail-foot">
+          <span class="fail-stat">seen <b>14×</b> · gpt-5.1-mini</span>
+          <a class="view-trace" href="trace-detail.html">View trace<span class="arr">→</span></a>
+        </div>
+      </article>
+
+      <article class="fail-card">
+        <div class="fail-head-row">
+          <span class="fail-tag">tool: search_kb</span>
+          <span class="fail-when">38m ago</span>
+        </div>
+        <h4 class="fail-title">Tool timeout — KB search exceeded 2s budget.</h4>
+        <p class="fail-where">
+          <span class="node">search_kb</span><span class="arrow">›</span><span class="err">TimeoutError after 2,041ms</span>
+        </p>
+        <div class="fail-foot">
+          <span class="fail-stat">seen <b>6×</b> · p95 <b>2.4s</b></span>
+          <a class="view-trace" href="trace-detail.html">View trace<span class="arr">→</span></a>
+        </div>
+      </article>
+
+      <article class="fail-card">
+        <div class="fail-head-row">
+          <span class="fail-tag">classify_intent</span>
+          <span class="fail-when">3h ago</span>
+        </div>
+        <h4 class="fail-title">Misrouted billing escalation as “feedback”.</h4>
+        <p class="fail-where">
+          <span class="node">classify_intent</span><span class="arrow">›</span><span class="err">expected billing, got feedback</span>
+        </p>
+        <div class="fail-foot">
+          <span class="fail-stat">seen <b>3×</b> · low confidence</span>
+          <a class="view-trace" href="trace-detail.html">View trace<span class="arr">→</span></a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>
