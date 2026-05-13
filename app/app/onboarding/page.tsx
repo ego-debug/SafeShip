@@ -1,14 +1,11 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { getOrProvisionProject } from "@/lib/provision";
+import { requireAccess } from "@/lib/access";
 import { OnboardingView } from "./OnboardingView";
 
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
-  const { userId } = auth();
-  if (!userId) redirect("/sign-in");
-
+  const { userId } = await requireAccess();
   const project = await getOrProvisionProject(userId);
 
   return (

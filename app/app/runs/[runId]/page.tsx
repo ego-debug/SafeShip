@@ -1,6 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { TraceDetailView } from "@/components/trace/TraceDetailView";
+import { requireAccess } from "@/lib/access";
 import { getRunForUser } from "@/lib/runs";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +10,7 @@ export default async function RunDetailPage({
 }: {
   params: { runId: string };
 }) {
-  const { userId } = auth();
-  if (!userId) redirect("/sign-in");
+  const { userId } = await requireAccess();
 
   const run = await getRunForUser(userId, params.runId);
   if (!run) notFound();
