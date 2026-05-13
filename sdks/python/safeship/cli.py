@@ -255,6 +255,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 def _cmd_test(args: argparse.Namespace) -> int:
+    # Hint to the customer's agent that we're in replay mode. Lets them
+    # gate non-deterministic side effects (datetime.now() mocks, fixed
+    # seeds, lower temperatures) on this var. Documented in /docs.
+    os.environ["SAFESHIP_RUN_MODE"] = "test"
+
     try:
         config = load_config(args.config)
         agent = resolve_agent(config["agent"])

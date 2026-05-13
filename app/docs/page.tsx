@@ -207,22 +207,83 @@ result = agent("user message here")`}</CodeBlock>
 
             <Section id="ci" title="5 — Block bad deploys (GitHub Action)">
               <p className="mb-3 text-fg-2">
-                Add SafeShip to your PR workflow to fail any deploy whose
-                latest run scored below a threshold:
+                SafeShip ships a GitHub Action that runs on every PR. By
+                default (<Mono>mode: auto</Mono>) it picks one of two
+                strategies based on whether you have a{" "}
+                <Mono>safeship.yaml</Mono> at your repo root.
               </p>
-              <CodeBlock language="yaml">{`# .github/workflows/deploy.yml
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                Test mode (recommended)
+              </h3>
+              <p className="mb-3 text-fg-2">
+                Every accepted regression test is replayed against your new
+                code in CI. If any test would reproduce a previously-caught
+                failure, the PR fails. Add a <Mono>safeship.yaml</Mono> at
+                the repo root pointing at your agent entry point:
+              </p>
+              <CodeBlock language="yaml">{`# safeship.yaml — declare which function the test runner should call
+agent: src.my_agent:run`}</CodeBlock>
+              <p className="mb-3 mt-3 text-fg-2">
+                Then add the Action to your workflow:
+              </p>
+              <CodeBlock language="yaml">{`# .github/workflows/safeship.yml
+name: SafeShip
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write    # optional, enables the inline PR comment
 jobs:
-  safeship:
+  regression:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .       # install your agent's deps
       - uses: ego-debug/SafeShip/.github/actions/safeship@main
         with:
-          api-key: \${{ secrets.SAFESHIP_API_KEY }}
-          min-score: 80`}</CodeBlock>
+          api-key: \${{ secrets.SAFESHIP_API_KEY }}`}</CodeBlock>
               <p className="mt-3 text-[13.5px] text-fg-3">
+                Your workflow is responsible for setting up Python and
+                installing your agent&apos;s dependencies — the SafeShip
+                action installs only the SafeShip SDK on top, then runs{" "}
+                <Mono>safeship test</Mono>. Each replayed test re-invokes
+                your agent with real LLM calls; budget roughly{" "}
+                <b className="text-fg">$0.05–$0.30 per accepted test per PR
+                run</b>, depending on how chatty your agent is. Cancellable
+                tests run in parallel-safe isolated steps so a flake on one
+                test doesn&apos;t cascade.
+              </p>
+
+              <h3 className="mb-2 mt-6 text-[15.5px] font-semibold text-fg">
+                Score-gate mode (simpler, ambient)
+              </h3>
+              <p className="mb-3 text-fg-2">
+                If you&apos;d rather monitor average production quality than
+                replay specific failures pre-deploy, omit the{" "}
+                <Mono>safeship.yaml</Mono> (or set{" "}
+                <Mono>mode: score-gate</Mono> explicitly). The Action then
+                calls SafeShip&apos;s{" "}
+                <Mono>/v1/runs/check</Mono> endpoint and fails the PR if
+                your latest production run scored below the threshold:
+              </p>
+              <CodeBlock language="yaml">{`- uses: ego-debug/SafeShip/.github/actions/safeship@main
+  with:
+    api-key: \${{ secrets.SAFESHIP_API_KEY }}
+    mode: score-gate
+    min-score: 80`}</CodeBlock>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                Lighter setup, but catches regressions{" "}
+                <i>after</i> they ship to production. Test mode catches them
+                before they merge. You can keep score-gate as a fallback
+                signal even if you adopt test mode later.
+              </p>
+
+              <p className="mt-5 text-[13.5px] text-fg-3">
                 Store your <Mono>sk_live_…</Mono> key as a repo secret named{" "}
-                <Mono>SAFESHIP_API_KEY</Mono>. Full reference:{" "}
+                <Mono>SAFESHIP_API_KEY</Mono>. Full input reference:{" "}
                 <a
                   href="https://github.com/ego-debug/SafeShip/blob/main/.github/actions/safeship/README.md"
                   target="_blank"
@@ -231,6 +292,81 @@ jobs:
                 >
                   Action README →
                 </a>
+              </p>
+            </Section>
+
+            <Section id="replay" title="How replay works">
+              <p className="mb-3 text-fg-2">
+                When SafeShip generates a regression test from a failing
+                trace, it also remembers the exact input the agent was
+                called with when the failure occurred. In CI, the test
+                runner replays that input through your <i>new</i> code and
+                evaluates the test&apos;s assertion (e.g.{" "}
+                <Mono>output contains lookup_order.output.total</Mono>)
+                against the new trace. Three outcomes:
+              </p>
+              <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  <b className="text-fg">passed</b> — the assertion held;
+                  this regression won&apos;t recur with your new code.
+                </li>
+                <li>
+                  <b className="text-fg">failed</b> — the assertion was
+                  violated; your PR would reproduce the original failure.
+                  The PR check fails and the inline comment shows which
+                  test broke and why.
+                </li>
+                <li>
+                  <b className="text-fg">skipped</b> — no step in the new
+                  trace matched the test&apos;s <Mono>when:</Mono> clause.
+                  The agent likely routed differently for this input;
+                  non-blocking.
+                </li>
+              </ul>
+              <p className="mt-3 text-fg-2">
+                Replays run <i>your</i> code with <i>your</i> credentials
+                inside <i>your</i> CI environment. SafeShip&apos;s servers
+                never execute your agent — they only generate the YAML
+                assertions and serve them via the manifest API.
+              </p>
+            </Section>
+
+            <Section id="determinism" title="Making your agent deterministic-friendly">
+              <p className="mb-3 text-fg-2">
+                Replay assumes the same input produces a comparable output.
+                If your agent is highly non-deterministic, tests may pass
+                or fail differently between runs even when your code is
+                unchanged. A few things help:
+              </p>
+              <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  Set <Mono>temperature=0</Mono> on LLM calls in CI, or
+                  whatever the equivalent &quot;most deterministic&quot;
+                  knob is for the model you&apos;re using.
+                </li>
+                <li>
+                  Pin the <Mono>seed</Mono> parameter where the provider
+                  supports it.
+                </li>
+                <li>
+                  Mock or stub time-dependent inputs (<Mono>datetime.now()</Mono>,
+                  randomness sources, external clocks) when running under
+                  the test runner. The simplest way is to gate them on an
+                  env var: <Mono>SAFESHIP_RUN_MODE=test</Mono> is set by
+                  the runner automatically.
+                </li>
+                <li>
+                  Re-accept the suggestion (or skip it and let SafeShip
+                  generate a fresh one) when you&apos;ve materially
+                  rewritten the prompt — the old fixture may no longer
+                  reproduce the failure even on broken code.
+                </li>
+              </ul>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                Determinism is your agent&apos;s property, not ours. We
+                surface flaky behavior so you can decide whether to
+                tighten the assertion, lower the temperature, or accept
+                the noise.
               </p>
             </Section>
 
@@ -411,6 +547,8 @@ asyncio.run(agent("hello"))`}</CodeBlock>
               <TocLink href="#steps">3 — Record sub-steps</TocLink>
               <TocLink href="#view">4 — See your traces</TocLink>
               <TocLink href="#ci">5 — Block bad deploys</TocLink>
+              <TocLink href="#replay">How replay works</TocLink>
+              <TocLink href="#determinism">Deterministic agents</TocLink>
               <TocLink href="#async">Async agents</TocLink>
               <TocLink href="#config">Configuration</TocLink>
               <TocLink href="#reliability">Reliability</TocLink>

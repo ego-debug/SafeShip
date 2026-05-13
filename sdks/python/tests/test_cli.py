@@ -327,6 +327,46 @@ def test_main_test_writes_results_json(tmp_path: Path, monkeypatch):
     assert data[0]["status"] == "passed"
 
 
+def test_main_test_sets_run_mode_env_var(tmp_path: Path, monkeypatch):
+    # Agent that snapshots the env var so we can assert it was set.
+    (tmp_path / "demo_agent5.py").write_text(
+        textwrap.dedent(
+            """
+            import os
+            captured = {}
+            def run(msg):
+                captured['run_mode'] = os.environ.get('SAFESHIP_RUN_MODE')
+                return msg
+            """
+        )
+    )
+    (tmp_path / "safeship.yaml").write_text("agent: demo_agent5:run\n")
+    (tmp_path / "manifest.json").write_text(
+        json.dumps(
+            [
+                {
+                    "id": "t_1",
+                    "name": "demo_agent5.echo",
+                    "test_yaml": (
+                        "test: demo_agent5.echo\n"
+                        "when: step == \"run\"\n"
+                        "assert: output == \"hi\"\n"
+                    ),
+                    "replay_input": "hi",
+                }
+            ]
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+    sys.modules.pop("demo_agent5", None)
+    monkeypatch.delenv("SAFESHIP_RUN_MODE", raising=False)
+
+    code = cli.main(["test", "--manifest", "manifest.json"])
+    assert code == 0
+    import demo_agent5  # type: ignore
+    assert demo_agent5.captured["run_mode"] == "test"
+
+
 def test_main_test_missing_api_key_when_no_manifest_flag(tmp_path: Path, monkeypatch, capsys):
     (tmp_path / "demo_agent4.py").write_text("def run(msg):\n    return msg\n")
     (tmp_path / "safeship.yaml").write_text("agent: demo_agent4:run\n")
