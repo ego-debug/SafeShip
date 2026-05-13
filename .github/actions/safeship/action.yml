@@ -1,5 +1,5 @@
 name: "SafeShip"
-description: "Block deploys when your AI agent regresses. Calls SafeShip's /v1/runs/check endpoint and fails the workflow if the latest run is below the threshold."
+description: "Block deploys when your AI agent regresses. Runs accepted regression tests against your new code (test mode) or checks the latest run's regression score (score-gate mode)."
 author: "SafeShip"
 branding:
   icon: "shield"
@@ -9,12 +9,24 @@ inputs:
   api-key:
     description: "Your SafeShip project's API key (sk_live_*). Store as a repository secret and reference like ${{ secrets.SAFESHIP_API_KEY }}."
     required: true
+  mode:
+    description: "auto | test | score-gate. 'auto' (default) runs test mode if safeship.yaml is present at repo root, else falls back to score-gate. 'test' forces the test runner (errors if safeship.yaml is missing). 'score-gate' forces the legacy score-threshold check."
+    required: false
+    default: "auto"
+  config:
+    description: "Path to safeship.yaml (test mode only)."
+    required: false
+    default: "safeship.yaml"
+  sdk-version:
+    description: "Override the safeship SDK version to install in test mode. Default installs the latest from PyPI; use a pinned version (e.g. '0.1.0') or 'git' to install from the SafeShip GitHub repo subdirectory."
+    required: false
+    default: ""
   min-score:
-    description: "Minimum regression score (0-100) the latest run must meet. Below this and the check fails."
+    description: "Minimum regression score (0-100) the latest run must meet (score-gate mode only)."
     required: false
     default: "80"
   trigger:
-    description: "Optional — only consider runs with this trigger (deploy | production | scheduled | manual). Omit to use the most recent run regardless."
+    description: "Optional — only consider runs with this trigger (deploy | production | scheduled | manual) (score-gate mode only)."
     required: false
     default: ""
   endpoint:
@@ -22,25 +34,123 @@ inputs:
     required: false
     default: "https://safeship.dev"
   fail-on-no-runs:
-    description: "When 'true', fail the check if the project has no runs at all. When 'false' (default) treat no-runs as a soft pass so first-time PRs don't break."
+    description: "score-gate mode only. When 'true', fail the check if the project has no runs at all. When 'false' (default) treat no-runs as a soft pass."
     required: false
     default: "false"
 
 outputs:
+  resolved-mode:
+    description: "The mode that actually ran (test | score-gate)."
+    value: ${{ steps.resolve.outputs.resolved-mode }}
   passed:
-    description: "'true' if the latest run met the threshold, 'false' otherwise."
-    value: ${{ steps.check.outputs.passed }}
+    description: "'true' if the check passed, 'false' otherwise. In test mode, true means every replayed test passed or was skipped."
+    value: ${{ steps.resolve.outputs.passed }}
   score:
-    description: "The score of the latest run (or empty if no runs)."
-    value: ${{ steps.check.outputs.score }}
+    description: "score-gate mode: the score of the latest run. Empty in test mode."
+    value: ${{ steps.score-gate.outputs.score }}
   run-id:
-    description: "The id of the latest run that was checked."
-    value: ${{ steps.check.outputs.run-id }}
+    description: "score-gate mode: the id of the latest run that was checked. Empty in test mode."
+    value: ${{ steps.score-gate.outputs.run-id }}
+  results-json:
+    description: "test mode: path to the JSON file with the per-test results (consumed by the PR comment step)."
+    value: ${{ steps.test-run.outputs.results-json }}
 
 runs:
   using: "composite"
   steps:
-    - id: check
+    # ─── Step 1: resolve which mode to actually run ───────────────────────
+    - id: resolve
+      shell: bash
+      env:
+        SAFESHIP_MODE: ${{ inputs.mode }}
+        SAFESHIP_CONFIG: ${{ inputs.config }}
+      run: |
+        set -u
+        mode="${SAFESHIP_MODE:-auto}"
+        cfg="${SAFESHIP_CONFIG:-safeship.yaml}"
+
+        if [ "$mode" = "auto" ]; then
+          if [ -f "$cfg" ]; then
+            mode="test"
+            echo "::notice::SafeShip: auto-detected $cfg → running in test mode"
+          else
+            mode="score-gate"
+            echo "::notice::SafeShip: no $cfg at repo root → falling back to score-gate mode (add a safeship.yaml to enable test mode)"
+          fi
+        elif [ "$mode" = "test" ] && [ ! -f "$cfg" ]; then
+          echo "::error::SafeShip: mode=test requires $cfg at the repo root. Either add a safeship.yaml declaring your agent entry point, or set mode=auto / mode=score-gate."
+          echo "resolved-mode=test" >> "$GITHUB_OUTPUT"
+          echo "passed=false" >> "$GITHUB_OUTPUT"
+          exit 1
+        elif [ "$mode" != "test" ] && [ "$mode" != "score-gate" ]; then
+          echo "::error::SafeShip: invalid mode '$mode'. Allowed: auto | test | score-gate."
+          echo "resolved-mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "passed=false" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        echo "resolved-mode=$mode" >> "$GITHUB_OUTPUT"
+        echo "::notice::SafeShip: running in $mode mode"
+
+    # ─── Step 2a: test mode — install SDK + run safeship test ─────────────
+    - id: install-sdk
+      if: steps.resolve.outputs.resolved-mode == 'test'
+      shell: bash
+      env:
+        SAFESHIP_SDK_VERSION: ${{ inputs.sdk-version }}
+      run: |
+        set -eu
+        # The customer's workflow is responsible for setting up Python +
+        # installing their agent's dependencies. We install only the
+        # SafeShip SDK on top.
+        if ! command -v python >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
+          echo "::error::SafeShip test mode requires Python in the workflow. Add 'uses: actions/setup-python@v5' to your workflow before this action."
+          exit 1
+        fi
+        PY="$(command -v python3 || command -v python)"
+        if [ -z "${SAFESHIP_SDK_VERSION}" ]; then
+          # Default to installing from the GitHub repo subdirectory until
+          # the SDK is published to PyPI.
+          "$PY" -m pip install --quiet "git+https://github.com/ego-debug/SafeShip.git#subdirectory=sdks/python"
+        elif [ "${SAFESHIP_SDK_VERSION}" = "git" ]; then
+          "$PY" -m pip install --quiet "git+https://github.com/ego-debug/SafeShip.git#subdirectory=sdks/python"
+        else
+          "$PY" -m pip install --quiet "safeship==${SAFESHIP_SDK_VERSION}"
+        fi
+        "$PY" -c "import safeship; print(f'safeship {safeship.__version__} installed')"
+
+    - id: test-run
+      if: steps.resolve.outputs.resolved-mode == 'test'
+      shell: bash
+      env:
+        SAFESHIP_API_KEY: ${{ inputs.api-key }}
+        SAFESHIP_ENDPOINT: ${{ inputs.endpoint }}
+        SAFESHIP_CONFIG: ${{ inputs.config }}
+      run: |
+        set -u
+        PY="$(command -v python3 || command -v python)"
+        results="${RUNNER_TEMP:-/tmp}/safeship-results.json"
+        echo "::group::safeship test output"
+        if "$PY" -m safeship.cli test \
+            --config "$SAFESHIP_CONFIG" \
+            --endpoint "$SAFESHIP_ENDPOINT" \
+            --results-json "$results"; then
+          test_passed=true
+        else
+          test_passed=false
+        fi
+        echo "::endgroup::"
+
+        echo "passed=$test_passed" >> "$GITHUB_OUTPUT"
+        echo "results-json=$results" >> "$GITHUB_OUTPUT"
+
+        # Don't exit yet — Step 3 (PR comment) runs after this regardless;
+        # we re-exit at the very end so the action's overall pass/fail is
+        # driven by the test outcome, not by the comment step.
+
+    # ─── Step 2b: score-gate mode — call /v1/runs/check ───────────────────
+    - id: score-gate
+      if: steps.resolve.outputs.resolved-mode == 'score-gate'
       shell: bash
       env:
         SAFESHIP_API_KEY: ${{ inputs.api-key }}
@@ -66,8 +176,6 @@ runs:
         echo
         echo "::endgroup::"
 
-        # Extract a handful of fields without depending on jq being installed.
-        # Light regex; tolerates whitespace and key order.
         get_json() {
           grep -oE "\"$1\"[[:space:]]*:[[:space:]]*(\"[^\"]*\"|[^,}]+)" "$response" \
             | head -1 \
@@ -75,7 +183,6 @@ runs:
             | sed -E 's/^"//; s/"$//'
         }
 
-        ok=$(get_json ok)
         score=$(get_json score)
         run_id=$(get_json id)
         msg=$(get_json message)
@@ -84,34 +191,115 @@ runs:
         echo "score=${score}"   >> "$GITHUB_OUTPUT"
         echo "run-id=${run_id}" >> "$GITHUB_OUTPUT"
 
+        passed=false
         case "$http" in
           200)
-            echo "passed=true" >> "$GITHUB_OUTPUT"
+            passed=true
             echo "::notice::SafeShip ✓ ${msg}"
             ;;
           404)
-            echo "passed=false" >> "$GITHUB_OUTPUT"
             if [ "$SAFESHIP_FAIL_ON_NO_RUNS" = "true" ]; then
               echo "::error::SafeShip: ${err}"
+              echo "passed=false" >> "$GITHUB_OUTPUT"
               exit 1
             else
               echo "::warning::SafeShip: ${err} — soft-passing this run (fail-on-no-runs=false)."
-              exit 0
+              passed=true
             fi
             ;;
           401)
-            echo "passed=false" >> "$GITHUB_OUTPUT"
             echo "::error::SafeShip auth failed (${err}). Check that the SAFESHIP_API_KEY secret is set correctly."
+            echo "passed=false" >> "$GITHUB_OUTPUT"
             exit 1
             ;;
           422)
-            echo "passed=false" >> "$GITHUB_OUTPUT"
             echo "::error::SafeShip blocked the deploy: ${msg}"
+            echo "passed=false" >> "$GITHUB_OUTPUT"
             exit 1
             ;;
           *)
-            echo "passed=false" >> "$GITHUB_OUTPUT"
             echo "::error::SafeShip request failed with HTTP ${http}. Body above."
+            echo "passed=false" >> "$GITHUB_OUTPUT"
             exit 1
             ;;
         esac
+
+        echo "passed=$passed" >> "$GITHUB_OUTPUT"
+
+    # ─── Step 3: write a PR comment (test mode only, optional). ───────────
+    # Wrapped in continue-on-error so missing `pull-requests: write`
+    # permission never fails the overall check.
+    - id: pr-comment
+      if: |
+        steps.resolve.outputs.resolved-mode == 'test' &&
+        github.event_name == 'pull_request' &&
+        steps.test-run.outputs.results-json != ''
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        RESULTS_JSON: ${{ steps.test-run.outputs.results-json }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -u
+        if ! command -v gh >/dev/null 2>&1; then
+          echo "::warning::SafeShip: gh CLI not available in this runner; skipping PR comment."
+          exit 0
+        fi
+        if [ ! -f "$RESULTS_JSON" ]; then
+          echo "::warning::SafeShip: results JSON not found at $RESULTS_JSON; skipping PR comment."
+          exit 0
+        fi
+
+        PY="$(command -v python3 || command -v python)"
+        script="${GITHUB_ACTION_PATH:-$(dirname "$0")}/_render_comment.py"
+        if [ ! -f "$script" ]; then
+          echo "::warning::SafeShip: _render_comment.py missing at $script; skipping PR comment."
+          exit 0
+        fi
+
+        body="$("$PY" "$script" "$RESULTS_JSON")" || {
+          echo "::warning::SafeShip: failed to render PR comment body; skipping."
+          exit 0
+        }
+
+        marker="<!-- safeship:results -->"
+        # Find any existing SafeShip comment (issue comments API; PRs reuse
+        # the same endpoint). gh CLI handles auth via $GH_TOKEN.
+        existing_id=$(gh api "/repos/$REPO/issues/$PR_NUMBER/comments" \
+          --jq ".[] | select(.body | startswith(\"$marker\")) | .id" \
+          2>/dev/null | head -1 || true)
+
+        if [ -n "$existing_id" ]; then
+          gh api -X PATCH "/repos/$REPO/issues/comments/$existing_id" \
+            -f body="$body" >/dev/null \
+            && echo "::notice::SafeShip: updated PR comment ($existing_id)."
+        else
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$body" \
+            && echo "::notice::SafeShip: posted PR comment."
+        fi
+
+    # ─── Step 4: final exit, gated on the underlying check ────────────────
+    - id: final
+      shell: bash
+      env:
+        RESOLVED_MODE: ${{ steps.resolve.outputs.resolved-mode }}
+        TEST_PASSED: ${{ steps.test-run.outputs.passed }}
+        SCORE_PASSED: ${{ steps.score-gate.outputs.passed }}
+      run: |
+        if [ "$RESOLVED_MODE" = "test" ]; then
+          if [ "$TEST_PASSED" = "true" ]; then
+            echo "::notice::SafeShip ✓ all regression tests passed."
+            exit 0
+          else
+            echo "::error::SafeShip blocked: one or more regression tests failed."
+            exit 1
+          fi
+        else
+          if [ "$SCORE_PASSED" = "true" ]; then
+            exit 0
+          else
+            exit 1
+          fi
+        fi
