@@ -7,7 +7,7 @@ branding:
 
 inputs:
   api-key:
-    description: "Your SafeShip project's API key (sk_live_*). Store as a repository secret and reference like ${{ secrets.SAFESHIP_API_KEY }}."
+    description: "Your SafeShip project's API key (sk_live_*). Store as a repository secret named SAFESHIP_API_KEY and pass it via secrets.SAFESHIP_API_KEY in your workflow."
     required: true
   mode:
     description: "auto | test | score-gate. 'auto' (default) runs test mode if safeship.yaml is present at repo root, else falls back to score-gate. 'test' forces the test runner (errors if safeship.yaml is missing). 'score-gate' forces the legacy score-threshold check."
