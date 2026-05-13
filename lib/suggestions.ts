@@ -219,7 +219,7 @@ export async function acceptSuggestion(
   const { data: suggestion } = await supabase
     .from("suggested_tests")
     .select(
-      "id, project_id, name, plain_english, code_yaml, status, projects!inner(user_id)",
+      "id, project_id, run_id, name, plain_english, code_yaml, status, projects!inner(user_id)",
     )
     .eq("id", suggestionId)
     .maybeSingle();
@@ -227,6 +227,7 @@ export async function acceptSuggestion(
   type Row = {
     id: string;
     project_id: string;
+    run_id: string | null;
     name: string;
     plain_english: string | null;
     code_yaml: string | null;
@@ -242,6 +243,24 @@ export async function acceptSuggestion(
   if (!project || project.user_id !== userId) throw new Error("not_found");
   if (row.status !== "pending") throw new Error("not_pending");
 
+  // Pull the top-level input from the originating run so the CI test runner
+  // can replay it. step_index=0 is the synthesized "agent" step when the
+  // customer didn't add explicit safeship.step() calls; its `input` field
+  // is the {args, kwargs} payload our SDK records. For runs with explicit
+  // steps we just take whatever's at index 0 — the runner falls back to
+  // single-positional-arg invocation if it's not in {args, kwargs} shape.
+  let replayInput: unknown = null;
+  if (row.run_id) {
+    const { data: firstStep } = await supabase
+      .from("traces")
+      .select("input")
+      .eq("run_id", row.run_id)
+      .order("step_index", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    replayInput = (firstStep as { input?: unknown } | null)?.input ?? null;
+  }
+
   const { data: created, error: insertErr } = await supabase
     .from("tests")
     .insert({
@@ -250,6 +269,8 @@ export async function acceptSuggestion(
       plain_english: row.plain_english,
       code_yaml: row.code_yaml,
       status: "active",
+      replay_input: replayInput,
+      origin_run_id: row.run_id,
     })
     .select("id")
     .single();

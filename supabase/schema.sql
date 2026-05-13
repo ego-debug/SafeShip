@@ -148,6 +148,25 @@ create table if not exists public.tests (
   created_at    timestamptz not null default now()
 );
 
+-- Phase-2 columns: when a suggestion is accepted, we also denormalize the
+-- top-level input of the failing run (the args/kwargs the agent was called
+-- with). The CI test runner re-invokes the customer's agent with this
+-- payload to check whether the same regression would recur. `origin_run_id`
+-- points back at the run the test was generated from so we can deep-link
+-- the original failure in PR comments and the dashboard.
+alter table public.tests add column if not exists replay_input  jsonb;
+alter table public.tests add column if not exists origin_run_id uuid;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'tests_origin_run_id_fkey'
+  ) then
+    alter table public.tests
+      add constraint tests_origin_run_id_fkey
+      foreign key (origin_run_id) references public.runs(id) on delete set null;
+  end if;
+end$$;
+
 create index if not exists tests_project_idx on public.tests (project_id, status);
 
 create table if not exists public.test_runs (
