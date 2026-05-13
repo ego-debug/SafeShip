@@ -30,9 +30,9 @@ inputs:
     required: false
     default: ""
   endpoint:
-    description: "Override the SafeShip API base URL (for self-host / staging)."
+    description: "Override the SafeShip API base URL (for self-host / staging). Default uses www. explicitly to avoid apex->www redirects that strip the Authorization header."
     required: false
-    default: "https://safeship.dev"
+    default: "https://www.safeship.dev"
   fail-on-no-runs:
     description: "score-gate mode only. When 'true', fail the check if the project has no runs at all. When 'false' (default) treat no-runs as a soft pass."
     required: false
