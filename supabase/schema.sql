@@ -43,6 +43,15 @@ alter table public.users add column if not exists stripe_subscription_id text;
 alter table public.users add column if not exists current_period_end     timestamptz;
 alter table public.users add column if not exists trial_ends_at          timestamptz;
 
+-- Migration: an earlier version of this file had `default 'trial'` on
+-- subscription_status. The `create table if not exists` above is a no-op
+-- on existing tables, so when we changed the default to 'none' the running
+-- DB kept the old 'trial' default and every new signup got that status —
+-- bypassing the access gate. Force the default to 'none' and rewrite any
+-- legacy 'trial' rows to the intended starting state. Idempotent.
+alter table public.users alter column subscription_status set default 'none';
+update public.users set subscription_status = 'none' where subscription_status = 'trial';
+
 create unique index if not exists users_stripe_customer_idx
   on public.users (stripe_customer_id)
   where stripe_customer_id is not null;
