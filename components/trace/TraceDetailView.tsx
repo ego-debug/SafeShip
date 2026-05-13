@@ -286,7 +286,7 @@ function IoBlock({ label, data }: { label: string; data: unknown }) {
         {label}
       </span>
       <pre
-        className="overflow-x-auto rounded-md border border-line p-3 font-mono text-[11.5px] leading-[1.55] text-fg"
+        className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-line p-3 font-mono text-[11.5px] leading-[1.55] text-fg"
         style={{ background: "rgba(0,0,0,0.35)" }}
       >
         <code>{display}</code>
