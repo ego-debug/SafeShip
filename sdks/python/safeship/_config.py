@@ -11,7 +11,11 @@ from typing import Optional
 @dataclass
 class _Config:
     api_key: Optional[str] = None
-    endpoint: str = "https://safeship.dev/v1/traces"
+    # www. is the canonical host. The apex (safeship.dev) 301-redirects to
+    # www. and httpx strips Authorization headers on cross-host redirects
+    # for security — so we'd silently lose the bearer token mid-trace if
+    # we used the apex.
+    endpoint: str = "https://www.safeship.dev/v1/traces"
     project_name: Optional[str] = None
     environment: str = "prod"
     timeout_seconds: float = 2.0

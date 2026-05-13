@@ -39,7 +39,10 @@ __all__ = [
 ]
 
 
-DEFAULT_ENDPOINT = "https://safeship.dev"
+# Use the www host explicitly. The apex (safeship.dev) 301-redirects to
+# www. and httpx strips the Authorization header on cross-host redirects
+# for security — so the bearer token never reaches the route handler.
+DEFAULT_ENDPOINT = "https://www.safeship.dev"
 DEFAULT_CONFIG_PATH = "safeship.yaml"
 
 
@@ -123,14 +126,20 @@ def resolve_agent(spec: str) -> Callable[..., Any]:
 def fetch_manifest(api_key: str, endpoint: str = DEFAULT_ENDPOINT) -> List[ManifestEntry]:
     """GET /v1/tests/manifest. Returns the list of ManifestEntry rows."""
     url = f"{endpoint.rstrip('/')}/v1/tests/manifest"
+    # follow_redirects=True so a Vercel/CDN auth wall lands us at the real
+    # response (or a clear error), rather than returning the redirect JSON
+    # body and confusing _parse_manifest downstream.
+    # Don't set a custom user-agent. Vercel deployment protection can
+    # flag uncommon UA strings as bot traffic and serve an auth-wall
+    # redirect; the default httpx UA gets through reliably.
     resp = httpx.get(
         url,
         headers={
             "authorization": f"Bearer {api_key}",
             "accept": "application/json",
-            "user-agent": "safeship-python/cli",
         },
         timeout=15.0,
+        follow_redirects=True,
     )
     if resp.status_code == 401:
         raise ConfigError(
@@ -141,7 +150,23 @@ def fetch_manifest(api_key: str, endpoint: str = DEFAULT_ENDPOINT) -> List[Manif
         raise ConfigError(
             f"manifest fetch failed: HTTP {resp.status_code} {resp.text[:200]}"
         )
-    return _parse_manifest(resp.json())
+    # Defensive: detect Vercel/CDN auth-wall payloads that respond 200 with
+    # a non-API body (e.g. {redirect: ..., status: ...}). The real manifest
+    # always has a `tests` array or is a top-level list.
+    try:
+        data = resp.json()
+    except ValueError as e:
+        raise ConfigError(
+            f"manifest response was not JSON (server returned HTML?): {resp.text[:200]}"
+        ) from e
+    if isinstance(data, dict) and "tests" not in data and "redirect" in data:
+        raise ConfigError(
+            "manifest fetch hit a Vercel/CDN auth wall — the server returned a "
+            "redirect challenge instead of the manifest. Either disable deployment "
+            "protection on this Vercel project, or set a deployment protection bypass "
+            "token. Body sample: " + str(data)[:200]
+        )
+    return _parse_manifest(data)
 
 
 def load_manifest_from_file(path: str) -> List[ManifestEntry]:
