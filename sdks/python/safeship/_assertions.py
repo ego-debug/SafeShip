@@ -28,8 +28,9 @@ didn't produce should evaluate to "is None / falsy", not crash.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Any
 
 import yaml
 from simpleeval import EvalWithCompoundTypes, InvalidExpression
@@ -45,7 +46,7 @@ class TestResult:
     test: str
     status: str  # "passed" | "failed" | "skipped" | "error"
     reason: str
-    matched_step: Optional[str] = None  # tool_name of the step we matched
+    matched_step: str | None = None  # tool_name of the step we matched
 
 
 def evaluate_test(
@@ -77,7 +78,7 @@ def evaluate_test(
         return TestResult(name, "error", "test YAML must define both `when` and `assert`")
 
     # Locate the first step where `when` evaluates true.
-    matched_step: Optional[Mapping[str, Any]] = None
+    matched_step: Mapping[str, Any] | None = None
     for step in trace_steps:
         ctx = _build_context(trace_steps, step)
         try:
@@ -124,17 +125,17 @@ class _Missing:
     absent, which is the natural shape for the YAML the suggestion engine
     emits."""
 
-    _instance: "Optional[_Missing]" = None
+    _instance: _Missing | None = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __getattr__(self, name: str) -> "_Missing":
+    def __getattr__(self, name: str) -> _Missing:
         return self
 
-    def __getitem__(self, key: Any) -> "_Missing":
+    def __getitem__(self, key: Any) -> _Missing:
         return self
 
     def __eq__(self, other: Any) -> bool:
@@ -184,8 +185,8 @@ def _wrap(value: Any) -> Any:
 def _build_context(
     trace_steps: Sequence[Mapping[str, Any]],
     current: Mapping[str, Any],
-) -> Dict[str, Any]:
-    ctx: Dict[str, Any] = {
+) -> dict[str, Any]:
+    ctx: dict[str, Any] = {
         "step": current.get("tool_name"),
         "output": _wrap(current.get("output")),
         "input": _wrap(current.get("input")),
@@ -229,7 +230,7 @@ def _rewrite_dsl(expr: str) -> str:
     supported in v1; the suggestion engine doesn't emit those today.
     """
 
-    def matches_sub(m: "re.Match[str]") -> str:
+    def matches_sub(m: re.Match[str]) -> str:
         lhs = m.group(1).strip()
         pat = m.group(2)
         # Triple-quoted raw string so the pattern body doesn't need escaping.

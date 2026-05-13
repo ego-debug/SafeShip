@@ -21,7 +21,7 @@ import random
 import threading
 import time
 from queue import Empty, Queue
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 
@@ -35,9 +35,9 @@ class Transport:
 
     def __init__(self, config: _Config):
         self.config = config
-        self._queue: "Queue[Dict[str, Any]]" = Queue(maxsize=config.queue_max)
+        self._queue: Queue[dict[str, Any]] = Queue(maxsize=config.queue_max)
         self._stop = threading.Event()
-        self._client: Optional[httpx.Client] = None
+        self._client: httpx.Client | None = None
         self._thread = threading.Thread(
             target=self._run,
             name="safeship-transport",
@@ -48,7 +48,7 @@ class Transport:
 
     # ---------- producer side ----------
 
-    def enqueue(self, payload: Dict[str, Any]) -> None:
+    def enqueue(self, payload: dict[str, Any]) -> None:
         if not self.config.enabled:
             return
         try:
@@ -83,7 +83,7 @@ class Transport:
                 except Exception:
                     pass
 
-    def _post_with_retry(self, payload: Dict[str, Any]) -> None:
+    def _post_with_retry(self, payload: dict[str, Any]) -> None:
         """POST one payload. Retry with capped exponential backoff on transient
         failures. Permanent 4xx errors (other than 429) are dropped."""
         if not self.config.api_key:

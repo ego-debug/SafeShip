@@ -5,18 +5,17 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import Optional
 
 
 @dataclass
 class _Config:
-    api_key: Optional[str] = None
+    api_key: str | None = None
     # www. is the canonical host. The apex (safeship.dev) 301-redirects to
     # www. and httpx strips Authorization headers on cross-host redirects
     # for security — so we'd silently lose the bearer token mid-trace if
     # we used the apex.
     endpoint: str = "https://www.safeship.dev/v1/traces"
-    project_name: Optional[str] = None
+    project_name: str | None = None
     environment: str = "prod"
     timeout_seconds: float = 2.0
     queue_max: int = 1000
@@ -46,7 +45,7 @@ def set_config(**kwargs) -> _Config:
         return _config
 
 
-def resolve_api_key(explicit: Optional[str]) -> Optional[str]:
+def resolve_api_key(explicit: str | None) -> str | None:
     """Resolve the API key from (in order): explicit arg, env var, existing config."""
     if explicit:
         return explicit
@@ -56,7 +55,7 @@ def resolve_api_key(explicit: Optional[str]) -> Optional[str]:
     return _config.api_key
 
 
-def resolve_endpoint(explicit: Optional[str]) -> str:
+def resolve_endpoint(explicit: str | None) -> str:
     if explicit:
         return explicit
     env = os.environ.get("SAFESHIP_ENDPOINT")

@@ -12,7 +12,6 @@ the real /v1/tests/manifest.
 from __future__ import annotations
 
 import json
-import os
 import sys
 import textwrap
 from pathlib import Path
@@ -22,8 +21,7 @@ import pytest
 import respx
 
 from safeship import cli
-from safeship._testrunner import ManifestEntry, TestRunResult
-
+from safeship._testrunner import TestRunResult
 
 # ---------- load_config ----------
 
@@ -203,7 +201,12 @@ def test_format_results_renders_summary():
         TestRunResult(name="a.b", status="passed", reason="assertion held"),
         TestRunResult(name="c.d", status="failed", reason="assertion false"),
         TestRunResult(name="e.f", status="skipped", reason="no matching step"),
-        TestRunResult(name="g.h", status="error", reason="agent crashed", agent_error="RuntimeError: x"),
+        TestRunResult(
+            name="g.h",
+            status="error",
+            reason="agent crashed",
+            agent_error="RuntimeError: x",
+        ),
     ]
     out = cli.format_results(results)
     assert "PASS" in out and "a.b" in out

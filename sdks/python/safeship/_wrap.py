@@ -5,9 +5,10 @@ from __future__ import annotations
 import functools
 import inspect
 import time
+from collections.abc import Awaitable
 from contextvars import ContextVar
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, TypeVar, cast
 
 from ._config import get_config
 from ._transport import Transport
@@ -18,18 +19,18 @@ F = TypeVar("F", bound=Callable[..., Any])
 # Active step list for the in-flight run. Lets nested ``record_step()`` calls
 # attach into the parent run automatically — this is what an SDK-level
 # ``@safeship.step`` decorator would target later.
-_active_steps: ContextVar[Optional[List[Dict[str, Any]]]] = ContextVar(
+_active_steps: ContextVar[list[dict[str, Any]] | None] = ContextVar(
     "safeship_active_steps", default=None
 )
 
 
 def record_step(
     *,
-    tool_name: Optional[str] = None,
-    kind: Optional[str] = None,
+    tool_name: str | None = None,
+    kind: str | None = None,
     input: Any = None,
     output: Any = None,
-    duration_ms: Optional[int] = None,
+    duration_ms: int | None = None,
     status: str = "ok",
 ) -> None:
     """Manually append a step to the in-flight run. No-op when called outside
@@ -49,7 +50,7 @@ def record_step(
     )
 
 
-def wrap(agent: F, *, name: Optional[str] = None) -> F:
+def wrap(agent: F, *, name: str | None = None) -> F:
     """Wrap ``agent`` so every invocation ships a trace.
 
     Works for both sync and async callables. The wrapped callable mirrors
@@ -65,7 +66,7 @@ def wrap(agent: F, *, name: Optional[str] = None) -> F:
 
         @functools.wraps(agent)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-            steps: List[Dict[str, Any]] = []
+            steps: list[dict[str, Any]] = []
             token = _active_steps.set(steps)
             started_at = datetime.now(timezone.utc)
             t0 = time.perf_counter()
@@ -83,7 +84,7 @@ def wrap(agent: F, *, name: Optional[str] = None) -> F:
 
     @functools.wraps(agent)
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-        steps: List[Dict[str, Any]] = []
+        steps: list[dict[str, Any]] = []
         token = _active_steps.set(steps)
         started_at = datetime.now(timezone.utc)
         t0 = time.perf_counter()
@@ -102,13 +103,13 @@ def wrap(agent: F, *, name: Optional[str] = None) -> F:
 
 def _emit_run(
     label: str,
-    steps: List[Dict[str, Any]],
+    steps: list[dict[str, Any]],
     started_at: datetime,
     t0: float,
     args: tuple,
     kwargs: dict,
     result: Any,
-    error: Optional[BaseException],
+    error: BaseException | None,
 ) -> None:
     config = get_config()
     transport = cast(Optional[Transport], config._transport)

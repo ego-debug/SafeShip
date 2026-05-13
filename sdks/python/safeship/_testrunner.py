@@ -18,9 +18,10 @@ customer's CI by default, the customer's laptop during local debugging).
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterator, List, Mapping, Optional, Sequence
+from typing import Any, Callable
 
 from ._assertions import TestResult, evaluate_test
 from ._config import get_config
@@ -48,8 +49,8 @@ class ManifestEntry:
     name: str
     test_yaml: str
     replay_input: Any = None
-    original_trace_id: Optional[str] = None
-    created_at: Optional[str] = None
+    original_trace_id: str | None = None
+    created_at: str | None = None
 
 
 @dataclass
@@ -61,10 +62,10 @@ class TestRunResult:
     name: str
     status: str  # "passed" | "failed" | "skipped" | "error"
     reason: str
-    matched_step: Optional[str] = None
-    original_trace_id: Optional[str] = None
-    agent_error: Optional[str] = None
-    captured_steps: List[Mapping[str, Any]] = field(default_factory=list)
+    matched_step: str | None = None
+    original_trace_id: str | None = None
+    agent_error: str | None = None
+    captured_steps: list[Mapping[str, Any]] = field(default_factory=list)
 
 
 # ---------- runner ----------
@@ -72,8 +73,8 @@ class TestRunResult:
 
 def run_test(entry: ManifestEntry, agent: Callable[..., Any]) -> TestRunResult:
     """Execute one manifest entry against `agent`. Returns the outcome."""
-    agent_error: Optional[str] = None
-    captured: List[Mapping[str, Any]] = []
+    agent_error: str | None = None
+    captured: list[Mapping[str, Any]] = []
 
     wrapped = safeship_wrap(agent, name=getattr(agent, "__name__", "agent"))
 
@@ -112,7 +113,7 @@ def run_test(entry: ManifestEntry, agent: Callable[..., Any]) -> TestRunResult:
 
 def run_all(
     entries: Sequence[ManifestEntry], agent: Callable[..., Any]
-) -> List[TestRunResult]:
+) -> list[TestRunResult]:
     """Run every manifest entry against `agent`, in order. Returns a list
     of results. Never raises — each entry's outcome is captured in its
     TestRunResult."""
@@ -128,7 +129,7 @@ class _LocalCapture:
     used by `_wrap._emit_run` — other Transport methods are not exercised."""
 
     def __init__(self) -> None:
-        self.runs: List[Mapping[str, Any]] = []
+        self.runs: list[Mapping[str, Any]] = []
 
     def enqueue(self, payload: Mapping[str, Any]) -> None:
         self.runs.append(payload)

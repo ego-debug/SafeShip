@@ -27,7 +27,10 @@ def _wait_until(predicate, timeout=2.0, interval=0.02):
 
 @pytest.fixture
 def mock_endpoint():
-    with respx.mock(base_url="https://stub.safeship.test") as r:
+    # assert_all_called=False so tests that register a route but
+    # intentionally DON'T call it (e.g. enabled=False, missing api key,
+    # daemon thread race) don't error in fixture teardown.
+    with respx.mock(base_url="https://stub.safeship.test", assert_all_called=False) as r:
         yield r
 
 
@@ -99,8 +102,14 @@ def test_record_step_appends_to_run(mock_endpoint):
     safeship.init(api_key="sk_live_test", endpoint="https://stub.safeship.test/v1/traces")
 
     def agent():
-        safeship.step(tool_name="classify", kind="llm", input="msg", output="intent", duration_ms=42, status="ok")
-        safeship.step(tool_name="reply", kind="llm", input="intent", output="hello", duration_ms=10, status="ok")
+        safeship.step(
+            tool_name="classify", kind="llm", input="msg",
+            output="intent", duration_ms=42, status="ok",
+        )
+        safeship.step(
+            tool_name="reply", kind="llm", input="intent",
+            output="hello", duration_ms=10, status="ok",
+        )
         return "done"
 
     wrapped = safeship.wrap(agent)
@@ -130,7 +139,7 @@ async def test_async_agent_supported(mock_endpoint):
 
 def test_init_without_api_key_disables_ingest(mock_endpoint):
     """No API key → wrap is a no-op shipper but the agent still works."""
-    mock_endpoint.post("/v1/traces").mock(return_value=httpx.Response(200))
+    route = mock_endpoint.post("/v1/traces").mock(return_value=httpx.Response(200))
     safeship.init()  # no key, no env
 
     def agent():
@@ -140,14 +149,17 @@ def test_init_without_api_key_disables_ingest(mock_endpoint):
     assert wrapped() == "ok"
     # Give the transport a chance to (not) ship anything
     time.sleep(0.2)
-    assert not mock_endpoint["/v1/traces"].called
+    assert not route.called
 
 
 def test_record_step_outside_wrap_is_noop():
     """Calling safeship.step() outside a wrapped agent must not crash."""
     safeship.init(api_key="sk_live_test")
     # No `wrap`, no run in flight — must be silent.
-    safeship.step(tool_name="orphan", kind="tool", input=None, output=None, duration_ms=1, status="ok")
+    safeship.step(
+        tool_name="orphan", kind="tool", input=None,
+        output=None, duration_ms=1, status="ok",
+    )
 
 
 def test_wrap_with_non_callable_raises():
@@ -157,15 +169,19 @@ def test_wrap_with_non_callable_raises():
 
 
 def test_disabled_flag_skips_ingest(mock_endpoint):
-    mock_endpoint.post("/v1/traces").mock(return_value=httpx.Response(200))
-    safeship.init(api_key="sk_live_test", endpoint="https://stub.safeship.test/v1/traces", enabled=False)
+    route = mock_endpoint.post("/v1/traces").mock(return_value=httpx.Response(200))
+    safeship.init(
+        api_key="sk_live_test",
+        endpoint="https://stub.safeship.test/v1/traces",
+        enabled=False,
+    )
 
     def agent():
         return "ok"
 
     assert safeship.wrap(agent)() == "ok"
     time.sleep(0.2)
-    assert not mock_endpoint["/v1/traces"].called
+    assert not route.called
 
 
 def test_config_singleton_holds_overrides():

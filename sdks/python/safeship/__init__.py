@@ -23,7 +23,8 @@ See https://safeship.dev for the dashboard.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from ._config import get_config, resolve_api_key, resolve_endpoint, set_config
 from ._transport import Transport
@@ -35,14 +36,14 @@ __all__ = ["init", "wrap", "step", "shutdown", "__version__"]
 
 
 def init(
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     *,
-    endpoint: Optional[str] = None,
-    project_name: Optional[str] = None,
-    environment: Optional[str] = None,
-    timeout_seconds: Optional[float] = None,
-    debug: Optional[bool] = None,
-    enabled: Optional[bool] = None,
+    endpoint: str | None = None,
+    project_name: str | None = None,
+    environment: str | None = None,
+    timeout_seconds: float | None = None,
+    debug: bool | None = None,
+    enabled: bool | None = None,
 ) -> None:
     """Configure the SafeShip SDK. Call once near process startup.
 

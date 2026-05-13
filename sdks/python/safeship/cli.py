@@ -21,8 +21,9 @@ import importlib
 import json
 import os
 import sys
+from collections.abc import Sequence
 from dataclasses import asdict
-from typing import Any, Callable, List, Optional, Sequence
+from typing import Any, Callable
 
 import httpx
 import yaml
@@ -63,7 +64,7 @@ def load_config(path: str = DEFAULT_CONFIG_PATH) -> dict:
             f"Create one with at least:\n  agent: your_module:your_function"
         )
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     except yaml.YAMLError as e:
         raise ConfigError(f"invalid YAML in '{path}': {e}") from e
@@ -123,7 +124,7 @@ def resolve_agent(spec: str) -> Callable[..., Any]:
 # ---------- manifest fetching ----------
 
 
-def fetch_manifest(api_key: str, endpoint: str = DEFAULT_ENDPOINT) -> List[ManifestEntry]:
+def fetch_manifest(api_key: str, endpoint: str = DEFAULT_ENDPOINT) -> list[ManifestEntry]:
     """GET /v1/tests/manifest. Returns the list of ManifestEntry rows."""
     url = f"{endpoint.rstrip('/')}/v1/tests/manifest"
     # follow_redirects=True so a Vercel/CDN auth wall lands us at the real
@@ -169,13 +170,13 @@ def fetch_manifest(api_key: str, endpoint: str = DEFAULT_ENDPOINT) -> List[Manif
     return _parse_manifest(data)
 
 
-def load_manifest_from_file(path: str) -> List[ManifestEntry]:
+def load_manifest_from_file(path: str) -> list[ManifestEntry]:
     """Load a manifest from a local JSON file (for `--manifest` flag)."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return _parse_manifest(json.load(f))
 
 
-def _parse_manifest(data: Any) -> List[ManifestEntry]:
+def _parse_manifest(data: Any) -> list[ManifestEntry]:
     if isinstance(data, list):
         rows = data
     elif isinstance(data, dict) and isinstance(data.get("tests"), list):
@@ -184,7 +185,7 @@ def _parse_manifest(data: Any) -> List[ManifestEntry]:
         raise ConfigError(
             "manifest must be a JSON list of test rows, or {tests: [...]}"
         )
-    out: List[ManifestEntry] = []
+    out: list[ManifestEntry] = []
     for r in rows:
         if not isinstance(r, dict):
             continue
@@ -210,7 +211,7 @@ def format_results(results: Sequence[TestRunResult]) -> str:
         return "No accepted tests in your regression suite — nothing to verify.\n"
 
     by_status = {"passed": 0, "failed": 0, "skipped": 0, "error": 0}
-    lines: List[str] = []
+    lines: list[str] = []
     icons = {"passed": "PASS", "failed": "FAIL", "skipped": "SKIP", "error": "ERR "}
 
     for r in results:
@@ -239,7 +240,7 @@ def format_results(results: Sequence[TestRunResult]) -> str:
 # ---------- main entry point ----------
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="safeship",
         description="SafeShip CLI — replay accepted regression tests against your agent.",
