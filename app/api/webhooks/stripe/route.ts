@@ -111,7 +111,13 @@ async function handleSubscriptionChange(sub: Stripe.Subscription): Promise<void>
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
   const user = await findUserByStripeCustomerId(customerId);
   if (!user) return;
-  await persistSubscriptionState(user.id, sub);
+  // Re-fetch through the SDK so the Subscription shape is whatever our pinned
+  // SDK version expects, regardless of the webhook endpoint's configured API
+  // version. Accounts created after Dahlia (2026-04-22) default to that API
+  // version, which moved `current_period_end` off the top-level Subscription
+  // and onto SubscriptionItem; re-fetching normalizes that.
+  const fresh = await getStripe().subscriptions.retrieve(sub.id);
+  await persistSubscriptionState(user.id, fresh);
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
