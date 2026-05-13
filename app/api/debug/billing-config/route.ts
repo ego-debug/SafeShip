@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { isStripeConfigured } from "@/lib/stripe";
 import { getSubscription, isOwner, hasAccess } from "@/lib/subscriptions";
 
-// GET /api/_debug/billing-config
+// GET /api/debug/billing-config
 // Returns booleans about Stripe env var presence and the current user's
 // subscription state. NEVER leaks secret values — only presence + last 4
 // chars of price id (which is non-sensitive). Gated to signed-in users so
