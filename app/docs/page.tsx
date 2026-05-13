@@ -66,7 +66,7 @@ export default function DocsPage() {
 
             <Section id="billing" title="Billing & free trial">
               <p className="mb-3 text-fg-2">
-                SafeShip is <b className="text-fg">$29 / month</b>, flat, no
+                SafeShip is <b className="text-fg">$29.99 / month</b>, flat, no
                 seats. There&apos;s one plan and a 7-day free trial.
               </p>
               <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
@@ -81,7 +81,7 @@ export default function DocsPage() {
                 </li>
                 <li>
                   <b className="text-fg">After 7 days</b>, your card is
-                  auto-charged $29/mo. Cancel anytime — you keep access until
+                  auto-charged $29.99/mo. Cancel anytime — you keep access until
                   the current period ends. No refunds for partial months.
                 </li>
                 <li>

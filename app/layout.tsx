@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "SafeShip — The same bug never ships twice.",
     description:
-      "Every production failure becomes a regression test. $29/mo flat, no seats.",
+      "Every production failure becomes a regression test. $29.99/mo flat, no seats.",
     url: "https://safeship.dev",
     siteName: "SafeShip",
     type: "website",

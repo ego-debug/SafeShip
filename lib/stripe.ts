@@ -25,4 +25,4 @@ export function isStripeConfigured(): boolean {
 }
 
 export const TRIAL_DAYS = 7;
-export const PRICE_PER_MONTH = "$29";
+export const PRICE_PER_MONTH = "$29.99";

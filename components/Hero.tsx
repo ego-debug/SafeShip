@@ -60,7 +60,7 @@ export function Hero() {
           className="flex animate-rise flex-wrap items-center gap-2 text-[13px] text-fg-3"
           style={{ animationDelay: "0.36s" }}
         >
-          <span className="font-mono text-xs">$29/mo · no seats · cancel before day 7 = $0 charged</span>
+          <span className="font-mono text-xs">$29.99/mo · no seats · cancel before day 7 = $0 charged</span>
         </div>
       </div>
 

@@ -116,7 +116,7 @@ export function BillingView({
         />
         <InfoCard
           title="Trial details"
-          body="Card required upfront. Stripe holds it for 7 days, doesn't charge. After 7 days your card is auto-billed $29/mo. Cancel before day 7 = $0 charged."
+          body="Card required upfront. Stripe holds it for 7 days, doesn't charge. After 7 days your card is auto-billed $29.99/mo. Cancel before day 7 = $0 charged."
         />
       </aside>
     </main>
@@ -151,6 +151,9 @@ function SubscriptionCard({
           </span>
           <span className="text-[60px] font-semibold leading-none tracking-[-0.04em] tabular-nums text-fg">
             29
+          </span>
+          <span className="-translate-y-3 text-[22px] font-medium text-fg-2">
+            .99
           </span>
           <span className="ml-1 text-fg-3">/ month</span>
         </div>
@@ -197,8 +200,8 @@ function Meta({ subscription }: { subscription: Subscription }) {
     return (
       <p className="text-[13.5px] text-fg-2">
         Trial ends {fmtDate(subscription.trial_ends_at)} (
-        {daysUntil(subscription.trial_ends_at)}). Your card will be charged $29
-        unless you cancel before then.
+        {daysUntil(subscription.trial_ends_at)}). Your card will be charged
+        $29.99 unless you cancel before then.
       </p>
     );
   }
@@ -229,7 +232,7 @@ function Meta({ subscription }: { subscription: Subscription }) {
   return (
     <p className="text-[13.5px] text-fg-2">
       Card required upfront. Stripe collects it but doesn&apos;t charge for 7
-      days. Auto-bills $29/month after that. Cancel anytime — cancel before
+      days. Auto-bills $29.99/month after that. Cancel anytime — cancel before
       day 7 = $0 charged.
     </p>
   );

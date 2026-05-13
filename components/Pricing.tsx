@@ -15,7 +15,7 @@ const COMPARE: Array<{
   { vendor: "LangSmith", tag: "per-seat", detail: "$39 / user / month + per-trace overage" },
   { vendor: "Braintrust", tag: "enterprise", detail: "$249 / month, enterprise focus" },
   { vendor: "Langfuse", tag: "self-host", detail: "Free — but 4 services to run" },
-  { vendor: "SafeShip", tag: "flat", detail: "$29 / month flat · no seats", us: true },
+  { vendor: "SafeShip", tag: "flat", detail: "$29.99 / month flat · no seats", us: true },
 ];
 
 export function Pricing() {
@@ -73,6 +73,9 @@ export function Pricing() {
             </span>
             <span className="text-[80px] font-semibold leading-none tracking-[-0.045em] tabular-nums text-fg">
               29
+            </span>
+            <span className="-translate-y-3 text-[28px] font-medium text-fg-2">
+              .99
             </span>
             <span className="ml-1 text-[15px] text-fg-3">/ month</span>
           </div>

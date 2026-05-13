@@ -29,20 +29,19 @@ Existing tools split in two:
 - **Logging** (Helicone, Langfuse) — records what happened, doesn't prevent it
 - **Evals** (Braintrust, LangSmith) — prevents failures but costs $40–250/mo, requires teams of 5+, and makes you write all tests by hand
 
-SafeShip is the eval tool, $29/month, where the tests build themselves.
+SafeShip is the eval tool, $29.99/month, where the tests build themselves.
 
 ## Wedge
 
 The only product that:
 1. Auto-suggests regression tests from real production traces — user thumbs-up to accept
-2. $29/month flat, no seats, no usage tiers
+2. $29.99/month flat, no seats, no usage tiers
 3. 4-line SDK install, first trace in 5 minutes
 
 ## Pricing
 
-- Free tier during MVP / waitlist
-- **Pro: $29/month flat**, unlimited traces, unlimited projects, no seats
-- 14-day free trial at launch, no credit card required
+- **Pro: $29.99/month flat**, unlimited traces, unlimited projects, no seats
+- 7-day free trial, card required upfront, cancel anytime (Stripe Checkout)
 
 ## Tech stack
 
