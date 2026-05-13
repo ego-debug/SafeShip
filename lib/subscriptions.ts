@@ -14,6 +14,11 @@ export type Subscription = {
   current_period_end: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  // True when the user has clicked "Cancel" but the period hasn't ended yet.
+  // They still have access; the subscription will transition to "canceled"
+  // automatically at period end. Surface this in the UI so they don't think
+  // their cancel didn't go through.
+  cancel_at_period_end: boolean;
 };
 
 /**
@@ -49,7 +54,7 @@ export async function getSubscription(userId: string): Promise<Subscription> {
   const { data, error } = await supabase
     .from("users")
     .select(
-      "subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id",
+      "subscription_status, trial_ends_at, current_period_end, stripe_customer_id, stripe_subscription_id, cancel_at_period_end",
     )
     .eq("id", userId)
     .maybeSingle();
@@ -61,6 +66,7 @@ export async function getSubscription(userId: string): Promise<Subscription> {
       current_period_end: null,
       stripe_customer_id: null,
       stripe_subscription_id: null,
+      cancel_at_period_end: false,
     };
   }
 
@@ -70,6 +76,7 @@ export async function getSubscription(userId: string): Promise<Subscription> {
     current_period_end: data.current_period_end as string | null,
     stripe_customer_id: data.stripe_customer_id as string | null,
     stripe_subscription_id: data.stripe_subscription_id as string | null,
+    cancel_at_period_end: Boolean(data.cancel_at_period_end),
   };
 }
 
@@ -81,6 +88,7 @@ export async function setSubscriptionFromStripe(
     current_period_end: string | null;
     stripe_customer_id: string | null;
     stripe_subscription_id: string | null;
+    cancel_at_period_end: boolean;
   }>,
 ): Promise<void> {
   const supabase = getServiceSupabase();
@@ -94,6 +102,8 @@ export async function setSubscriptionFromStripe(
     dbPatch.stripe_customer_id = patch.stripe_customer_id;
   if (patch.stripe_subscription_id !== undefined)
     dbPatch.stripe_subscription_id = patch.stripe_subscription_id;
+  if (patch.cancel_at_period_end !== undefined)
+    dbPatch.cancel_at_period_end = patch.cancel_at_period_end;
   if (Object.keys(dbPatch).length === 0) return;
 
   await supabase.from("users").update(dbPatch).eq("id", userId);

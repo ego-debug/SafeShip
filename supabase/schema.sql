@@ -38,10 +38,11 @@ create table if not exists public.users (
 );
 
 -- Subscription columns — added via ALTER for forward-compat with v1 schema
-alter table public.users add column if not exists stripe_customer_id     text;
-alter table public.users add column if not exists stripe_subscription_id text;
-alter table public.users add column if not exists current_period_end     timestamptz;
-alter table public.users add column if not exists trial_ends_at          timestamptz;
+alter table public.users add column if not exists stripe_customer_id      text;
+alter table public.users add column if not exists stripe_subscription_id  text;
+alter table public.users add column if not exists current_period_end      timestamptz;
+alter table public.users add column if not exists trial_ends_at           timestamptz;
+alter table public.users add column if not exists cancel_at_period_end    boolean not null default false;
 
 -- Migration: an earlier version of this file had `default 'trial'` on
 -- subscription_status. The `create table if not exists` above is a no-op

@@ -67,6 +67,9 @@ export function BillingView({
         <h1 className="text-[clamp(28px,3vw,36px)] font-semibold leading-[1.1] tracking-[-0.025em]">
           {isOwner
             ? "Owner account — billing skipped"
+            : subscription.cancel_at_period_end &&
+              (subscription.status === "trialing" || subscription.status === "active")
+            ? "Subscription canceled — won't renew"
             : subscription.status === "active"
             ? "SafeShip Pro — active"
             : subscription.status === "trialing"
@@ -157,7 +160,10 @@ function SubscriptionCard({
           </span>
           <span className="ml-1 text-fg-3">/ month</span>
         </div>
-        <StatusBadge status={subscription.status} />
+        <StatusBadge
+          status={subscription.status}
+          cancelAtPeriodEnd={subscription.cancel_at_period_end}
+        />
       </div>
 
       <Meta subscription={subscription} />
@@ -196,6 +202,25 @@ function SubscriptionCard({
 }
 
 function Meta({ subscription }: { subscription: Subscription }) {
+  // Pending cancellation (user cancelled, period hasn't ended yet) takes
+  // priority over the trial/active default copy — otherwise the page reads
+  // like the cancel didn't go through.
+  if (
+    subscription.cancel_at_period_end &&
+    (subscription.status === "trialing" || subscription.status === "active")
+  ) {
+    const end =
+      subscription.current_period_end ?? subscription.trial_ends_at;
+    if (end) {
+      return (
+        <p className="text-[13.5px] text-fg-2">
+          You canceled. Access continues until {fmtDate(end)} (
+          {daysUntil(end)}) — your card won&apos;t be charged. Resume anytime
+          from the customer portal.
+        </p>
+      );
+    }
+  }
   if (subscription.status === "trialing" && subscription.trial_ends_at) {
     return (
       <p className="text-[13.5px] text-fg-2">
@@ -238,9 +263,17 @@ function Meta({ subscription }: { subscription: Subscription }) {
   );
 }
 
-function StatusBadge({ status }: { status: Subscription["status"] }) {
+function StatusBadge({
+  status,
+  cancelAtPeriodEnd,
+}: {
+  status: Subscription["status"];
+  cancelAtPeriodEnd: boolean;
+}) {
   const cfg =
-    status === "active" || status === "trialing"
+    cancelAtPeriodEnd && (status === "active" || status === "trialing")
+      ? { label: "CANCELING", color: "text-fg-3", bg: "rgba(255,255,255,0.05)" }
+      : status === "active" || status === "trialing"
       ? { label: status.toUpperCase(), color: "text-accent", bg: "rgba(194,249,112,0.10)" }
       : status === "past_due"
       ? { label: "PAST DUE", color: "text-danger", bg: "rgba(255,107,107,0.10)" }

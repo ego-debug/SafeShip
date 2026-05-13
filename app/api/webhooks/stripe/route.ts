@@ -169,6 +169,7 @@ async function persistSubscriptionState(
     stripe_subscription_id: sub.id,
     stripe_customer_id:
       typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+    cancel_at_period_end: Boolean(sub.cancel_at_period_end),
   });
 }
 
