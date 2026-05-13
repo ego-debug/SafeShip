@@ -36,6 +36,9 @@ Homepage = "https://safeship.dev"
 Repository = "https://github.com/ego-debug/SafeShip"
 Issues = "https://github.com/ego-debug/SafeShip/issues"
 
+[project.scripts]
+safeship = "safeship.cli:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",

@@ -54,6 +54,10 @@ class ManifestEntry:
 
 @dataclass
 class TestRunResult:
+    # Tell pytest this isn't a test class — the `Test` prefix matches its
+    # default collection pattern.
+    __test__ = False
+
     name: str
     status: str  # "passed" | "failed" | "skipped" | "error"
     reason: str
