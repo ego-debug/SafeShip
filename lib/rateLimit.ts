@@ -13,13 +13,19 @@ const BURST_WINDOW_SECONDS =
 const DAILY_WINDOW_SECONDS = 24 * 3600;
 
 // Traces ingestion limits — independent of Claude limits because ingestion
-// is just DB writes, not LLM calls. Defaults are intentionally generous so
-// legitimate high-volume agents aren't throttled, but tight enough that a
-// leaked API key can't bloat the DB by millions of rows overnight.
+// is just DB writes, not LLM calls. The pricing card says "unlimited
+// traces"; these caps exist purely as an abuse circuit breaker for leaked
+// API keys, NOT a usage ceiling for honest customers. Sized so that no
+// realistic solo-dev or small-team workload hits them:
+//   - Burst 200/min = 12,000/hr peak (~20 agent runs/sec, 10x what any
+//     consumer-facing agent realistically does)
+//   - Daily 50,000 = ~1.5M traces/mo per project (way past the persona).
+//     If you legitimately need more, email founder@safeship.dev — we'll
+//     raise it on your account.
 const TRACES_DAILY_LIMIT =
-  Number(process.env.SAFESHIP_TRACES_DAILY_LIMIT) || 5000;
+  Number(process.env.SAFESHIP_TRACES_DAILY_LIMIT) || 50000;
 const TRACES_BURST_LIMIT =
-  Number(process.env.SAFESHIP_TRACES_BURST_LIMIT) || 100;
+  Number(process.env.SAFESHIP_TRACES_BURST_LIMIT) || 200;
 const TRACES_BURST_WINDOW_SECONDS =
   Number(process.env.SAFESHIP_TRACES_BURST_WINDOW_SECONDS) || 60;
 

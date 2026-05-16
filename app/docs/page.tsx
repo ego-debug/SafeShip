@@ -331,6 +331,103 @@ jobs:
               </p>
             </Section>
 
+            <Section id="free-replay" title="Free CI replay (cached LLM responses)">
+              <p className="mb-3 text-fg-2">
+                By default, every replayed test re-invokes your agent with
+                real LLM calls. That costs roughly{" "}
+                <b className="text-fg">$0.05–$0.30 per accepted test per PR
+                run</b>{" "}
+                and grows linearly with both test count and PR cadence.
+                SafeShip&apos;s auto-instrumentation captures every
+                Anthropic / OpenAI call when the trace is first recorded;
+                the cached request and response bodies travel with the
+                test. In CI, those cached responses can be replayed
+                verbatim — no provider hit, no LLM bill.
+              </p>
+              <p className="mb-3 text-fg-2">
+                Opt in by setting the feature flag in your repo secrets:
+              </p>
+              <CodeBlock>{`SAFESHIP_REPLAY_LLM_CACHE=true`}</CodeBlock>
+              <p className="mb-3 mt-3 text-fg-2">
+                And (optionally) the mode in <Mono>safeship.yaml</Mono>:
+              </p>
+              <CodeBlock language="yaml">{`agent: src.my_agent:run
+replay_mode: cached_or_live  # default — falls back to live on miss
+# replay_mode: cached_only   # strict — miss = fail with "fixture mismatch"
+# replay_mode: live          # ignore cache entirely (Phase-2 behavior)`}</CodeBlock>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                Match key
+              </h3>
+              <p className="mb-3 text-fg-2">
+                A cached response is returned when the cursor-walked
+                request matches by{" "}
+                <Mono>sha256(canonical_json_body)</Mono>. Canonicalization
+                sorts JSON keys and strips whitespace, so harmless
+                serialization differences don&apos;t break a hit. Cursor
+                walking means a refactor that adds or skips a non-LLM step
+                in between calls still matches the remaining LLM calls in
+                order.
+              </p>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                Cache-miss behavior by mode
+              </h3>
+              <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  <Mono>cached_or_live</Mono> <b className="text-fg">(default)</b>{" "}
+                  — cache miss falls through to a real LLM call. The PR
+                  comment notes which calls fell through, so you can see
+                  cost creep over time.
+                </li>
+                <li>
+                  <Mono>cached_only</Mono> — cache miss returns a synthetic
+                  HTTP 599 response (no provider hit). The assertion
+                  evaluator treats it as a failed step and reports
+                  &quot;fixture mismatch&quot;. Use this when you want CI
+                  to be guaranteed free even if it means refactor PRs need
+                  fresh re-accepts.
+                </li>
+                <li>
+                  <Mono>live</Mono> — cache is ignored entirely. Every call
+                  goes to the provider. Identical to Phase-2 behavior;
+                  useful as an escape hatch.
+                </li>
+              </ul>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                When to re-accept a test
+              </h3>
+              <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  You materially rewrote the prompt for a step the test
+                  targets — the old cached response is now misleading.
+                </li>
+                <li>
+                  You switched providers or models — cache entries are
+                  per-host and per-model.
+                </li>
+                <li>
+                  You started seeing too many fallthrough warnings in PR
+                  comments — easier to re-accept once than to keep paying
+                  for live calls.
+                </li>
+              </ul>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                Tests accepted before this feature shipped have no cache
+                and continue to run via live calls (Phase-2 behavior,
+                unchanged). The dashboard surfaces a small{" "}
+                <b className="text-fg">&quot;LLM calls cached&quot;</b>{" "}
+                badge per test so you can see which ones run free.
+              </p>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                Two-week observation period: this feature is gated behind
+                the env flag above for two weeks while we verify the
+                cache-key strategy holds up across real refactor patterns.
+                Once stable, the default flips to on.
+              </p>
+            </Section>
+
             <Section id="determinism" title="Making your agent deterministic-friendly">
               <p className="mb-3 text-fg-2">
                 Replay assumes the same input produces a comparable output.
@@ -385,6 +482,157 @@ async def my_agent(prompt):
 
 agent = safeship.wrap(my_agent)
 asyncio.run(agent("hello"))`}</CodeBlock>
+            </Section>
+
+            <Section id="compatibility" title="What it works with">
+              <p className="mb-3 text-fg-2">
+                SafeShip is framework-agnostic by design.{" "}
+                <Mono>safeship.wrap()</Mono> takes any Python callable, and
+                the SDK auto-records calls to common LLM providers as
+                steps — no per-call instrumentation needed. A few common
+                patterns:
+              </p>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                Anthropic SDK
+              </h3>
+              <p className="mb-3 text-fg-2">
+                Every call to <Mono>client.messages.create</Mono> is
+                auto-captured as a step with model, messages, and assistant
+                text. No <Mono>safeship.step()</Mono> calls needed.
+              </p>
+              <CodeBlock>{`import anthropic, safeship
+
+safeship.init(api_key="sk_live_...")
+client = anthropic.Anthropic()
+
+@safeship.wrap
+def agent(prompt: str) -> str:
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return msg.content[0].text`}</CodeBlock>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                OpenAI SDK
+              </h3>
+              <p className="mb-3 text-fg-2">
+                Same story — <Mono>client.chat.completions.create</Mono>{" "}
+                and the legacy <Mono>completions</Mono> endpoint are both
+                captured automatically.
+              </p>
+              <CodeBlock>{`import openai, safeship
+
+safeship.init(api_key="sk_live_...")
+client = openai.OpenAI()
+
+@safeship.wrap
+def agent(prompt: str) -> str:
+    resp = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return resp.choices[0].message.content`}</CodeBlock>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                How auto-instrumentation works
+              </h3>
+              <p className="mb-3 text-fg-2">
+                <Mono>safeship.init()</Mono> installs a small httpx
+                transport interceptor. Outbound requests to{" "}
+                <Mono>api.anthropic.com</Mono> and{" "}
+                <Mono>api.openai.com</Mono> are timed, parsed, and recorded
+                as steps on the in-flight run. Everything else (your
+                database, your tools, third-party APIs) passes through
+                untouched. The interceptor runs in your process, on your
+                infra — no requests go through SafeShip.
+              </p>
+              <p className="mb-3 text-[13.5px] text-fg-3">
+                Set <Mono>auto_instrument=False</Mono> in{" "}
+                <Mono>init()</Mono>, or{" "}
+                <Mono>SAFESHIP_AUTO_INSTRUMENT=false</Mono> in your env, to
+                opt out — for the rare stacks that depend on raw httpx
+                behavior.
+              </p>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                MCP tool calls and other non-LLM steps
+              </h3>
+              <p className="mb-3 text-fg-2">
+                MCP tool invocations and other non-LLM operations
+                aren&apos;t HTTP calls to a known provider host, so wrap
+                each one in <Mono>safeship.step()</Mono> to surface them on
+                the trace timeline. The auto-suggest engine then knows
+                which tool failed and can target the assertion at it
+                specifically.
+              </p>
+              <CodeBlock>{`import safeship
+from your_mcp_client import call_mcp_tool
+
+safeship.init(api_key="sk_live_...")
+
+@safeship.wrap
+def agent(user_message: str) -> str:
+    search = call_mcp_tool("search_docs", {"q": user_message})
+    safeship.step(
+        tool_name="mcp.search_docs",
+        kind="tool",
+        input={"q": user_message},
+        output=search,
+        duration_ms=search["_elapsed_ms"],
+        status="ok" if search.get("results") else "fail",
+    )
+
+    summary = call_mcp_tool("summarize", {"docs": search["results"]})
+    safeship.step(
+        tool_name="mcp.summarize",
+        kind="tool",
+        input={"docs_n": len(search["results"])},
+        output=summary,
+        duration_ms=summary["_elapsed_ms"],
+        status="ok",
+    )
+
+    return summary["text"]`}</CodeBlock>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                Same pattern for any non-HTTP tool — function calling,
+                custom RPC, in-process libraries. SafeShip cares about{" "}
+                <Mono>tool_name</Mono>, <Mono>input</Mono>,{" "}
+                <Mono>output</Mono>, and <Mono>status</Mono>.
+              </p>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                Custom LLM endpoints or other providers
+              </h3>
+              <p className="mb-3 text-fg-2">
+                If you call a self-hosted model, a less-common provider, or
+                anything outside the auto-instrument allowlist, record it
+                with <Mono>safeship.step()</Mono> just like a tool call:
+              </p>
+              <CodeBlock>{`import httpx, safeship, time
+
+safeship.init(api_key="sk_live_...")
+
+@safeship.wrap
+def agent(prompt: str) -> str:
+    t0 = time.perf_counter()
+    r = httpx.post("https://your-llm-endpoint", json={"prompt": prompt})
+    safeship.step(
+        tool_name="custom_llm",
+        kind="llm",
+        input=prompt,
+        output=r.json(),
+        duration_ms=int((time.perf_counter() - t0) * 1000),
+        status="ok" if r.status_code == 200 else "fail",
+    )
+    return r.json()["text"]`}</CodeBlock>
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                Want a provider added to the auto-instrument allowlist?
+                Email <a href="mailto:founder@safeship.dev" className="text-accent hover:text-[#d3ff85]">founder@safeship.dev</a>{" "}
+                with the API host and we&apos;ll prioritize it.
+              </p>
             </Section>
 
             <Section id="config" title="Configuration reference">
@@ -488,7 +736,7 @@ asyncio.run(agent("hello"))`}</CodeBlock>
                 stderr.
               </Trouble>
               <Trouble q='I got a 429 "rate_limited" response.'>
-                You hit either the burst (100/min) or daily (5,000/day)
+                You hit either the burst (200/min) or daily (50,000/day)
                 ingestion cap. The response includes a{" "}
                 <Mono>Retry-After</Mono> header telling you how many seconds
                 to wait. Contact{" "}
@@ -548,8 +796,10 @@ asyncio.run(agent("hello"))`}</CodeBlock>
               <TocLink href="#view">4 — See your traces</TocLink>
               <TocLink href="#ci">5 — Block bad deploys</TocLink>
               <TocLink href="#replay">How replay works</TocLink>
+              <TocLink href="#free-replay">Free CI replay</TocLink>
               <TocLink href="#determinism">Deterministic agents</TocLink>
               <TocLink href="#async">Async agents</TocLink>
+              <TocLink href="#compatibility">What it works with</TocLink>
               <TocLink href="#config">Configuration</TocLink>
               <TocLink href="#reliability">Reliability</TocLink>
               <TocLink href="#troubleshoot">Troubleshooting</TocLink>

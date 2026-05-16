@@ -44,7 +44,9 @@ export async function GET(req: Request) {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("tests")
-    .select("id, name, code_yaml, replay_input, origin_run_id, created_at, status")
+    .select(
+      "id, name, code_yaml, replay_input, origin_run_id, cached_llm_calls, created_at, status",
+    )
     .eq("project_id", project.id)
     .eq("status", "active")
     .not("replay_input", "is", null)
@@ -60,6 +62,7 @@ export async function GET(req: Request) {
     code_yaml: string | null;
     replay_input: unknown;
     origin_run_id: string | null;
+    cached_llm_calls: unknown;
     created_at: string;
   };
   const rows = (data ?? []) as unknown as Row[];
@@ -73,6 +76,7 @@ export async function GET(req: Request) {
       name: r.name,
       test_yaml: r.code_yaml,
       replay_input: r.replay_input,
+      cached_llm_calls: r.cached_llm_calls,
       original_trace_id: r.origin_run_id,
       created_at: r.created_at,
     }));

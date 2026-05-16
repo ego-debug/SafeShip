@@ -189,6 +189,9 @@ def _parse_manifest(data: Any) -> list[ManifestEntry]:
     for r in rows:
         if not isinstance(r, dict):
             continue
+        cached = r.get("cached_llm_calls")
+        if cached is not None and not isinstance(cached, list):
+            cached = None
         out.append(
             ManifestEntry(
                 id=str(r.get("id") or ""),
@@ -197,9 +200,28 @@ def _parse_manifest(data: Any) -> list[ManifestEntry]:
                 replay_input=r.get("replay_input"),
                 original_trace_id=r.get("original_trace_id"),
                 created_at=r.get("created_at"),
+                cached_llm_calls=cached,
             )
         )
     return out
+
+
+_VALID_REPLAY_MODES = {"cached_only", "cached_or_live", "live"}
+
+
+def _resolve_replay_mode(config: dict, cli_override: str | None) -> str:
+    """Resolution order: CLI flag > safeship.yaml > default. Invalid values
+    are corrected to the default with a stderr warning so a typo doesn't
+    silently fall to the wrong behavior."""
+    raw = cli_override or config.get("replay_mode") or "cached_or_live"
+    if raw not in _VALID_REPLAY_MODES:
+        print(
+            f"safeship: warning — replay_mode '{raw}' is not one of "
+            f"{sorted(_VALID_REPLAY_MODES)}; falling back to cached_or_live",
+            file=sys.stderr,
+        )
+        return "cached_or_live"
+    return raw
 
 
 # ---------- result formatting ----------
@@ -271,6 +293,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="Write the test results to this path as JSON (consumed by the Action)",
     )
+    test_p.add_argument(
+        "--replay-mode",
+        default=None,
+        choices=sorted(_VALID_REPLAY_MODES),
+        help=(
+            "How to handle LLM-call replay against cached responses. "
+            "Overrides 'replay_mode' in safeship.yaml. Default: cached_or_live."
+        ),
+    )
 
     args = parser.parse_args(list(argv) if argv is not None else None)
 
@@ -317,7 +348,8 @@ def _cmd_test(args: argparse.Namespace) -> int:
             print(f"safeship: {e}", file=sys.stderr)
             return 1
 
-    results = run_all(manifest, agent)
+    replay_mode = _resolve_replay_mode(config, getattr(args, "replay_mode", None))
+    results = run_all(manifest, agent, replay_mode=replay_mode)
 
     print(format_results(results))
 

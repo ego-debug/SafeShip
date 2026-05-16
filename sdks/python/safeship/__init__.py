@@ -26,7 +26,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from ._config import get_config, resolve_api_key, resolve_endpoint, set_config
+from ._config import (
+    get_config,
+    resolve_api_key,
+    resolve_auto_instrument,
+    resolve_endpoint,
+    set_config,
+)
+from ._instrument import install_instrumentation, uninstall_instrumentation
 from ._transport import Transport
 from ._wrap import record_step as step
 from ._wrap import wrap
@@ -44,6 +51,7 @@ def init(
     timeout_seconds: float | None = None,
     debug: bool | None = None,
     enabled: bool | None = None,
+    auto_instrument: bool | None = None,
 ) -> None:
     """Configure the SafeShip SDK. Call once near process startup.
 
@@ -56,9 +64,14 @@ def init(
         timeout_seconds: Per-request HTTP timeout. Default 2s.
         debug: If True, log dropped traces / transport errors to stderr.
         enabled: Set False to disable trace shipping entirely (e.g. in tests).
+        auto_instrument: If True (default), install an httpx interceptor
+            that auto-records LLM-provider calls (Anthropic, OpenAI) as
+            steps. Set to False or ``SAFESHIP_AUTO_INSTRUMENT=false`` to
+            opt out for stacks that conflict with httpx monkey-patching.
     """
     resolved_key = resolve_api_key(api_key)
     resolved_endpoint = resolve_endpoint(endpoint)
+    resolved_auto = resolve_auto_instrument(auto_instrument)
 
     set_config(
         api_key=resolved_key,
@@ -68,11 +81,17 @@ def init(
         timeout_seconds=timeout_seconds,
         debug=debug,
         enabled=enabled,
+        auto_instrument=resolved_auto,
     )
 
     cfg = get_config()
     if cfg._transport is None:
         cfg._transport = Transport(cfg)
+
+    if cfg.auto_instrument:
+        install_instrumentation()
+    else:
+        uninstall_instrumentation()
 
 
 def shutdown(timeout: float = 2.0) -> None:

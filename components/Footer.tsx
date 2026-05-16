@@ -23,9 +23,9 @@ export function Footer() {
         <FooterCol
           title="Product"
           links={[
-            { label: "Pricing", href: "#pricing" },
+            { label: "Pricing", href: "/pricing" },
             { label: "Docs", href: "/docs" },
-            { label: "Changelog", href: "#" },
+            { label: "Migrate from Helicone", href: "/migrate/helicone" },
           ]}
         />
         <FooterCol
@@ -41,7 +41,7 @@ export function Footer() {
           links={[
             { label: "Twitter", href: "#" },
             { label: "GitHub", href: "#" },
-            { label: "Status", href: "#" },
+            { label: "Status", href: "/status" },
           ]}
         />
       </div>
@@ -57,9 +57,9 @@ export function Footer() {
           Terms
         </a>
         <span className="opacity-60">·</span>
-        <a href="#" className="text-fg-4 hover:text-fg-3">
+        <Link href="/security" className="text-fg-4 hover:text-fg-3">
           Security
-        </a>
+        </Link>
       </div>
     </footer>
   );

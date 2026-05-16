@@ -68,17 +68,21 @@ def wrap(agent: F, *, name: str | None = None) -> F:
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             steps: list[dict[str, Any]] = []
             token = _active_steps.set(steps)
+            llm_calls = _start_llm_buffer()
             started_at = datetime.now(timezone.utc)
             t0 = time.perf_counter()
             try:
                 result = await cast(Callable[..., Awaitable[Any]], agent)(*args, **kwargs)
-                _emit_run(label, steps, started_at, t0, args, kwargs, result, error=None)
+                _emit_run(label, steps, started_at, t0, args, kwargs, result, error=None,
+                          llm_calls=llm_calls)
                 return result
             except Exception as exc:
-                _emit_run(label, steps, started_at, t0, args, kwargs, None, error=exc)
+                _emit_run(label, steps, started_at, t0, args, kwargs, None, error=exc,
+                          llm_calls=llm_calls)
                 raise
             finally:
                 _active_steps.reset(token)
+                _stop_llm_buffer()
 
         return cast(F, async_wrapper)
 
@@ -86,19 +90,42 @@ def wrap(agent: F, *, name: str | None = None) -> F:
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
         steps: list[dict[str, Any]] = []
         token = _active_steps.set(steps)
+        llm_calls = _start_llm_buffer()
         started_at = datetime.now(timezone.utc)
         t0 = time.perf_counter()
         try:
             result = agent(*args, **kwargs)
-            _emit_run(label, steps, started_at, t0, args, kwargs, result, error=None)
+            _emit_run(label, steps, started_at, t0, args, kwargs, result, error=None,
+                      llm_calls=llm_calls)
             return result
         except Exception as exc:
-            _emit_run(label, steps, started_at, t0, args, kwargs, None, error=exc)
+            _emit_run(label, steps, started_at, t0, args, kwargs, None, error=exc,
+                      llm_calls=llm_calls)
             raise
         finally:
             _active_steps.reset(token)
+            _stop_llm_buffer()
 
     return cast(F, sync_wrapper)
+
+
+def _start_llm_buffer() -> list[dict[str, Any]] | None:
+    """Initialize a fresh per-run raw-LLM-call buffer if auto-instrumentation
+    is in scope. Returns the buffer list (or None if instrumentation isn't
+    loaded / installed). Import locally to avoid a circular import."""
+    try:
+        from . import _instrument
+        return _instrument.start_recording_buffer()
+    except Exception:
+        return None
+
+
+def _stop_llm_buffer() -> None:
+    try:
+        from . import _instrument
+        _instrument.clear_recording_buffer()
+    except Exception:
+        pass
 
 
 def _emit_run(
@@ -110,6 +137,7 @@ def _emit_run(
     kwargs: dict,
     result: Any,
     error: BaseException | None,
+    llm_calls: list[dict[str, Any]] | None = None,
 ) -> None:
     config = get_config()
     transport = cast(Optional[Transport], config._transport)
@@ -132,7 +160,7 @@ def _emit_run(
             }
         ]
 
-    payload = {
+    payload: dict[str, Any] = {
         "run": {
             "trigger": "production",
             "score": None,
@@ -143,6 +171,12 @@ def _emit_run(
         },
         "steps": steps,
     }
+    # Phase 3 cache: ship the raw LLM call records alongside the trace so
+    # the server can persist them on runs.cached_llm_calls. Only included
+    # when non-empty to keep payloads small for agents that don't use the
+    # auto-instrumented providers.
+    if llm_calls:
+        payload["cached_llm_calls"] = llm_calls
 
     try:
         transport.enqueue(payload)

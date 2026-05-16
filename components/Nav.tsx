@@ -18,7 +18,7 @@ export function Nav() {
         <a href="/docs" className="text-sm text-fg-2 transition-colors hover:text-fg">
           Docs
         </a>
-        <a href="#pricing" className="text-sm text-fg-2 transition-colors hover:text-fg">
+        <a href="/pricing" className="text-sm text-fg-2 transition-colors hover:text-fg">
           Pricing
         </a>
       </div>

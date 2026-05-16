@@ -1,4 +1,5 @@
 import "server-only";
+import { alertOnFailedRun } from "./alerts";
 import { getServiceSupabase } from "./supabase";
 
 export type IngestStep = {
@@ -20,10 +21,63 @@ export type IngestRun = {
   model?: string | null;
 };
 
+export type CachedLLMCall = {
+  index: number;
+  host: string;
+  method: string;
+  path: string;
+  request_body: string; // base64
+  request_hash: string;
+  response_status: number;
+  response_body: string; // base64
+  response_headers?: Record<string, string>;
+  duration_ms?: number;
+};
+
 export type IngestPayload = {
   run?: IngestRun;
   steps?: IngestStep[];
+  cached_llm_calls?: CachedLLMCall[];
 };
+
+// Phase 3 cache size safety net. Bigger than any realistic agent run,
+// smaller than "leaked-key-flooding-bytes." Truncates rather than rejects
+// so a chatty agent doesn't silently lose its trace.
+const MAX_CACHED_CALLS = 200;
+const MAX_CACHED_BYTES = 1024 * 1024; // 1 MB total per run
+
+function sanitizeCachedCalls(input: unknown): CachedLLMCall[] | null {
+  if (!Array.isArray(input)) return null;
+  const out: CachedLLMCall[] = [];
+  let totalBytes = 0;
+  for (const raw of input.slice(0, MAX_CACHED_CALLS)) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const reqBody = typeof r.request_body === "string" ? r.request_body : "";
+    const respBody = typeof r.response_body === "string" ? r.response_body : "";
+    const entryBytes = reqBody.length + respBody.length;
+    if (totalBytes + entryBytes > MAX_CACHED_BYTES) break;
+    totalBytes += entryBytes;
+    out.push({
+      index: typeof r.index === "number" ? r.index : out.length,
+      host: typeof r.host === "string" ? r.host : "",
+      method: typeof r.method === "string" ? r.method : "POST",
+      path: typeof r.path === "string" ? r.path : "",
+      request_body: reqBody,
+      request_hash: typeof r.request_hash === "string" ? r.request_hash : "",
+      response_status:
+        typeof r.response_status === "number" ? r.response_status : 0,
+      response_body: respBody,
+      response_headers:
+        r.response_headers && typeof r.response_headers === "object"
+          ? (r.response_headers as Record<string, string>)
+          : undefined,
+      duration_ms:
+        typeof r.duration_ms === "number" ? r.duration_ms : undefined,
+    });
+  }
+  return out.length > 0 ? out : null;
+}
 
 export type IngestResult = {
   run_id: string;
@@ -60,6 +114,8 @@ export async function ingestRun(
     ? run.status
     : "ok";
 
+  const cachedLLMCalls = sanitizeCachedCalls(payload.cached_llm_calls);
+
   const supabase = getServiceSupabase();
 
   const { data: createdRun, error: runErr } = await supabase
@@ -72,6 +128,7 @@ export async function ingestRun(
       started_at: run.started_at ?? new Date().toISOString(),
       duration_ms: typeof run.duration_ms === "number" ? run.duration_ms : null,
       model: run.model ?? null,
+      cached_llm_calls: cachedLLMCalls,
     })
     .select("id")
     .single();
@@ -102,6 +159,20 @@ export async function ingestRun(
     .update({ first_trace_at: new Date().toISOString() })
     .eq("id", projectId)
     .is("first_trace_at", null);
+
+  // Fire-and-forget alert dispatch for failed runs. Awaiting would block
+  // the ingest response on Resend/Slack latency, so we deliberately don't
+  // — alertOnFailedRun swallows every error internally.
+  if (runStatus === "fail") {
+    const ctx = {
+      projectId,
+      runId: createdRun.id as string,
+      runStatus: "fail" as const,
+      durationMs: typeof run.duration_ms === "number" ? run.duration_ms : null,
+      triggeredAt: run.started_at ?? new Date().toISOString(),
+    };
+    void alertOnFailedRun(ctx);
+  }
 
   return { run_id: createdRun.id, steps: traceRows.length };
 }

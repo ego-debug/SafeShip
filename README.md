@@ -90,7 +90,7 @@ Without this, the app still runs — the Suggestions queue and "Suggest a regres
 | Endpoint group | Daily / project | Burst / project | Override env vars |
 |---|---|---|---|
 | Claude suggestion endpoints | 50 / 24h | 5 / 5min | `SAFESHIP_SUGGEST_DAILY_LIMIT`, `SAFESHIP_SUGGEST_BURST_LIMIT`, `SAFESHIP_SUGGEST_BURST_WINDOW_SECONDS` |
-| `POST /v1/traces` ingestion | 5000 / 24h | 100 / 60s | `SAFESHIP_TRACES_DAILY_LIMIT`, `SAFESHIP_TRACES_BURST_LIMIT`, `SAFESHIP_TRACES_BURST_WINDOW_SECONDS` |
+| `POST /v1/traces` ingestion | 50,000 / 24h | 200 / 60s | `SAFESHIP_TRACES_DAILY_LIMIT`, `SAFESHIP_TRACES_BURST_LIMIT`, `SAFESHIP_TRACES_BURST_WINDOW_SECONDS` |
 
 At Sonnet 4.6 prices the Claude daily cap = ~$0.75/day worst case per customer. The traces cap allows ~200 traces/hour sustained (way more than any reasonable agent), but a leaked API key can't bloat the DB by millions of rows overnight. Both endpoint groups return `429 Too Many Requests` with a `Retry-After` header when either limit is hit; the UI surfaces a "try again in N min" message. See `.env.local.example` for the env-var override values.
 

@@ -249,16 +249,30 @@ export async function acceptSuggestion(
   // is the {args, kwargs} payload our SDK records. For runs with explicit
   // steps we just take whatever's at index 0 — the runner falls back to
   // single-positional-arg invocation if it's not in {args, kwargs} shape.
+  // We also pull the Phase 3 cached_llm_calls so the runner can replay
+  // Anthropic/OpenAI calls without spending real LLM tokens in CI.
   let replayInput: unknown = null;
+  let cachedLLMCalls: unknown = null;
   if (row.run_id) {
-    const { data: firstStep } = await supabase
-      .from("traces")
-      .select("input")
-      .eq("run_id", row.run_id)
-      .order("step_index", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    replayInput = (firstStep as { input?: unknown } | null)?.input ?? null;
+    const [firstStepRes, runRes] = await Promise.all([
+      supabase
+        .from("traces")
+        .select("input")
+        .eq("run_id", row.run_id)
+        .order("step_index", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("runs")
+        .select("cached_llm_calls")
+        .eq("id", row.run_id)
+        .maybeSingle(),
+    ]);
+    replayInput =
+      (firstStepRes.data as { input?: unknown } | null)?.input ?? null;
+    cachedLLMCalls =
+      (runRes.data as { cached_llm_calls?: unknown } | null)?.cached_llm_calls ??
+      null;
   }
 
   const { data: created, error: insertErr } = await supabase
@@ -271,6 +285,7 @@ export async function acceptSuggestion(
       status: "active",
       replay_input: replayInput,
       origin_run_id: row.run_id,
+      cached_llm_calls: cachedLLMCalls,
     })
     .select("id")
     .single();

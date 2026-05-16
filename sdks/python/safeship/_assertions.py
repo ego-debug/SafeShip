@@ -138,6 +138,21 @@ class _Missing:
     def __getitem__(self, key: Any) -> _Missing:
         return self
 
+    def __contains__(self, item: Any) -> bool:
+        # Without this, Python's `x in _MISSING` falls back to iterating via
+        # __getitem__(0), __getitem__(1), …. Since our __getitem__ always
+        # returns _MISSING (never raises IndexError), that iteration spins
+        # forever. Declare ourselves explicitly empty.
+        return False
+
+    def __iter__(self):
+        # Empty iterator — for-loops and list comprehensions over a missing
+        # field yield nothing rather than hanging.
+        return iter(())
+
+    def __len__(self) -> int:
+        return 0
+
     def __eq__(self, other: Any) -> bool:
         return other is None or isinstance(other, _Missing)
 

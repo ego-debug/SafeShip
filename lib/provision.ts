@@ -8,6 +8,8 @@ export type ProvisionedProject = {
   environment: string;
   api_key: string;
   first_trace_at: string | null;
+  alerts_enabled: boolean;
+  slack_webhook_url: string | null;
 };
 
 /**
@@ -22,7 +24,7 @@ export async function getOrProvisionProject(
 
   const { data: existing, error: selectErr } = await supabase
     .from("projects")
-    .select("id, name, environment, api_key, first_trace_at")
+    .select("id, name, environment, api_key, first_trace_at, alerts_enabled, slack_webhook_url")
     .eq("user_id", clerkUserId)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -58,7 +60,7 @@ export async function getOrProvisionProject(
       environment: "prod",
       api_key: apiKey,
     })
-    .select("id, name, environment, api_key, first_trace_at")
+    .select("id, name, environment, api_key, first_trace_at, alerts_enabled, slack_webhook_url")
     .single();
   if (insertErr || !created) {
     throw new Error(`project_insert_failed: ${insertErr?.message}`);

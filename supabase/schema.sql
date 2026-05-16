@@ -70,6 +70,11 @@ create table if not exists public.projects (
   first_trace_at timestamptz                                -- set on first trace ingestion
 );
 
+-- Per-project notification settings. Defaults: email alerts on, no Slack
+-- webhook (user adds one via /app/onboarding if they want it).
+alter table public.projects add column if not exists alerts_enabled boolean not null default true;
+alter table public.projects add column if not exists slack_webhook_url text;
+
 create index if not exists projects_user_idx on public.projects (user_id);
 
 -- =====================================================================
@@ -156,6 +161,17 @@ create table if not exists public.tests (
 -- the original failure in PR comments and the dashboard.
 alter table public.tests add column if not exists replay_input  jsonb;
 alter table public.tests add column if not exists origin_run_id uuid;
+
+-- Phase-3 column: cached LLM HTTP calls captured by the auto-instrument
+-- transport at recording time. Each entry is one Anthropic or OpenAI call:
+-- {index, host, path, request_body, response_status, response_body,
+--  response_headers, duration_ms}. The CI replayer matches on
+-- (index, sha256(canonical_request_body)) and returns the cached
+-- response — making CI runs $0 at the LLM-call layer. Nullable for
+-- backwards compat: tests accepted before Phase 3 fall back to live LLM
+-- calls (current Phase 2 behavior).
+alter table public.tests add column if not exists cached_llm_calls jsonb;
+alter table public.runs  add column if not exists cached_llm_calls jsonb;
 do $$
 begin
   if not exists (
@@ -179,6 +195,45 @@ create table if not exists public.test_runs (
 );
 
 create index if not exists test_runs_test_idx on public.test_runs (test_id, created_at desc);
+
+-- =====================================================================
+-- Notification log: throttling source-of-truth for email + Slack alerts.
+-- Each row = one notification we successfully dispatched. Throttle queries
+-- (max-per-window) read this table; cleanup is best-effort (we don't
+-- delete; the table is small because of per-project throttle limits).
+-- =====================================================================
+create table if not exists public.notification_log (
+  id          uuid primary key default gen_random_uuid(),
+  project_id  uuid not null references public.projects(id) on delete cascade,
+  channel     text not null,                                -- 'email' | 'slack'
+  kind        text not null default 'failure_alert',        -- 'failure_alert' | future kinds
+  run_id      uuid references public.runs(id) on delete set null,
+  sent_at     timestamptz not null default now()
+);
+
+create index if not exists notification_log_project_channel_sent_idx
+  on public.notification_log (project_id, channel, sent_at desc);
+
+alter table public.notification_log enable row level security;
+
+-- =====================================================================
+-- Health checks: synthetic ingest pings recorded by the Vercel cron at
+-- /api/cron/ingest-ping. /status reads the last hour and computes p95.
+-- Rows are deleted by the same cron after 24h so the table stays tiny.
+-- =====================================================================
+create table if not exists public.health_checks (
+  id           uuid primary key default gen_random_uuid(),
+  kind         text not null,                              -- 'ingest_synthetic' | future kinds
+  ok           boolean not null,
+  duration_ms  integer not null,
+  detail       text,
+  checked_at   timestamptz not null default now()
+);
+
+create index if not exists health_checks_kind_checked_idx
+  on public.health_checks (kind, checked_at desc);
+
+alter table public.health_checks enable row level security;
 
 -- =====================================================================
 -- Row Level Security: all reads go through server actions / API routes

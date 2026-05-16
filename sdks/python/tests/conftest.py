@@ -35,7 +35,17 @@ def reset_safeship():
     cfg.queue_max = 1000
     cfg.debug = False
     cfg.enabled = True
+    cfg.auto_instrument = True
     cfg._transport = None
+
+    # Tests should not inherit monkey-patched httpx from a previous test.
+    try:
+        import safeship._instrument as _instrument
+        _instrument.uninstall_instrumentation()
+        _instrument.clear_recording_buffer()
+        _instrument.clear_replay_cache()
+    except Exception:
+        pass
 
     yield
 
@@ -45,6 +55,14 @@ def reset_safeship():
             cfg._transport.flush(timeout=0.1)
         except Exception:
             pass
+
+    try:
+        import safeship._instrument as _instrument
+        _instrument.uninstall_instrumentation()
+        _instrument.clear_recording_buffer()
+        _instrument.clear_replay_cache()
+    except Exception:
+        pass
 
     _ = importlib.import_module  # keep imports referenced
     _ = _transport

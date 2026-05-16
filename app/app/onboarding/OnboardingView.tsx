@@ -11,10 +11,14 @@ export function OnboardingView({
   apiKey,
   projectId,
   firstTraceAt,
+  alertsEnabled,
+  slackWebhookUrl,
 }: {
   apiKey: string;
   projectId: string;
   firstTraceAt: string | null;
+  alertsEnabled: boolean;
+  slackWebhookUrl: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("python");
   const [revealed, setRevealed] = useState(false);
@@ -111,6 +115,12 @@ export function OnboardingView({
 
         <StatusIndicator status={status} />
 
+        <AlertsPanel
+          projectId={projectId}
+          initialEnabled={alertsEnabled}
+          initialSlack={slackWebhookUrl}
+        />
+
         {status === "waiting" ? (
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -169,6 +179,148 @@ export function OnboardingView({
         </SideCard>
       </aside>
     </main>
+  );
+}
+
+function AlertsPanel({
+  projectId,
+  initialEnabled,
+  initialSlack,
+}: {
+  projectId: string;
+  initialEnabled: boolean;
+  initialSlack: string | null;
+}) {
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [slack, setSlack] = useState(initialSlack ?? "");
+  const [savedSlack, setSavedSlack] = useState(initialSlack ?? "");
+  const [saving, setSaving] = useState<"toggle" | "slack" | null>(null);
+  const [status, setStatus] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+
+  async function patch(body: Record<string, unknown>, kind: "toggle" | "slack") {
+    setSaving(kind);
+    setStatus(null);
+    try {
+      const r = await fetch(`/api/projects/${projectId}/alerts`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = (await r.json().catch(() => ({}))) as {
+        error?: string;
+        detail?: string;
+      };
+      if (!r.ok) {
+        setStatus({
+          kind: "err",
+          msg: data.detail || data.error || `request failed (${r.status})`,
+        });
+        return false;
+      }
+      setStatus({ kind: "ok", msg: "Saved." });
+      setTimeout(() => setStatus(null), 1500);
+      return true;
+    } catch (err) {
+      setStatus({
+        kind: "err",
+        msg: err instanceof Error ? err.message : "network error",
+      });
+      return false;
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function onToggle() {
+    const next = !enabled;
+    setEnabled(next);
+    const ok = await patch({ alerts_enabled: next }, "toggle");
+    if (!ok) setEnabled(!next); // revert on failure
+  }
+
+  async function onSaveSlack() {
+    const trimmed = slack.trim();
+    if (trimmed && !trimmed.startsWith("https://hooks.slack.com/")) {
+      setStatus({
+        kind: "err",
+        msg: "Slack webhook must start with https://hooks.slack.com/",
+      });
+      return;
+    }
+    const ok = await patch({ slack_webhook_url: trimmed || null }, "slack");
+    if (ok) setSavedSlack(trimmed);
+  }
+
+  const slackDirty = slack.trim() !== (savedSlack ?? "");
+
+  return (
+    <section className="flex flex-col gap-4 rounded-xl border border-line bg-[rgba(255,255,255,0.015)] p-5">
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-[15px] font-semibold text-fg">Failure alerts</h3>
+          <p className="mt-1 text-[12.5px] text-fg-3">
+            Throttled to one alert per 10 minutes, max 10 per day. We send
+            on any run with <code className="rounded border border-line bg-black/40 px-1 py-0.5 font-mono text-[11px]">status=fail</code>.
+          </p>
+        </div>
+        <label className="flex flex-shrink-0 cursor-pointer items-center gap-2.5">
+          <span className="text-[13px] text-fg-2">
+            {enabled ? "On" : "Off"}
+          </span>
+          <button
+            type="button"
+            onClick={onToggle}
+            disabled={saving === "toggle"}
+            aria-pressed={enabled}
+            className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
+              enabled ? "bg-accent" : "bg-[#2a2a2e]"
+            } disabled:opacity-60`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                enabled ? "translate-x-[18px]" : "translate-x-[2px]"
+              }`}
+            />
+          </button>
+        </label>
+      </header>
+
+      <div className="grid gap-2">
+        <label className="text-[12px] font-medium uppercase tracking-[0.12em] text-fg-4">
+          Slack incoming webhook URL (optional)
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={slack}
+            onChange={(e) => setSlack(e.target.value)}
+            placeholder="https://hooks.slack.com/services/..."
+            className="min-w-[260px] flex-1 rounded-md border border-line bg-black/40 px-3 py-2 font-mono text-[12.5px] text-fg placeholder:text-fg-4 focus:border-line-strong focus:outline-none"
+          />
+          <button
+            type="button"
+            disabled={saving === "slack" || !slackDirty}
+            onClick={onSaveSlack}
+            className="rounded-md border border-line-strong px-3 py-2 text-[12.5px] font-medium text-fg transition-colors hover:border-[rgba(255,255,255,0.25)] disabled:opacity-50"
+          >
+            {saving === "slack" ? "Saving…" : "Save"}
+          </button>
+        </div>
+        <p className="text-[11.5px] text-fg-4">
+          Create one at <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-[#d3ff85]">api.slack.com/messaging/webhooks</a>. Leave blank to disable Slack alerts.
+        </p>
+      </div>
+
+      {status && (
+        <p
+          className={`text-[12px] ${
+            status.kind === "ok" ? "text-accent" : "text-danger"
+          }`}
+        >
+          {status.msg}
+        </p>
+      )}
+    </section>
   );
 }
 

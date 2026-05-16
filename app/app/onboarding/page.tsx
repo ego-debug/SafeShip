@@ -13,6 +13,8 @@ export default async function OnboardingPage() {
       apiKey={project.api_key}
       projectId={project.id}
       firstTraceAt={project.first_trace_at}
+      alertsEnabled={project.alerts_enabled}
+      slackWebhookUrl={project.slack_webhook_url}
     />
   );
 }

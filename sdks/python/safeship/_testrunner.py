@@ -43,6 +43,13 @@ class ManifestEntry:
     synthesizes when no explicit safeship.step() calls were made), but any
     JSON value is tolerated and falls back to single-positional-arg
     invocation.
+
+    `cached_llm_calls` is the Phase 3 replay cache: a list of recorded
+    Anthropic/OpenAI calls (base64 request + response bodies + hashes).
+    When present, the test runner installs it via the auto-instrument
+    transport before invoking the agent so cache-matched LLM calls return
+    instantly with no provider hit. None for tests accepted before Phase 3
+    or for agents that don't use the auto-instrumented providers.
     """
 
     id: str
@@ -51,6 +58,7 @@ class ManifestEntry:
     replay_input: Any = None
     original_trace_id: str | None = None
     created_at: str | None = None
+    cached_llm_calls: list[dict[str, Any]] | None = None
 
 
 @dataclass
@@ -71,18 +79,29 @@ class TestRunResult:
 # ---------- runner ----------
 
 
-def run_test(entry: ManifestEntry, agent: Callable[..., Any]) -> TestRunResult:
-    """Execute one manifest entry against `agent`. Returns the outcome."""
+def run_test(
+    entry: ManifestEntry,
+    agent: Callable[..., Any],
+    replay_mode: str = "cached_or_live",
+) -> TestRunResult:
+    """Execute one manifest entry against `agent`. Returns the outcome.
+
+    `replay_mode` controls how cached LLM responses are used (see
+    ``_instrument.set_replay_cache``). Honored only when the entry has a
+    non-empty ``cached_llm_calls`` and the
+    ``SAFESHIP_REPLAY_LLM_CACHE`` env flag is set; otherwise we fall back
+    to the live behavior identical to Phase 2."""
     agent_error: str | None = None
     captured: list[Mapping[str, Any]] = []
 
     wrapped = safeship_wrap(agent, name=getattr(agent, "__name__", "agent"))
 
     with _capture_run() as buffer:
-        try:
-            _invoke(wrapped, entry.replay_input)
-        except Exception as e:  # noqa: BLE001 — we surface this verbatim to the user
-            agent_error = f"{type(e).__name__}: {e}"
+        with _maybe_install_replay(entry, replay_mode):
+            try:
+                _invoke(wrapped, entry.replay_input)
+            except Exception as e:  # noqa: BLE001 — surface verbatim
+                agent_error = f"{type(e).__name__}: {e}"
 
     if buffer.runs:
         captured = list(buffer.runs[-1].get("steps", []))
@@ -112,12 +131,42 @@ def run_test(entry: ManifestEntry, agent: Callable[..., Any]) -> TestRunResult:
 
 
 def run_all(
-    entries: Sequence[ManifestEntry], agent: Callable[..., Any]
+    entries: Sequence[ManifestEntry],
+    agent: Callable[..., Any],
+    replay_mode: str = "cached_or_live",
 ) -> list[TestRunResult]:
     """Run every manifest entry against `agent`, in order. Returns a list
     of results. Never raises — each entry's outcome is captured in its
     TestRunResult."""
-    return [run_test(e, agent) for e in entries]
+    return [run_test(e, agent, replay_mode=replay_mode) for e in entries]
+
+
+@contextmanager
+def _maybe_install_replay(
+    entry: ManifestEntry, replay_mode: str
+) -> Iterator[None]:
+    """If the entry has a cached_llm_calls fixture AND the replay feature
+    flag is on, install it via the auto-instrument transport for the
+    duration of the test. Otherwise no-op (live-call fallback = Phase 2
+    behavior)."""
+    calls = entry.cached_llm_calls
+    if not calls:
+        yield
+        return
+    try:
+        from . import _instrument
+        if not _instrument.is_replay_feature_enabled():
+            yield
+            return
+        _instrument.set_replay_cache(list(calls), mode=replay_mode)
+        try:
+            yield
+        finally:
+            _instrument.clear_replay_cache()
+    except Exception:
+        # If the replay layer is broken for any reason, fall back to live
+        # behavior rather than failing the test for the wrong reason.
+        yield
 
 
 # ---------- internals ----------

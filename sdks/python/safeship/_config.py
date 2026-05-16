@@ -21,6 +21,12 @@ class _Config:
     queue_max: int = 1000
     debug: bool = False
     enabled: bool = True
+    # When True, init() installs a global httpx interceptor that auto-
+    # records LLM-provider HTTP calls (Anthropic, OpenAI) as steps on the
+    # in-flight wrapped agent run. No customer code change needed.
+    # Disable with SAFESHIP_AUTO_INSTRUMENT=false if it conflicts with
+    # some other library that depends on raw httpx behavior.
+    auto_instrument: bool = True
     # internal: holds the singleton transport once started
     _transport: object = field(default=None, repr=False)
 
@@ -62,3 +68,13 @@ def resolve_endpoint(explicit: str | None) -> str:
     if env:
         return env
     return _config.endpoint
+
+
+def resolve_auto_instrument(explicit: bool | None) -> bool:
+    """Resolve auto_instrument from (in order): explicit arg, env var, default True."""
+    if explicit is not None:
+        return explicit
+    env = os.environ.get("SAFESHIP_AUTO_INSTRUMENT")
+    if env is not None:
+        return env.strip().lower() not in {"0", "false", "no", "off"}
+    return _config.auto_instrument

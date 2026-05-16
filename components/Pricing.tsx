@@ -12,9 +12,9 @@ const COMPARE: Array<{
   detail: string;
   us?: boolean;
 }> = [
-  { vendor: "LangSmith", tag: "per-seat", detail: "$39 / user / month + per-trace overage" },
-  { vendor: "Braintrust", tag: "enterprise", detail: "$249 / month, enterprise focus" },
-  { vendor: "Langfuse", tag: "self-host", detail: "Free — but 4 services to run" },
+  { vendor: "Per-seat eval platforms", tag: "per-seat", detail: "$39+ / user / month + per-trace overage" },
+  { vendor: "Enterprise eval suites", tag: "enterprise", detail: "$249+ / month, designed for ML teams" },
+  { vendor: "Self-hosted observability", tag: "self-host", detail: "Free, but a multi-service stack to run yourself" },
   { vendor: "SafeShip", tag: "flat", detail: "$29.99 / month flat · no seats", us: true },
 ];
 

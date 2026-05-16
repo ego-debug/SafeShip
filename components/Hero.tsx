@@ -29,12 +29,20 @@ export function Hero() {
         </h1>
 
         <p
-          className="mb-8 max-w-[540px] animate-rise text-lg leading-[1.5] text-fg-2 [text-wrap:pretty]"
+          className="mb-4 max-w-[540px] animate-rise text-lg leading-[1.5] text-fg-2 [text-wrap:pretty]"
           style={{ animationDelay: "0.2s" }}
         >
           Every production failure becomes a regression test. Drop in a
           4-line SDK — SafeShip captures the trace, writes the assertion,
           and blocks any future deploy that would reproduce it.
+        </p>
+
+        <p
+          className="mb-8 max-w-[540px] animate-rise text-[13.5px] leading-[1.5] text-fg-3"
+          style={{ animationDelay: "0.24s" }}
+        >
+          Works with the Anthropic SDK, OpenAI SDK, MCP tool calls, or any
+          Python callable — no framework lock-in.
         </p>
 
         <div
