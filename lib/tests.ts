@@ -8,6 +8,16 @@ export type TestRow = {
   code_yaml: string | null;
   status: "active" | "muted" | "deleted";
   created_at: string;
+  // Phase 2: replay fixture (the input the failing agent was called with)
+  // + the run that produced the failure. Null for tests accepted before
+  // Phase 2 — those can't be run by the CLI test runner until re-accepted.
+  replay_input: unknown | null;
+  origin_run_id: string | null;
+  // Phase 3: how many LLM provider calls are cached for this test.
+  // Surfaced as a "LLM cached (N)" badge in the UI so the user can see
+  // which tests replay for free in CI vs incur a live LLM bill on every
+  // PR run. We don't ship the full payload to the client — just the count.
+  cached_llm_calls_count: number;
 };
 
 export type TestsSnapshot = {
@@ -47,7 +57,9 @@ export async function getTestsSnapshot(
     await Promise.all([
       supabase
         .from("tests")
-        .select("id, name, plain_english, code_yaml, status, created_at")
+        .select(
+          "id, name, plain_english, code_yaml, status, created_at, replay_input, origin_run_id, cached_llm_calls",
+        )
         .eq("project_id", project.id)
         .neq("status", "deleted")
         .order("created_at", { ascending: false })
@@ -82,7 +94,32 @@ export async function getTestsSnapshot(
         .maybeSingle(),
     ]);
 
-  const tests = (testsRes.data ?? []) as TestRow[];
+  type RawRow = {
+    id: string;
+    name: string;
+    plain_english: string | null;
+    code_yaml: string | null;
+    status: "active" | "muted" | "deleted";
+    created_at: string;
+    replay_input: unknown | null;
+    origin_run_id: string | null;
+    cached_llm_calls: unknown;
+  };
+  const tests: TestRow[] = ((testsRes.data ?? []) as RawRow[]).map((r) => ({
+    id: r.id,
+    name: r.name,
+    plain_english: r.plain_english,
+    code_yaml: r.code_yaml,
+    status: r.status,
+    created_at: r.created_at,
+    replay_input: r.replay_input,
+    origin_run_id: r.origin_run_id,
+    // Don't ship the full cache payload to the client — it can be tens of
+    // KB per call. Just count.
+    cached_llm_calls_count: Array.isArray(r.cached_llm_calls)
+      ? r.cached_llm_calls.length
+      : 0,
+  }));
   const active = tests.filter((t) => t.status === "active").length;
 
   return {

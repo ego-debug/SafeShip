@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { DashboardFailure } from "@/lib/projects";
 
-export function FailureCards({ failures }: { failures: DashboardFailure[] }) {
+export function FailureCards({
+  failures,
+  highlightIds,
+}: {
+  failures: DashboardFailure[];
+  highlightIds?: Set<string>;
+}) {
   if (failures.length === 0) {
     return (
       <div
@@ -16,14 +22,20 @@ export function FailureCards({ failures }: { failures: DashboardFailure[] }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-      {failures.map((f) => (
-        <article
-          key={`${f.run_id}-${f.step_index}`}
-          className="flex flex-col gap-3 rounded-xl border border-line-strong p-4"
-          style={{
-            background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)",
-          }}
-        >
+      {failures.map((f) => {
+        const isNew = highlightIds?.has(f.run_id);
+        return (
+          <article
+            key={`${f.run_id}-${f.step_index}`}
+            className="flex flex-col gap-3 rounded-xl border border-line-strong p-4"
+            style={{
+              background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)",
+              ...(isNew
+                ? { animation: "safeshipNewRowFade 1.5s ease-out" }
+                : null),
+            }}
+            data-is-new={isNew ? "true" : undefined}
+          >
           <div className="flex items-center justify-between">
             <span className="rounded border border-line-strong bg-[rgba(255,255,255,0.02)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-fg-3">
               {f.tool_name ?? "step"}
@@ -45,8 +57,9 @@ export function FailureCards({ failures }: { failures: DashboardFailure[] }) {
           >
             View trace →
           </Link>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }

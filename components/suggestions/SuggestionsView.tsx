@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   AcceptedTest,
   PendingSuggestion,
   SuggestionsSummary,
 } from "@/lib/suggestions";
+import { ErrorBanner } from "@/components/ErrorBanner";
+
+const UNDO_WINDOW_MS = 5000;
+
+type PendingAction = {
+  type: "accept" | "skip";
+  suggestion: PendingSuggestion;
+};
 
 export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) {
   const router = useRouter();
@@ -17,50 +25,131 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
   const [generating, setGenerating] = useState(false);
   const [flash, setFlash] = useState<"accept" | "skip" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+
+  // Holds the deferred-commit timer + a flag so we can fire the API call
+  // even if the component unmounts (e.g. customer navigates away) — losing
+  // an accept on unmount would silently swallow their click.
+  const commitTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingActionRef = useRef<PendingAction | null>(null);
+  pendingActionRef.current = pendingAction;
 
   const current = items[0];
 
-  async function handleAccept() {
-    if (!current) return;
-    setFlash("accept");
-    setError(null);
-    setTimeout(() => setFlash(null), 500);
+  const commitAction = useCallback(async (action: PendingAction) => {
+    const endpoint =
+      action.type === "accept"
+        ? `/api/suggestions/${action.suggestion.id}/accept`
+        : `/api/suggestions/${action.suggestion.id}/skip`;
     try {
-      const r = await fetch(`/api/suggestions/${current.id}/accept`, {
-        method: "POST",
-      });
-      if (!r.ok) throw new Error((await r.json()).error ?? "accept_failed");
-      setAccepted((prev) => [
-        {
-          id: current.id,
-          name: current.name,
-          plain_english: current.plain_english,
-          code_yaml: current.code_yaml,
-          created_at: new Date().toISOString(),
-        },
-        ...prev,
-      ].slice(0, 5));
-      setAcceptedToday((n) => n + 1);
-      setItems((prev) => prev.slice(1));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "accept_failed");
+      const r = await fetch(endpoint, { method: "POST" });
+      if (!r.ok) {
+        const data = (await r.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? `${action.type}_failed`);
+        // On failure, restore the suggestion to the top of the queue so
+        // the customer can retry rather than losing it silently.
+        setItems((prev) => [action.suggestion, ...prev]);
+        if (action.type === "accept") {
+          setAcceptedToday((n) => Math.max(0, n - 1));
+          setAccepted((prev) =>
+            prev.filter((t) => t.id !== action.suggestion.id),
+          );
+        }
+      }
+    } catch {
+      setError("network_error");
+      setItems((prev) => [action.suggestion, ...prev]);
+      if (action.type === "accept") {
+        setAcceptedToday((n) => Math.max(0, n - 1));
+        setAccepted((prev) =>
+          prev.filter((t) => t.id !== action.suggestion.id),
+        );
+      }
     }
+  }, []);
+
+  const clearPending = useCallback(() => {
+    if (commitTimerRef.current) {
+      clearTimeout(commitTimerRef.current);
+      commitTimerRef.current = null;
+    }
+  }, []);
+
+  const queueAction = useCallback(
+    (type: "accept" | "skip", suggestion: PendingSuggestion) => {
+      setError(null);
+      setFlash(type);
+      setTimeout(() => setFlash(null), 450);
+
+      // If there's already a pending undo-able action, commit it now —
+      // pressing Y/N again means "I'm done deliberating on the previous one."
+      const prev = pendingActionRef.current;
+      if (prev) {
+        clearPending();
+        void commitAction(prev);
+      }
+
+      // Optimistically remove from queue + add to accepted (if accept).
+      setItems((q) => q.slice(1));
+      if (type === "accept") {
+        setAccepted((prev) =>
+          [
+            {
+              id: suggestion.id,
+              name: suggestion.name,
+              plain_english: suggestion.plain_english,
+              code_yaml: suggestion.code_yaml,
+              created_at: new Date().toISOString(),
+            },
+            ...prev,
+          ].slice(0, 5),
+        );
+        setAcceptedToday((n) => n + 1);
+      }
+
+      const action: PendingAction = { type, suggestion };
+      setPendingAction(action);
+      commitTimerRef.current = setTimeout(() => {
+        setPendingAction(null);
+        commitTimerRef.current = null;
+        void commitAction(action);
+      }, UNDO_WINDOW_MS);
+    },
+    [clearPending, commitAction],
+  );
+
+  const undoPending = useCallback(() => {
+    const action = pendingActionRef.current;
+    if (!action) return;
+    clearPending();
+    // Put the suggestion back at the top.
+    setItems((q) => [action.suggestion, ...q]);
+    if (action.type === "accept") {
+      setAccepted((prev) => prev.filter((t) => t.id !== action.suggestion.id));
+      setAcceptedToday((n) => Math.max(0, n - 1));
+    }
+    setPendingAction(null);
+  }, [clearPending]);
+
+  // Commit any pending action on unmount (don't lose customer's click).
+  useEffect(() => {
+    return () => {
+      const a = pendingActionRef.current;
+      if (a) {
+        clearPending();
+        void commitAction(a);
+      }
+    };
+  }, [clearPending, commitAction]);
+
+  function handleAccept() {
+    if (!current) return;
+    queueAction("accept", current);
   }
 
-  async function handleSkip() {
+  function handleSkip() {
     if (!current) return;
-    setFlash("skip");
-    setError(null);
-    setTimeout(() => setFlash(null), 500);
-    try {
-      const r = await fetch(`/api/suggestions/${current.id}/skip`, {
-        method: "POST",
-      });
-      if (!r.ok) throw new Error((await r.json()).error ?? "skip_failed");
-      setItems((prev) => prev.slice(1));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "skip_failed");
-    }
+    queueAction("skip", current);
   }
 
   async function handleGenerate() {
@@ -176,9 +265,11 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
         )}
 
         {error && (
-          <div className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
-            {error}
-          </div>
+          <ErrorBanner
+            message={humanizeError(error)}
+            onRetry={isRetryable(error) ? handleGenerate : undefined}
+            onDismiss={() => setError(null)}
+          />
         )}
 
         {!current ? (
@@ -198,7 +289,13 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
           />
         )}
 
+        <UpNextPreview items={items.slice(1, 4)} extra={Math.max(0, items.length - 4)} />
+
         <KeyboardHints />
+
+        {pendingAction && (
+          <UndoToast action={pendingAction} onUndo={undoPending} />
+        )}
       </div>
 
       <aside className="flex flex-col gap-4">
@@ -415,17 +512,151 @@ function EmptyQueue({
   );
 }
 
+// Map raw error codes from the API into user-readable text. Falls back
+// to the raw code if we don't have a translation yet (better than nothing).
+function humanizeError(code: string): string {
+  if (code.startsWith("Rate limit")) return code; // already formatted by handleGenerate
+  switch (code) {
+    case "network_error":
+      return "Network error — check your connection and try again.";
+    case "engine_not_configured":
+      return "Auto-suggest engine isn't configured. Set ANTHROPIC_API_KEY in your environment and redeploy.";
+    case "accept_failed":
+      return "Couldn't accept the suggestion. It's been restored to the top of the queue; try again.";
+    case "skip_failed":
+      return "Couldn't skip the suggestion. It's been restored to the top of the queue; try again.";
+    case "generate_failed":
+      return "Couldn't generate new suggestions. Try again, or check the server logs.";
+    default:
+      return code;
+  }
+}
+
+function isRetryable(code: string): boolean {
+  // Engine-not-configured is a config issue that retry can't fix.
+  if (code === "engine_not_configured") return false;
+  // Rate-limit copy already tells the user when to try again — no retry
+  // button (they'd just hit the limit again immediately).
+  if (code.startsWith("Rate limit")) return false;
+  return true;
+}
+
 function KeyboardHints() {
   return (
-    <footer className="mt-4 flex flex-wrap items-center gap-4 font-mono text-[11px] text-fg-4">
+    <footer className="mt-2 flex flex-wrap items-center gap-4 font-mono text-[11px] text-fg-4">
       <span>
         <KeyHint k="Y" /> accept
       </span>
       <span>
         <KeyHint k="N" /> skip
       </span>
-      <span className="opacity-60">queue updates live as failures land</span>
+      <span className="opacity-70">5-second undo after either</span>
     </footer>
+  );
+}
+
+function UpNextPreview({
+  items,
+  extra,
+}: {
+  items: PendingSuggestion[];
+  extra: number;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <section className="mt-2 flex flex-col gap-1.5">
+      <span className="font-mono text-[10.5px] uppercase tracking-wide text-fg-4">
+        Up next
+      </span>
+      <ul className="flex flex-col gap-1">
+        {items.map((s, i) => (
+          <li
+            key={s.id}
+            className="flex items-baseline gap-3 truncate font-mono text-[12px]"
+            style={{ opacity: 0.85 - i * 0.18 }}
+          >
+            <span className="text-fg-4">{i + 2}.</span>
+            <span className="truncate text-fg-2">{s.name}</span>
+            {s.severity && (
+              <span
+                className={`flex-none text-[10.5px] uppercase tracking-wide ${
+                  s.severity === "high"
+                    ? "text-danger"
+                    : s.severity === "medium"
+                    ? "text-[#f5c14a]"
+                    : "text-fg-4"
+                }`}
+              >
+                {s.severity}
+              </span>
+            )}
+          </li>
+        ))}
+        {extra > 0 && (
+          <li className="font-mono text-[11px] text-fg-4" style={{ opacity: 0.5 }}>
+            + {extra} more
+          </li>
+        )}
+      </ul>
+    </section>
+  );
+}
+
+function UndoToast({
+  action,
+  onUndo,
+}: {
+  action: PendingAction;
+  onUndo: () => void;
+}) {
+  // Visible progress bar so the customer sees how long they have left
+  // to undo. Pure CSS animation — no per-frame React re-render needed.
+  const label =
+    action.type === "accept" ? "Accepted" : "Skipped";
+  const accentColor =
+    action.type === "accept" ? "rgba(194,249,112,0.7)" : "rgba(245,193,74,0.7)";
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
+    >
+      <div
+        className="pointer-events-auto relative flex items-center gap-4 overflow-hidden rounded-xl border border-line-strong px-4 py-2.5 shadow-2xl"
+        style={{
+          background: "rgba(15,15,17,0.96)",
+          backdropFilter: "blur(6px)",
+        }}
+      >
+        <span className="font-mono text-[12px] text-fg-3">
+          <b className="font-medium text-fg-2">{label}</b>{" "}
+          <span className="text-fg-4">·</span>{" "}
+          <span className="truncate text-fg-2">{action.suggestion.name}</span>
+        </span>
+        <button
+          onClick={onUndo}
+          className="rounded border border-line-strong bg-[rgba(255,255,255,0.04)] px-2.5 py-1 text-[12px] font-medium text-fg transition-colors hover:border-[rgba(255,255,255,0.25)]"
+        >
+          Undo
+        </button>
+        <span
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 h-[2px]"
+          style={{
+            background: accentColor,
+            width: "100%",
+            transformOrigin: "left",
+            animation: `safeshipUndoProgress ${UNDO_WINDOW_MS}ms linear forwards`,
+          }}
+        />
+        <style>{`
+          @keyframes safeshipUndoProgress {
+            from { transform: scaleX(1); }
+            to   { transform: scaleX(0); }
+          }
+        `}</style>
+      </div>
+    </div>
   );
 }
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { RunDetail, RunDetailStep } from "@/lib/runs";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 export function TraceDetailView({ run }: { run: RunDetail }) {
   const failingStep = run.steps.find((s) => s.status === "fail");
@@ -34,12 +35,7 @@ export function TraceDetailView({ run }: { run: RunDetail }) {
                 showVerdict={isFailedRun && step.status === "fail"}
               />
             ))}
-            {run.steps.length === 0 && (
-              <li className="rounded-xl border border-dashed border-line p-6 text-center text-sm text-fg-3">
-                This run has no trace steps. That&apos;s unusual — your SDK
-                may have failed to capture them.
-              </li>
-            )}
+            {run.steps.length === 0 && <NoStepsState />}
           </ol>
         </section>
 
@@ -174,6 +170,10 @@ function StepCard({
   const failed = step.status === "fail";
   const warn = step.status === "warn";
 
+  const provider = extractProvider(step.input);
+  const usage = extractLLMUsage(step.output);
+  const curlCommand = buildCurlCommand(step, provider);
+
   return (
     <li
       className={`overflow-hidden rounded-xl border transition-colors ${
@@ -210,8 +210,35 @@ function StepCard({
               {step.kind}
             </span>
           )}
+          {provider && (
+            <span
+              className="rounded border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide"
+              style={{
+                background: "rgba(194,249,112,0.08)",
+                borderColor: "rgba(194,249,112,0.25)",
+                color: "#c2f970",
+              }}
+              title={`Auto-captured ${provider} call`}
+            >
+              {provider}
+            </span>
+          )}
         </div>
         <div className="flex flex-none items-center gap-3 font-mono text-[11.5px] text-fg-4">
+          {usage && (
+            <span
+              className="hidden items-center gap-1 sm:inline-flex"
+              title={`Input ${usage.input ?? "?"} · Output ${usage.output ?? "?"} tokens`}
+            >
+              <span className="text-fg-3">
+                {usage.input ?? "?"}
+                <span className="text-fg-4">in</span>
+                {" / "}
+                {usage.output ?? "?"}
+                <span className="text-fg-4">out</span>
+              </span>
+            </span>
+          )}
           <span>{fmtDuration(step.duration_ms)}</span>
           <span
             className={`transition-transform ${open ? "rotate-180" : ""}`}
@@ -229,6 +256,12 @@ function StepCard({
             <IoBlock label="Output" data={step.output} />
           </div>
 
+          {curlCommand && (
+            <div className="mt-4">
+              <CurlBlock command={curlCommand} provider={provider} />
+            </div>
+          )}
+
           {showVerdict && (
             <div
               className="mt-4 rounded-lg border p-3.5"
@@ -241,9 +274,16 @@ function StepCard({
                 What went wrong
               </p>
               <p className="text-[13px] leading-relaxed text-fg-2">
-                This step failed. Once the auto-suggest engine ships in
-                Stage 5, this callout will contain a plain-English diagnosis
-                and a one-click "add as regression test" action.
+                This step failed. Open the{" "}
+                <Link
+                  href="/app/suggestions"
+                  className="text-accent hover:text-[#d3ff85]"
+                >
+                  suggestions queue
+                </Link>{" "}
+                or click <b className="text-fg">Suggest a regression test</b>{" "}
+                below to draft a YAML assertion that would have caught this
+                exact failure mode.
               </p>
             </div>
           )}
@@ -274,24 +314,123 @@ function StepDot({ status }: { status: string | null }) {
 }
 
 function IoBlock({ label, data }: { label: string; data: unknown }) {
+  const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const display =
     data == null
       ? "(none)"
       : typeof data === "string"
       ? data
       : safeStringify(data);
+
+  // Heuristic: if the rendered text is long enough that we'd be hiding
+  // content behind the scroll cap, show an "Expand" toggle.
+  const isLong = typeof display === "string" && display.length > 1200;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(display);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // older browsers / no permission — silent
+    }
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="font-mono text-[10.5px] uppercase tracking-wide text-fg-4">
-        {label}
-      </span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[10.5px] uppercase tracking-wide text-fg-4">
+          {label}
+        </span>
+        <div className="flex items-center gap-3">
+          {isLong && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded((v) => !v);
+              }}
+              className="font-mono text-[10.5px] text-fg-3 transition-colors hover:text-fg-2"
+            >
+              {expanded ? "Collapse" : "Expand"}
+            </button>
+          )}
+          {data != null && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                copy();
+              }}
+              className="font-mono text-[10.5px] text-fg-3 transition-colors hover:text-fg-2"
+              title="Copy raw value to clipboard"
+            >
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
+          )}
+        </div>
+      </div>
       <pre
-        className="max-h-80 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-line p-3 font-mono text-[11.5px] leading-[1.55] text-fg"
+        className={`overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-line p-3 font-mono text-[11.5px] leading-[1.55] text-fg ${
+          expanded ? "max-h-[60vh]" : "max-h-80"
+        }`}
         style={{ background: "rgba(0,0,0,0.35)" }}
       >
         <code>{display}</code>
       </pre>
     </div>
+  );
+}
+
+function CurlBlock({
+  command,
+  provider,
+}: {
+  command: string;
+  provider: string | null;
+}) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // silent
+    }
+  }
+  return (
+    <details
+      className="overflow-hidden rounded-md border border-line"
+      style={{ background: "rgba(0,0,0,0.35)" }}
+    >
+      <summary className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 hover:bg-[rgba(255,255,255,0.02)]">
+        <span className="font-mono text-[10.5px] uppercase tracking-wide text-fg-4">
+          Reproduce this {provider ?? "LLM"} call (cURL)
+        </span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copy();
+          }}
+          className="font-mono text-[10.5px] text-fg-3 transition-colors hover:text-fg-2"
+        >
+          {copied ? "Copied ✓" : "Copy"}
+        </button>
+      </summary>
+      <pre className="max-h-80 overflow-auto whitespace-pre border-t border-line p-3 font-mono text-[11.5px] leading-[1.55] text-fg">
+        <code>{command}</code>
+      </pre>
+      <p className="border-t border-line px-3 py-2 text-[11px] text-fg-4">
+        Replace <code className="font-mono text-fg-3">$YOUR_API_KEY</code>{" "}
+        with your own provider key. SafeShip never sees your LLM
+        provider keys; this command runs entirely in your terminal.
+      </p>
+    </details>
   );
 }
 
@@ -346,42 +485,48 @@ function ActionBar({ runId }: { runId: string }) {
       }
       router.push("/app/suggestions");
     } catch {
-      setSuggestErr("network_error");
+      setSuggestErr("Network error — check your connection and try again.");
     } finally {
       setSuggesting(false);
     }
   }
 
   return (
-    <div
-      className="sticky bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-strong px-4 py-3 backdrop-blur"
-      style={{ background: "rgba(10,10,11,0.85)" }}
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={generateSuggestion}
-          disabled={suggesting}
-          className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85] disabled:opacity-60"
-        >
-          {suggesting ? "Generating…" : "✓ Suggest a regression test"}
-        </button>
-        <button
-          disabled
-          title="Coming with the eval set in a follow-up"
-          className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-[rgba(255,255,255,0.02)] px-4 py-2 text-sm text-fg-2 opacity-60"
-        >
-          Mark as expected behavior
-        </button>
-        {suggestErr && (
-          <span className="font-mono text-[11px] text-danger">{suggestErr}</span>
-        )}
-      </div>
-      <button
-        onClick={copyShareUrl}
-        className="font-mono text-[12px] text-fg-3 transition-colors hover:text-fg-2"
+    <div className="sticky bottom-3 flex flex-col gap-2">
+      {suggestErr && (
+        <ErrorBanner
+          message={suggestErr}
+          onRetry={isSuggestRetryable(suggestErr) ? generateSuggestion : undefined}
+          onDismiss={() => setSuggestErr(null)}
+        />
+      )}
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-strong px-4 py-3 backdrop-blur"
+        style={{ background: "rgba(10,10,11,0.85)" }}
       >
-        {copied ? "✓ link copied" : "Share trace →"}
-      </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={generateSuggestion}
+            disabled={suggesting}
+            className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85] disabled:opacity-60"
+          >
+            {suggesting ? "Generating…" : "✓ Suggest a regression test"}
+          </button>
+          <button
+            disabled
+            title="Coming with the eval set in a follow-up"
+            className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-[rgba(255,255,255,0.02)] px-4 py-2 text-sm text-fg-2 opacity-60"
+          >
+            Mark as expected behavior
+          </button>
+        </div>
+        <button
+          onClick={copyShareUrl}
+          className="font-mono text-[12px] text-fg-3 transition-colors hover:text-fg-2"
+        >
+          {copied ? "✓ link copied" : "Share trace →"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -419,12 +564,158 @@ function RawTracePanel({ run }: { run: RunDetail }) {
   );
 }
 
+// Suggest errors that retry can't fix on its own — engine config + rate
+// limits both need the user to do something else before retrying.
+function isSuggestRetryable(msg: string): boolean {
+  if (/ANTHROPIC_API_KEY|engine_not_configured/i.test(msg)) return false;
+  if (/^Rate limit/i.test(msg)) return false;
+  return true;
+}
+
 function safeStringify(value: unknown) {
   try {
     return JSON.stringify(value, null, 2);
   } catch {
     return String(value);
   }
+}
+
+// ─── Auto-instrument metadata helpers ─────────────────────────────────
+// These read the conventions our SDK's _providers/{anthropic,openai}.py
+// emit when an LLM call is captured by safeship.init's httpx interceptor.
+
+function extractProvider(input: unknown): string | null {
+  if (input == null || typeof input !== "object") return null;
+  const provider = (input as { provider?: unknown }).provider;
+  if (provider === "anthropic" || provider === "openai") return provider;
+  return null;
+}
+
+function extractLLMUsage(
+  output: unknown,
+): { input: number | null; output: number | null } | null {
+  if (output == null || typeof output !== "object") return null;
+  const usage = (output as { usage?: unknown }).usage;
+  if (!usage || typeof usage !== "object") return null;
+  const u = usage as Record<string, unknown>;
+  // Anthropic: {input_tokens, output_tokens}
+  // OpenAI:    {prompt_tokens, completion_tokens, total_tokens}
+  const inT =
+    typeof u.input_tokens === "number"
+      ? u.input_tokens
+      : typeof u.prompt_tokens === "number"
+      ? u.prompt_tokens
+      : null;
+  const outT =
+    typeof u.output_tokens === "number"
+      ? u.output_tokens
+      : typeof u.completion_tokens === "number"
+      ? u.completion_tokens
+      : null;
+  if (inT == null && outT == null) return null;
+  return { input: inT, output: outT };
+}
+
+function buildCurlCommand(
+  step: RunDetailStep,
+  provider: string | null,
+): string | null {
+  if (provider == null) return null;
+  if (step.input == null || typeof step.input !== "object") return null;
+  const input = step.input as {
+    model?: unknown;
+    messages?: unknown;
+    max_tokens?: unknown;
+    prompt?: unknown;
+  };
+  if (provider === "anthropic") {
+    const body = {
+      model: input.model,
+      max_tokens: input.max_tokens ?? 1024,
+      messages: input.messages,
+    };
+    return [
+      "curl https://api.anthropic.com/v1/messages \\",
+      "  -H 'x-api-key: $YOUR_API_KEY' \\",
+      "  -H 'anthropic-version: 2023-06-01' \\",
+      "  -H 'content-type: application/json' \\",
+      "  -d '" + safeStringifyCompact(body) + "'",
+    ].join("\n");
+  }
+  if (provider === "openai") {
+    const body =
+      input.messages != null
+        ? { model: input.model, messages: input.messages }
+        : { model: input.model, prompt: input.prompt };
+    const endpoint =
+      input.messages != null
+        ? "https://api.openai.com/v1/chat/completions"
+        : "https://api.openai.com/v1/completions";
+    return [
+      `curl ${endpoint} \\`,
+      "  -H 'Authorization: Bearer $YOUR_API_KEY' \\",
+      "  -H 'content-type: application/json' \\",
+      "  -d '" + safeStringifyCompact(body) + "'",
+    ].join("\n");
+  }
+  return null;
+}
+
+function safeStringifyCompact(value: unknown): string {
+  try {
+    // Escape single quotes for shell safety (curl -d '...')
+    return JSON.stringify(value).replace(/'/g, "'\\''");
+  } catch {
+    return String(value);
+  }
+}
+
+function NoStepsState() {
+  return (
+    <li
+      className="grid place-items-center rounded-2xl border border-dashed border-line-strong py-12 text-center"
+      style={{ background: "rgba(255,255,255,0.015)" }}
+    >
+      <div className="flex max-w-md flex-col gap-3">
+        <span
+          className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-line-strong text-[#f5c14a]"
+          style={{ background: "rgba(245,193,74,0.10)" }}
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-5 w-5"
+          >
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        </span>
+        <h3 className="text-xl font-semibold tracking-tight">
+          No trace steps recorded.
+        </h3>
+        <p className="text-fg-2">
+          The run completed but the SDK didn&apos;t capture any steps. This
+          usually means <code className="rounded border border-line bg-black/40 px-1 py-0.5 font-mono text-[11.5px]">safeship.wrap()</code> wasn&apos;t in the call
+          path, or the agent threw before any step ran.
+        </p>
+        <p className="mt-1 text-[13px] text-fg-3">
+          <Link
+            href="/docs#wrap"
+            className="text-accent hover:text-[#d3ff85]"
+          >
+            Check the install instructions
+          </Link>{" "}
+          if this keeps happening on every run.
+        </p>
+      </div>
+    </li>
+  );
 }
 
 function fmtDuration(ms: number | null) {

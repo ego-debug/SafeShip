@@ -95,3 +95,51 @@ step then verifies the resulting score before letting the PR merge.
 | No runs in project | 404 | Soft-pass (default) or fails if `fail-on-no-runs=true` |
 | Bad / missing key | 401 | ✗ Fails with auth error |
 | Anything else | 5xx / 000 | ✗ Fails |
+
+## Make the red check actually block the merge
+
+A failing SafeShip check on a PR is informational by default — GitHub
+shows the red ✕ but the merge button still works. To actually block
+merges, enable branch protection on your default branch and require the
+SafeShip check.
+
+Quickest path (classic branch protection rule):
+
+1. **Repo Settings → Branches → Branch protection rules → Add rule**
+2. Branch name pattern: `main` (or your default)
+3. Tick **Require status checks to pass before merging**
+4. Search for and add your SafeShip check (named after the job in your
+   workflow — e.g. `regression`, not "SafeShip"). The check has to have
+   run at least once before it shows in the dropdown.
+5. Optional: tick **Require branches to be up to date before merging**
+   so the check re-runs against the latest base.
+6. **Create**.
+
+For newer repos, GitHub **Rulesets** (Settings → Rules → Rulesets) are
+the recommended replacement — same merge-blocking outcome, more
+flexibility. Same idea: target the default branch, require status
+checks, add the SafeShip job by name.
+
+## PR comments (test mode)
+
+When the action runs in test mode on a `pull_request` event, it posts a
+single comment to the PR with a per-test results table. Subsequent runs on
+the same PR update that comment in place (via a stable HTML marker) rather
+than stacking. The PR check status itself is the gate — the comment is
+inline explanation only.
+
+The comment posts even when the SDK couldn't produce a results report
+(missing API key, install failure, transient manifest fetch error). In
+those cases the comment body explains the most likely cause so you don't
+have to dig through workflow logs.
+
+If posting fails (rate limit, missing `pull-requests: write` permission,
+transient gh API blip), the step retries once after a 2-second wait, then
+gives up silently — never failing the overall check. Add this to your
+workflow `permissions` block to let the comment post:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+```

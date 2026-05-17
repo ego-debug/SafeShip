@@ -226,14 +226,17 @@ runs:
 
         echo "passed=$passed" >> "$GITHUB_OUTPUT"
 
-    # ─── Step 3: write a PR comment (test mode only, optional). ───────────
-    # Wrapped in continue-on-error so missing `pull-requests: write`
-    # permission never fails the overall check.
+    # ─── Step 3: write a PR comment (test mode only). ─────────────────────
+    # `always()` so the comment posts even when an upstream step (e.g.
+    # install-sdk) failed — the comment is the customer's only inline
+    # signal explaining what went wrong. `continue-on-error: true` so a
+    # missing `pull-requests: write` permission or a flaky gh API call
+    # never fails the overall check.
     - id: pr-comment
       if: |
+        always() &&
         steps.resolve.outputs.resolved-mode == 'test' &&
-        github.event_name == 'pull_request' &&
-        steps.test-run.outputs.results-json != ''
+        github.event_name == 'pull_request'
       continue-on-error: true
       shell: bash
       env:
@@ -247,37 +250,82 @@ runs:
           echo "::warning::SafeShip: gh CLI not available in this runner; skipping PR comment."
           exit 0
         fi
-        if [ ! -f "$RESULTS_JSON" ]; then
-          echo "::warning::SafeShip: results JSON not found at $RESULTS_JSON; skipping PR comment."
-          exit 0
-        fi
-
-        PY="$(command -v python3 || command -v python)"
-        script="${GITHUB_ACTION_PATH:-$(dirname "$0")}/_render_comment.py"
-        if [ ! -f "$script" ]; then
-          echo "::warning::SafeShip: _render_comment.py missing at $script; skipping PR comment."
-          exit 0
-        fi
-
-        body="$("$PY" "$script" "$RESULTS_JSON")" || {
-          echo "::warning::SafeShip: failed to render PR comment body; skipping."
-          exit 0
-        }
 
         marker="<!-- safeship:results -->"
-        # Find any existing SafeShip comment (issue comments API; PRs reuse
-        # the same endpoint). gh CLI handles auth via $GH_TOKEN.
-        existing_id=$(gh api "/repos/$REPO/issues/$PR_NUMBER/comments" \
+        body_file="${RUNNER_TEMP:-/tmp}/safeship-comment.md"
+        rm -f "$body_file"
+
+        # If we have a non-empty results file, render real results. If
+        # anything's missing (upstream step failed, manifest fetch errored,
+        # render crashed), fall through to the fallback body below so the
+        # PR still gets a comment explaining what happened.
+        if [ -n "${RESULTS_JSON:-}" ] && [ -s "${RESULTS_JSON:-/dev/null}" ]; then
+          PY="$(command -v python3 || command -v python || true)"
+          script="${GITHUB_ACTION_PATH:-$(dirname "$0")}/_render_comment.py"
+          if [ -n "$PY" ] && [ -f "$script" ]; then
+            if "$PY" "$script" "$RESULTS_JSON" > "$body_file" 2>/dev/null; then
+              :  # rendered successfully
+            else
+              rm -f "$body_file"
+            fi
+          fi
+        fi
+
+        # Fallback when no real results were rendered. Built with echo
+        # lines (not a heredoc) so the YAML block-scalar indent is
+        # preserved.
+        if [ ! -s "$body_file" ]; then
+          {
+            echo "$marker"
+            echo "## SafeShip regression check"
+            echo ""
+            echo "SafeShip ran but couldn't produce a results report on this PR run."
+            echo ""
+            echo "The PR check above reflects whether tests passed; this comment exists"
+            echo "so you have inline context. Common causes:"
+            echo ""
+            echo "- The \`SAFESHIP_API_KEY\` secret is missing or invalid (repo Settings → Secrets and variables → Actions)."
+            echo "- This project has no accepted regression tests yet — open the dashboard and accept a suggestion."
+            echo "- The SafeShip SDK couldn't install in this runner (check the \`install-sdk\` step log above)."
+            echo "- A transient network error fetching the test manifest — re-running the workflow usually clears it."
+            echo ""
+            echo "If the problem persists, email founder@safeship.dev with a link to this run."
+          } > "$body_file"
+        fi
+
+        # Find any existing SafeShip comment (paginate so a busy PR with
+        # 100+ comments doesn't cause a second one to stack on top).
+        existing_id=$(gh api --paginate "/repos/$REPO/issues/$PR_NUMBER/comments" \
           --jq ".[] | select(.body | startswith(\"$marker\")) | .id" \
           2>/dev/null | head -1 || true)
 
-        if [ -n "$existing_id" ]; then
-          gh api -X PATCH "/repos/$REPO/issues/comments/$existing_id" \
-            -f body="$body" >/dev/null \
-            && echo "::notice::SafeShip: updated PR comment ($existing_id)."
+        post_comment() {
+          if [ -n "$existing_id" ]; then
+            gh api -X PATCH "/repos/$REPO/issues/comments/$existing_id" \
+              -f body="$(cat "$body_file")" >/dev/null
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file "$body_file" >/dev/null
+          fi
+        }
+
+        # Retry once on transient gh/API failure. The first run on a
+        # freshly-opened PR has occasionally hit a permission-propagation
+        # race where the initial POST fails but a retry seconds later
+        # succeeds; this is the cheap fix.
+        if post_comment; then
+          if [ -n "$existing_id" ]; then
+            echo "::notice::SafeShip: updated PR comment ($existing_id)."
+          else
+            echo "::notice::SafeShip: posted PR comment."
+          fi
         else
-          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "$body" \
-            && echo "::notice::SafeShip: posted PR comment."
+          echo "::warning::SafeShip: PR comment post failed; retrying after 2s..."
+          sleep 2
+          if post_comment; then
+            echo "::notice::SafeShip: posted PR comment on retry."
+          else
+            echo "::warning::SafeShip: PR comment post failed twice; giving up. The PR check status is still the gate."
+          fi
         fi
 
     # ─── Step 4: final exit, gated on the underlying check ────────────────

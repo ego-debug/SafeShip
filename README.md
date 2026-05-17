@@ -33,18 +33,57 @@ See [`CLAUDE.md`](./CLAUDE.md) for the full product brief.
 - Graceful degradation when `ANTHROPIC_API_KEY` isn't set — UI shows a friendly banner instead of crashing
 
 **Stage 6 — Tests List + CI gating (done)**
-- `/app/tests` — real port of the prototype: filter chips (All / Active / Muted), per-row kebab menu (Mute / Unmute / Delete), search, sidebar with health donut + coverage + suite info
+- `/app/tests` — filter chips (All / Active / Muted), per-row kebab menu (Mute / Unmute / Delete), search, sidebar with health donut + coverage + suite info, plus Phase 2/3 badges per row: "CI ready" / "Re-accept to enable" / "LLM cached (N)" / origin-run deep-link
 - `POST /api/tests/[id]/mute|unmute|delete` — wired to the kebab menu
-- `GET /v1/runs/check` — public CI endpoint; returns 200 if the latest run scored ≥ `min_score`, 422 if it dropped below. See [the action README](./.github/actions/safeship/README.md) for usage.
-- `.github/actions/safeship/` — composite GitHub Action customers add to their PR workflow to block deploys on regression
+- `GET /v1/runs/check` — public CI endpoint; returns 200 if the latest run scored ≥ `min_score`, 422 if it dropped below
+- `.github/actions/safeship/` — composite GitHub Action with **two modes**:
+  - `test` (default if `safeship.yaml` is present) — installs the SDK, fetches the test manifest, replays each accepted regression test against the customer's new code, posts a per-test PR comment
+  - `score-gate` — legacy threshold check via `/v1/runs/check`
+
+**Phase 2 — Test runner + replay (done)**
+- `sdks/python/safeship/_assertions.py` — YAML DSL evaluator (simpleeval + ~40 LOC of pre-rewriting for `contains` / `matches` / dotted access)
+- `sdks/python/safeship/_testrunner.py` — replays a customer's wrapped agent against the captured failing input, evaluates the YAML assertion
+- `sdks/python/safeship/cli.py` — `safeship test` CLI entry point (reads `safeship.yaml`, fetches manifest, runs all tests, writes a results JSON for the Action)
+- `tests.replay_input` jsonb + `tests.origin_run_id` columns — denormalize the failing input + link to the original run on suggestion accept
+- `GET /v1/tests/manifest` — bearer-authed manifest endpoint serving accepted tests to CI
+
+**Phase 3 — Auto-instrumentation + free CI replay (done)**
+- `sdks/python/safeship/_instrument.py` + `_providers/{anthropic,openai}.py` — `safeship.init()` monkey-patches `httpx.Client.__init__` to install a wrapping transport. Outbound calls to `api.anthropic.com` and `api.openai.com` auto-record as steps (model, messages, response, tokens, duration) with **zero customer code change**. Opt-out via `SAFESHIP_AUTO_INSTRUMENT=false`.
+- Recording side captures raw request/response bytes per run into `runs.cached_llm_calls`. On suggestion accept, the cache is copied onto `tests.cached_llm_calls`.
+- Replay side: same transport short-circuits matching calls in CI by returning the cached response. Behind the `SAFESHIP_REPLAY_LLM_CACHE=true` feature flag for a two-week observation period. Three modes via `safeship.yaml` `replay_mode`: `cached_only`, `cached_or_live` (default), `live`. Match key is `(call_index, sha256(canonical_json_body))`.
+- 9 pytest cases cover record→replay round-trip, all three modes, hash canonicalization, feature flag off, backwards compat.
+
+**Failure alerts (done)**
+- Email via Resend + Slack via incoming webhook, both throttled per project (10-min burst window, 10 alerts/day cap)
+- `lib/alerts.ts` fires fire-and-forget from `lib/ingestion.ts` after any run with `status="fail"`
+- Customer toggles email on/off + pastes a Slack webhook URL from `/app/onboarding`
+- `notification_log` table is the throttling source of truth
+- `/api/projects/[id]/alerts` PATCH endpoint with ownership check; Slack URLs must start with `https://hooks.slack.com/`
+
+**Marketing pages (done)**
+- `/` — landing with Hero (framework-agnostic + MCP), HowItWorks, Pricing comparison (category-based, no named competitors), Footer
+- `/pricing` — standalone comparison page: effective monthly cost at 3 workload tiers across 4 pricing-model categories, plus methodology section
+- `/migrate/helicone` — Helicone refugee landing page with side-by-side before/after code diff, 12-row comparison table, FAQ, trademark notice
+- `/security` — architecture-honest sub-processors table, data-storage matrix, incident response policy (72h customer notification, public postmortem within 30d), honest compliance roadmap
+- `/status` — real Supabase round-trip ping + Anthropic Statuspage reachability check + Vercel-cron-driven ingest latency p95 from a synthetic `/api/cron/ingest-ping` endpoint; "Run check now" button for on-demand validation
+- `/docs` — full setup guide with sections for branch protection, free CI replay, framework compatibility (Anthropic / OpenAI / MCP / raw HTTP examples)
+
+**UX polish (done)**
+- Real-time dashboard: client island polls `/api/projects/[id]/recent` every 2s while tab is visible; new runs flash an accent fade-in animation
+- Trace detail readability: token counts inline, provider badges, copy buttons per Input/Output block, expand-fully toggle for long content, copy-as-cURL for LLM steps
+- Suggestion queue: 5-second buffered undo on every Y/N (toast with progress bar), Up-next preview (next 3 suggestions with severity), keyboard hint clarification
+- Empty states: every signed-in screen has a designed empty state with explanation + CTA
+- Failure-alert email body rendered as HTML with the SafeShip accent color
 
 **Reference**
 - `public/designs/*.html` — original HTML prototypes for the six screens (served at `/designs/*.html`)
 - `.claude/agents/` — `code-reviewer`, `design-checker`, `sdk-builder` subagents
+- `docs/decisions/` — phase 1 / phase 2 / phase 3 audit + completion docs, competitive research, reality audit
+- `scripts/smoke-suggest.mjs` — standalone Node script that hits Claude with the production system prompt + a synthetic failing run; useful for validating engine quality without going through the UI
 
 ## Stack
 
-Next.js 14 (App Router) · TypeScript strict · Tailwind · Clerk · Supabase · Claude Sonnet 4.6 · Vercel.
+Next.js 14 (App Router) · TypeScript strict · Tailwind · Clerk · Supabase · Stripe · Claude Sonnet 4.6 · Resend · Vercel.
 
 ## First-time setup
 
@@ -151,5 +190,10 @@ Per the plan in CLAUDE.md:
 4. ✅ **Stage 4** — Dashboard + Trace Detail wired to real data
 5. ✅ **Stage 5** — Auto-suggest engine + Suggested Tests review queue
 6. ✅ **Stage 6** — Tests List + CI gating GitHub Action
+7. ✅ **Phase 2** — Test runner + replay (YAML assertion DSL, manifest API, two-mode GitHub Action)
+8. ✅ **Phase 3** — Auto-instrumentation of Anthropic/OpenAI + free CI replay (recorded LLM responses)
+9. ✅ **Failure alerts** — email (Resend) + Slack incoming webhook, throttled
+10. ✅ **Marketing pages** — `/pricing`, `/security`, `/status`, `/migrate/helicone`
+11. ✅ **UX polish** — real-time dashboard, trace-detail readability, undo on suggestion accept/skip
 
-Defer everything else (teams, Slack, custom dashboards, TS SDK, in-app test executor, per-project rate limits, BYOK fallback) until 10 paying customers exist, per CLAUDE.md.
+Items still deferred per CLAUDE.md until 10 paying customers exist: TypeScript SDK, multi-seat teams, custom dashboards, BYOK fallback, in-product test executor, EU data residency.

@@ -74,8 +74,12 @@ def main(argv: list[str]) -> int:
     if not path.is_file():
         print(f"results file not found: {path}", file=sys.stderr)
         return 2
+    # utf-8-sig transparently strips a BOM if present — produced by some
+    # Windows tools (notably PowerShell's Set-Content -Encoding utf8). The
+    # SDK's own writer doesn't emit a BOM, but customers running custom
+    # pipelines might.
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as e:
         print(f"invalid JSON in {path}: {e}", file=sys.stderr)
         return 2

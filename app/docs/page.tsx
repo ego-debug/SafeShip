@@ -295,6 +295,127 @@ jobs:
               </p>
             </Section>
 
+            <Section id="branch-protection" title="6 — Make the red check actually block the merge">
+              <p className="mb-3 text-fg-2">
+                By default, GitHub <i>shows</i> failed status checks on a
+                PR but doesn&apos;t prevent the merge button from being
+                clicked. To actually <b className="text-fg">block</b> a PR
+                from merging when SafeShip&apos;s check is red, enable a
+                branch protection rule (or ruleset) for your default
+                branch and require the SafeShip check.
+              </p>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                Option A — Branch protection rule (classic, available on all plans)
+              </h3>
+              <ol className="list-decimal pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  Go to{" "}
+                  <b className="text-fg">
+                    repo Settings → Branches → Branch protection rules →
+                    Add rule
+                  </b>
+                  .
+                </li>
+                <li>
+                  In <b className="text-fg">Branch name pattern</b>, enter{" "}
+                  <Mono>main</Mono> (or whatever your default branch is).
+                </li>
+                <li>
+                  Tick{" "}
+                  <b className="text-fg">
+                    Require status checks to pass before merging
+                  </b>
+                  .
+                </li>
+                <li>
+                  In the search box that appears, type{" "}
+                  <Mono>safeship</Mono> and select the SafeShip check.
+                  GitHub only lists checks that have <i>run at least once</i>
+                  {" "}on the repo — so open a throwaway PR first and let
+                  the workflow finish if you don&apos;t see the option.
+                </li>
+                <li>
+                  Optionally tick{" "}
+                  <b className="text-fg">
+                    Require branches to be up to date before merging
+                  </b>{" "}
+                  so the check re-runs against the latest base.
+                </li>
+                <li>
+                  <b className="text-fg">Create</b>. From now on, any PR
+                  against this branch with a red SafeShip check has the
+                  merge button disabled.
+                </li>
+              </ol>
+
+              <h3 className="mb-2 mt-6 text-[15.5px] font-semibold text-fg">
+                Option B — Repository ruleset (recommended for new repos)
+              </h3>
+              <p className="mb-3 text-fg-2">
+                GitHub Rulesets are the newer, more flexible replacement
+                for Branch protection rules. If you&apos;re starting fresh,
+                use these:
+              </p>
+              <ol className="list-decimal pl-5 text-fg-2 [&>li]:mb-1.5">
+                <li>
+                  Go to{" "}
+                  <b className="text-fg">
+                    repo Settings → Rules → Rulesets → New ruleset → New
+                    branch ruleset
+                  </b>
+                  .
+                </li>
+                <li>
+                  Name it (e.g. <Mono>main-protection</Mono>), set{" "}
+                  <b className="text-fg">Enforcement status: Active</b>.
+                </li>
+                <li>
+                  Under <b className="text-fg">Target branches</b>, add{" "}
+                  <Mono>Default branch</Mono>.
+                </li>
+                <li>
+                  Under <b className="text-fg">Rules</b>, tick{" "}
+                  <b className="text-fg">Require status checks to pass</b>{" "}
+                  and add the SafeShip check by its workflow job name.
+                </li>
+                <li>
+                  <b className="text-fg">Create</b>. Same merge-blocking
+                  outcome, more flexibility for future rules.
+                </li>
+              </ol>
+
+              <h3 className="mb-2 mt-6 text-[15.5px] font-semibold text-fg">
+                Finding the right check name
+              </h3>
+              <p className="mb-3 text-fg-2">
+                The check name GitHub remembers is the{" "}
+                <b className="text-fg">job name</b> from your workflow YAML
+                — <i>not</i> &quot;SafeShip&quot;. So if your workflow
+                looks like:
+              </p>
+              <CodeBlock language="yaml">{`jobs:
+  regression:    # <- this is what GitHub registers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ego-debug/SafeShip/.github/actions/safeship@main`}</CodeBlock>
+              <p className="mb-3 mt-3 text-fg-2">
+                Then the check to require is called{" "}
+                <Mono>regression</Mono>. If you have steps with{" "}
+                <Mono>name:</Mono> set, GitHub uses{" "}
+                <Mono>regression / Block on agent regression</Mono>{" "}
+                instead. The branch-protection search box autocompletes,
+                so just type a few letters of either.
+              </p>
+
+              <p className="mt-3 text-[13.5px] text-fg-3">
+                If the check doesn&apos;t appear in the dropdown, the
+                workflow hasn&apos;t finished running on this repo yet —
+                open a draft PR, let it run once, then come back.
+              </p>
+            </Section>
+
             <Section id="replay" title="How replay works">
               <p className="mb-3 text-fg-2">
                 When SafeShip generates a regression test from a failing
@@ -795,6 +916,7 @@ def agent(prompt: str) -> str:
               <TocLink href="#steps">3 — Record sub-steps</TocLink>
               <TocLink href="#view">4 — See your traces</TocLink>
               <TocLink href="#ci">5 — Block bad deploys</TocLink>
+              <TocLink href="#branch-protection">6 — Branch protection</TocLink>
               <TocLink href="#replay">How replay works</TocLink>
               <TocLink href="#free-replay">Free CI replay</TocLink>
               <TocLink href="#determinism">Deterministic agents</TocLink>

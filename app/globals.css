@@ -58,3 +58,14 @@
     z-index: -1;
   }
 }
+
+/* Realtime dashboard: highlight newly-arrived runs and failure cards
+   with a brief accent flash that fades back to transparent. */
+@keyframes safeshipNewRowFade {
+  0% {
+    background-color: rgba(194, 249, 112, 0.16);
+  }
+  100% {
+    background-color: rgba(194, 249, 112, 0);
+  }
+}

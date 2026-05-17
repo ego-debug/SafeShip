@@ -64,7 +64,7 @@ export function ScoreChart({ series }: { series: Point[] }) {
           </>
         ) : (
           <span className="font-semibold text-[28px] tracking-tight text-fg-3">
-            No runs yet
+            No scored runs yet
           </span>
         )}
       </div>

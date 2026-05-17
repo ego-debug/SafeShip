@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { BrandMark } from "./BrandMark";
+import { CmdKHint } from "./CmdKHint";
 
 export function AppNav() {
   return (
@@ -21,6 +22,7 @@ export function AppNav() {
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <CmdKHint />
         <Link
           href="/designs/dashboard.html"
           className="hidden text-xs text-fg-3 hover:text-fg-2 md:inline"

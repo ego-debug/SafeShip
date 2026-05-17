@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { DashboardRun } from "@/lib/projects";
 
-export function RunsList({ runs }: { runs: DashboardRun[] }) {
+export function RunsList({
+  runs,
+  highlightIds,
+}: {
+  runs: DashboardRun[];
+  highlightIds?: Set<string>;
+}) {
   if (runs.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-line p-8 text-center text-sm text-fg-3">
@@ -16,33 +22,47 @@ export function RunsList({ runs }: { runs: DashboardRun[] }) {
 
   return (
     <ul className="flex flex-col">
-      {runs.map((run, i) => (
-        <li key={run.id} className={i === 0 ? "" : "border-t border-line"}>
-          <Link
-            href={`/app/runs/${run.id}`}
-            className="grid items-center gap-4 px-4 py-3 transition-colors hover:bg-[rgba(255,255,255,0.02)]"
-            style={{
-              gridTemplateColumns: "20px 1fr auto auto auto",
-            }}
+      {runs.map((run, i) => {
+        const isNew = highlightIds?.has(run.id);
+        return (
+          <li
+            key={run.id}
+            className={i === 0 ? "" : "border-t border-line"}
+            // When new, the row fades from an accent background back to
+            // transparent over 1.5s — pure CSS animation, see globals.css.
+            data-is-new={isNew ? "true" : undefined}
+            style={
+              isNew
+                ? { animation: "safeshipNewRowFade 1.5s ease-out" }
+                : undefined
+            }
           >
-            <StatusDot status={run.status} />
-            <span className="overflow-hidden font-mono text-[12.5px] text-fg-2">
-              <span className="text-fg-3">run </span>
-              <span className="text-fg">#{run.id.slice(0, 8)}</span>
-              <TriggerTag trigger={run.trigger} />
-            </span>
-            <span className="font-mono text-[12.5px] text-fg-3">
-              {run.score == null ? "—" : `${run.score}/100`}
-            </span>
-            <span className="font-mono text-[11.5px] text-fg-4">
-              {run.model ?? "—"}
-            </span>
-            <span className="font-mono text-[11.5px] text-fg-4">
-              {timeAgo(run.started_at)}
-            </span>
-          </Link>
-        </li>
-      ))}
+            <Link
+              href={`/app/runs/${run.id}`}
+              className="grid items-center gap-4 px-4 py-3 transition-colors hover:bg-[rgba(255,255,255,0.02)]"
+              style={{
+                gridTemplateColumns: "20px 1fr auto auto auto",
+              }}
+            >
+              <StatusDot status={run.status} />
+              <span className="overflow-hidden font-mono text-[12.5px] text-fg-2">
+                <span className="text-fg-3">run </span>
+                <span className="text-fg">#{run.id.slice(0, 8)}</span>
+                <TriggerTag trigger={run.trigger} />
+              </span>
+              <span className="font-mono text-[12.5px] text-fg-3">
+                {run.score == null ? "—" : `${run.score}/100`}
+              </span>
+              <span className="font-mono text-[11.5px] text-fg-4">
+                {run.model ?? "—"}
+              </span>
+              <span className="font-mono text-[11.5px] text-fg-4">
+                {timeAgo(run.started_at)}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }

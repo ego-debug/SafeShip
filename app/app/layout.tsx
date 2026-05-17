@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Background } from "@/components/Background";
 import { AppNav } from "@/components/AppNav";
+import { CmdKPalette } from "@/components/CmdKPalette";
 
 // Auth-only here. Subscription gating happens per-page via requireAccess()
 // in lib/access.ts — layouts persist across sibling navigations in the
@@ -19,6 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppNav />
         {children}
       </div>
+      <CmdKPalette />
     </>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TestRow, TestsSnapshot } from "@/lib/tests";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
   const router = useRouter();
@@ -11,6 +12,13 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
   const [search, setSearch] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  // Remember the last failed action so the Retry button on the banner
+  // can re-fire the exact same request without the user re-opening the
+  // kebab menu.
+  const [lastFailed, setLastFailed] = useState<{
+    test: TestRow;
+    action: "mute" | "unmute" | "delete";
+  } | null>(null);
 
   const filtered = snapshot.tests
     .filter((t) => (filter === "all" ? true : t.status === filter))
@@ -28,12 +36,18 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
       const r = await fetch(`/api/tests/${test.id}/${action}`, { method: "POST" });
       if (!r.ok) {
         const data = (await r.json().catch(() => ({}))) as { error?: string };
-        setErr(data.error ?? `${action}_failed`);
+        const code = data.error ?? `${action}_failed`;
+        setErr(humanizeTestsError(code, action, test.name));
+        setLastFailed({ test, action });
         return;
       }
+      setLastFailed(null);
       router.refresh();
     } catch {
-      setErr("network_error");
+      setErr(
+        `Network error while trying to ${action} "${test.name}" — check your connection and try again.`,
+      );
+      setLastFailed({ test, action });
     } finally {
       setBusyId(null);
     }
@@ -107,9 +121,18 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
         />
 
         {err && (
-          <div className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger">
-            {err}
-          </div>
+          <ErrorBanner
+            message={err}
+            onRetry={
+              lastFailed
+                ? () => callAction(lastFailed.test, lastFailed.action)
+                : undefined
+            }
+            onDismiss={() => {
+              setErr(null);
+              setLastFailed(null);
+            }}
+          />
         )}
 
         {filtered.length === 0 ? (
@@ -275,6 +298,7 @@ function TestsTable({
                     {t.plain_english}
                   </div>
                 )}
+                <ReplayBadges test={t} />
               </div>
               <span className="text-right font-mono text-[11px] text-fg-3">
                 {t.status}
@@ -296,6 +320,90 @@ function TestsTable({
       </ul>
     </div>
   );
+}
+
+function ReplayBadges({ test }: { test: TestRow }) {
+  const hasReplay = test.replay_input != null;
+  const cachedCount = test.cached_llm_calls_count;
+  const hasCache = cachedCount > 0;
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+      {hasReplay ? (
+        <Badge tone="ok" title="This test has a captured replay fixture and can run in CI.">
+          <Dot tone="ok" />
+          CI ready
+        </Badge>
+      ) : (
+        <Link
+          href="/app/suggestions"
+          title="This test was accepted before the Phase-2 replay fixture shipped. Re-accept a fresh suggestion from the same run to enable CI replay."
+          className="inline-flex items-center gap-1 rounded-full border border-[rgba(245,193,74,0.3)] bg-[rgba(245,193,74,0.08)] px-2 py-[2px] text-[10.5px] font-medium text-[#f5c14a] transition-colors hover:bg-[rgba(245,193,74,0.14)]"
+        >
+          <Dot tone="warn" />
+          Re-accept to enable CI
+        </Link>
+      )}
+
+      {hasCache && (
+        <Badge
+          tone="accent"
+          title={`${cachedCount} cached LLM ${
+            cachedCount === 1 ? "call" : "calls"
+          } — this test replays for free in CI.`}
+        >
+          <Dot tone="accent" />
+          LLM cached ({cachedCount})
+        </Badge>
+      )}
+
+      {test.origin_run_id && (
+        <Link
+          href={`/app/runs/${test.origin_run_id}`}
+          title="Open the failing run that produced this test."
+          className="inline-flex items-center gap-1 rounded-full border border-line-strong bg-[rgba(255,255,255,0.02)] px-2 py-[2px] text-[10.5px] font-medium text-fg-3 transition-colors hover:border-[rgba(255,255,255,0.2)] hover:text-fg-2"
+        >
+          Origin run
+          <span aria-hidden="true">→</span>
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Badge({
+  tone,
+  title,
+  children,
+}: {
+  tone: "ok" | "warn" | "accent";
+  title?: string;
+  children: React.ReactNode;
+}) {
+  const cls =
+    tone === "ok"
+      ? "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.025)] text-fg-2"
+      : tone === "accent"
+      ? "border-[rgba(194,249,112,0.3)] bg-[rgba(194,249,112,0.08)] text-accent"
+      : "border-[rgba(245,193,74,0.3)] bg-[rgba(245,193,74,0.08)] text-[#f5c14a]";
+  return (
+    <span
+      title={title}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[10.5px] font-medium ${cls}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Dot({ tone }: { tone: "ok" | "warn" | "accent" }) {
+  const c =
+    tone === "ok"
+      ? "bg-fg-3"
+      : tone === "accent"
+      ? "bg-accent"
+      : "bg-[#f5c14a]";
+  return <span className={`h-1.5 w-1.5 rounded-full ${c}`} />;
 }
 
 function StatusDot({ status }: { status: TestRow["status"] }) {
@@ -483,6 +591,25 @@ function SideCard({ title, children }: { title: string; children: React.ReactNod
       {children}
     </div>
   );
+}
+
+function humanizeTestsError(
+  code: string,
+  action: "mute" | "unmute" | "delete",
+  name: string,
+): string {
+  const verbing =
+    action === "mute" ? "muting" : action === "unmute" ? "unmuting" : "deleting";
+  switch (code) {
+    case "not_found":
+      return `Couldn't find "${name}". It may have been deleted from another tab — refresh and try again.`;
+    case "invalid_transition":
+      return `Can't ${action} "${name}" from its current state. Refresh and try again.`;
+    case "unauthorized":
+      return `You don't have permission to ${action} this test.`;
+    default:
+      return `Something went wrong ${verbing} "${name}". Try again, or refresh the page.`;
+  }
 }
 
 function timeAgo(iso: string) {

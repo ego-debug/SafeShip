@@ -76,7 +76,7 @@ export function HowItWorks() {
           step="02"
           tag="RUN"
           title="We trace every run."
-          desc="Every tool call, every step, every retry — captured automatically. No config."
+          desc="Every LLM call, every tool, every retry — auto-captured. No safeship.step() boilerplate."
           icon={
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
               <polyline points="3 12 7 12 9 6 13 18 15 12 21 12" />

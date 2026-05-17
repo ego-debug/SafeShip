@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { DashboardSnapshot } from "@/lib/projects";
+import { DashboardLiveSection } from "./DashboardLiveSection";
 import { ScoreChart } from "./ScoreChart";
-import { RunsList } from "./RunsList";
-import { FailureCards } from "./FailureCards";
 
 export function DashboardView({ snapshot }: { snapshot: DashboardSnapshot }) {
   const { project, runs, failures, scoreSeries, totalRuns } = snapshot;
@@ -42,58 +41,14 @@ export function DashboardView({ snapshot }: { snapshot: DashboardSnapshot }) {
       {!hasAnyData ? (
         <EmptyState />
       ) : (
-        <>
-          <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-            <Panel title="Regression score" meta="0 – 100 · higher is better">
-              <ScoreChart series={scoreSeries} />
-            </Panel>
-            <Panel title="Recent runs" meta={`${runs.length} shown`}>
-              <RunsList runs={runs} />
-            </Panel>
-          </section>
-
-          <section className="flex flex-col gap-4">
-            <header className="flex items-baseline justify-between">
-              <h2 className="text-lg font-semibold text-fg">
-                Recent failures
-                <span className="ml-3 font-mono text-xs uppercase tracking-wide text-fg-4">
-                  {failures.length} unresolved
-                </span>
-              </h2>
-            </header>
-            <FailureCards failures={failures} />
-          </section>
-        </>
+        <DashboardLiveSection
+          projectId={project.id}
+          initialRuns={runs}
+          initialFailures={failures}
+          scoreChart={<ScoreChart series={scoreSeries} />}
+        />
       )}
     </main>
-  );
-}
-
-function Panel({
-  title,
-  meta,
-  children,
-}: {
-  title: string;
-  meta?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className="rounded-2xl border border-line-strong"
-      style={{
-        background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)",
-      }}
-    >
-      <header
-        className="flex items-baseline justify-between border-b border-line px-5 py-3"
-        style={{ background: "rgba(255,255,255,0.015)" }}
-      >
-        <span className="text-sm font-medium text-fg-2">{title}</span>
-        {meta && <span className="font-mono text-[11px] text-fg-4">{meta}</span>}
-      </header>
-      <div className="p-5">{children}</div>
-    </section>
   );
 }
 

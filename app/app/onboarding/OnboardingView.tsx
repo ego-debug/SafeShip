@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { maskApiKey } from "@/lib/apiKey";
+import { ErrorBanner } from "@/components/ErrorBanner";
 
 type Tab = "python" | "ts" | "node";
 type Status = "waiting" | "success";
@@ -26,6 +27,7 @@ export function OnboardingView({
   const [status, setStatus] = useState<Status>(firstTraceAt ? "success" : "waiting");
   const [sending, setSending] = useState(false);
   const [lastRunId, setLastRunId] = useState<string | null>(null);
+  const [sendErr, setSendErr] = useState<string | null>(null);
 
   const shownKey = revealed ? apiKey : maskApiKey(apiKey);
 
@@ -56,6 +58,7 @@ export function OnboardingView({
 
   async function sendTestTrace() {
     setSending(true);
+    setSendErr(null);
     try {
       const r = await fetch(`/api/projects/${projectId}/test-trace`, {
         method: "POST",
@@ -63,9 +66,25 @@ export function OnboardingView({
       const data = (await r.json().catch(() => ({}))) as {
         ok?: boolean;
         run_id?: string;
+        error?: string;
       };
+      if (!r.ok) {
+        // Don't silently flip to success if the trace insertion failed —
+        // earlier code did that and customers got a false "success" state
+        // with no actual trace on their dashboard.
+        setSendErr(
+          data.error
+            ? `Couldn't send a test trace: ${data.error}. Try again, or send a real trace from your agent code.`
+            : `Couldn't send a test trace (HTTP ${r.status}). Try again, or send a real trace from your agent code.`,
+        );
+        return;
+      }
       if (data.run_id) setLastRunId(data.run_id);
       setStatus("success");
+    } catch {
+      setSendErr(
+        "Network error sending a test trace. Check your connection and try again.",
+      );
     } finally {
       setSending(false);
     }
@@ -120,6 +139,14 @@ export function OnboardingView({
           initialEnabled={alertsEnabled}
           initialSlack={slackWebhookUrl}
         />
+
+        {sendErr && (
+          <ErrorBanner
+            message={sendErr}
+            onRetry={sendTestTrace}
+            onDismiss={() => setSendErr(null)}
+          />
+        )}
 
         {status === "waiting" ? (
           <div className="flex flex-wrap items-center gap-3">
@@ -195,11 +222,19 @@ function AlertsPanel({
   const [slack, setSlack] = useState(initialSlack ?? "");
   const [savedSlack, setSavedSlack] = useState(initialSlack ?? "");
   const [saving, setSaving] = useState<"toggle" | "slack" | null>(null);
-  const [status, setStatus] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+  const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
+  // Track the last failed PATCH body so the banner's Retry button can
+  // re-fire the same request.
+  const [lastFailedBody, setLastFailedBody] = useState<{
+    body: Record<string, unknown>;
+    kind: "toggle" | "slack";
+  } | null>(null);
 
   async function patch(body: Record<string, unknown>, kind: "toggle" | "slack") {
     setSaving(kind);
-    setStatus(null);
+    setOkMsg(null);
+    setErrMsg(null);
     try {
       const r = await fetch(`/api/projects/${projectId}/alerts`, {
         method: "PATCH",
@@ -211,20 +246,25 @@ function AlertsPanel({
         detail?: string;
       };
       if (!r.ok) {
-        setStatus({
-          kind: "err",
-          msg: data.detail || data.error || `request failed (${r.status})`,
-        });
+        setErrMsg(
+          data.detail ||
+            data.error ||
+            `Couldn't save alert settings (HTTP ${r.status}). Try again.`,
+        );
+        setLastFailedBody({ body, kind });
         return false;
       }
-      setStatus({ kind: "ok", msg: "Saved." });
-      setTimeout(() => setStatus(null), 1500);
+      setLastFailedBody(null);
+      setOkMsg("Saved.");
+      setTimeout(() => setOkMsg(null), 1500);
       return true;
     } catch (err) {
-      setStatus({
-        kind: "err",
-        msg: err instanceof Error ? err.message : "network error",
-      });
+      setErrMsg(
+        err instanceof Error
+          ? `Network error: ${err.message}`
+          : "Network error — check your connection and try again.",
+      );
+      setLastFailedBody({ body, kind });
       return false;
     } finally {
       setSaving(null);
@@ -241,10 +281,9 @@ function AlertsPanel({
   async function onSaveSlack() {
     const trimmed = slack.trim();
     if (trimmed && !trimmed.startsWith("https://hooks.slack.com/")) {
-      setStatus({
-        kind: "err",
-        msg: "Slack webhook must start with https://hooks.slack.com/",
-      });
+      // Client-side validation — not a network failure, no retry needed.
+      setErrMsg("Slack webhook URL must start with https://hooks.slack.com/");
+      setLastFailedBody(null);
       return;
     }
     const ok = await patch({ slack_webhook_url: trimmed || null }, "slack");
@@ -311,14 +350,22 @@ function AlertsPanel({
         </p>
       </div>
 
-      {status && (
-        <p
-          className={`text-[12px] ${
-            status.kind === "ok" ? "text-accent" : "text-danger"
-          }`}
-        >
-          {status.msg}
-        </p>
+      {okMsg && <p className="text-[12px] text-accent">{okMsg}</p>}
+      {errMsg && (
+        <ErrorBanner
+          message={errMsg}
+          onRetry={
+            lastFailedBody
+              ? async () => {
+                  await patch(lastFailedBody.body, lastFailedBody.kind);
+                }
+              : undefined
+          }
+          onDismiss={() => {
+            setErrMsg(null);
+            setLastFailedBody(null);
+          }}
+        />
       )}
     </section>
   );
