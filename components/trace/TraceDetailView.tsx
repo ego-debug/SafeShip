@@ -194,6 +194,9 @@ function StepCard({
       }}
     >
       <button
+        type="button"
+        aria-expanded={open}
+        aria-label={`Step ${step.step_index}: ${step.tool_name ?? "unnamed"} — ${open ? "collapse" : "expand"} details`}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
       >
@@ -541,6 +544,8 @@ function RawTracePanel({ run }: { run: RunDetail }) {
       }}
     >
       <button
+        type="button"
+        aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between border-b border-line px-4 py-3 text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
         style={{ background: "rgba(255,255,255,0.015)" }}

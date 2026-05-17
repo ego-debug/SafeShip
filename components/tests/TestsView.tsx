@@ -231,6 +231,8 @@ function Chip({
 }) {
   return (
     <button
+      type="button"
+      aria-pressed={on}
       onClick={onClick}
       className={`rounded-[7px] border px-2.5 py-1 text-[12.5px] transition-colors ${
         on

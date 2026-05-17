@@ -16,6 +16,35 @@
     min-height: 100vh;
     overflow-x: hidden;
   }
+
+  /* Consistent keyboard focus ring across the entire app.
+     :focus-visible only shows on keyboard navigation (not on mouse click)
+     so we don't add visual noise for pointer users. The 2px accent ring
+     with a 1px dark offset is readable against any background we use. */
+  *:focus {
+    outline: none;
+  }
+  *:focus-visible {
+    outline: 2px solid rgba(194, 249, 112, 0.7);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Anchor + button focus rings tighten the offset so they don't pop
+     beyond rounded card edges. */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [role="option"]:focus-visible {
+    outline-offset: 2px;
+  }
+  /* Inputs inherit a stronger ring color since the field background is
+     darker than most button surfaces. */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid rgba(194, 249, 112, 0.85);
+    outline-offset: 1px;
+  }
 }
 
 @layer utilities {

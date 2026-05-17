@@ -101,6 +101,12 @@ export function CmdKPalette() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  // Container ref so the focus trap can scope its focusable-element query
+  // to elements inside the modal only.
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Element that had focus right before the palette opened. We restore
+  // focus here when the palette closes so the user lands where they were.
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   // Fuzzy(-ish) filter — substring across label, hint, group, keywords.
   // Good enough for ~10 destinations; we'll upgrade to true fuzzy ranking
@@ -188,6 +194,22 @@ export function CmdKPalette() {
         if (dest) navigate(dest);
         return;
       }
+      // Focus trap: cycle Tab / Shift+Tab among focusables inside the
+      // panel, never escaping to the background page.
+      if (e.key === "Tab") {
+        const focusables = getFocusables(panelRef.current);
+        if (focusables.length === 0) return;
+        const active = document.activeElement as HTMLElement | null;
+        const currentIdx = active ? focusables.indexOf(active) : -1;
+        e.preventDefault();
+        let nextIdx: number;
+        if (e.shiftKey) {
+          nextIdx = currentIdx <= 0 ? focusables.length - 1 : currentIdx - 1;
+        } else {
+          nextIdx = currentIdx === focusables.length - 1 ? 0 : currentIdx + 1;
+        }
+        focusables[nextIdx]?.focus();
+      }
     }
     window.addEventListener("keydown", onKey, { capture: true });
     return () => window.removeEventListener("keydown", onKey, { capture: true });
@@ -203,14 +225,23 @@ export function CmdKPalette() {
     return () => window.removeEventListener("safeship:cmdk-open", onOpen);
   }, []);
 
-  // Focus input on open + reset state on close.
+  // Focus input on open + reset state on close. Also save/restore the
+  // pre-open focus target so the user lands back on whatever they were
+  // focused on (typically the CmdKHint button in the nav).
   useEffect(() => {
     if (open) {
+      triggerRef.current = document.activeElement as HTMLElement | null;
       const t = setTimeout(() => inputRef.current?.focus(), 0);
       return () => clearTimeout(t);
     }
     setQuery("");
     setSelectedIdx(0);
+    // Defer restore so the close-triggering click (if any) finishes first.
+    const t = setTimeout(() => {
+      triggerRef.current?.focus();
+      triggerRef.current = null;
+    }, 0);
+    return () => clearTimeout(t);
   }, [open]);
 
   // Keep the highlighted row in view when arrow-navigating.
@@ -248,6 +279,7 @@ export function CmdKPalette() {
       />
 
       <div
+        ref={panelRef}
         className="relative z-10 w-full max-w-xl overflow-hidden rounded-xl border border-line-strong shadow-2xl"
         style={{
           background: "linear-gradient(180deg, #131316 0%, #0c0c0e 100%)",
@@ -353,8 +385,9 @@ export function CmdKPalette() {
           )}
         </div>
 
+        {/* Keyboard hints are noise on touch devices — hide < sm. */}
         <div
-          className="flex items-center justify-end gap-3 border-t border-line px-3 py-2 font-mono text-[10.5px] text-fg-4"
+          className="hidden items-center justify-end gap-3 border-t border-line px-3 py-2 font-mono text-[10.5px] text-fg-4 sm:flex"
           style={{ background: "rgba(255,255,255,0.015)" }}
         >
           <span>
@@ -378,5 +411,17 @@ function Kbd({ children }: { children: React.ReactNode }) {
     <kbd className="ml-1 inline-grid h-[16px] min-w-[16px] place-items-center rounded border border-line-strong bg-[rgba(255,255,255,0.04)] px-1 font-mono text-[10px] text-fg-3">
       {children}
     </kbd>
+  );
+}
+
+// Returns all keyboard-focusable elements inside `root` in document order.
+// Excludes elements that are disabled or have tabindex="-1". Used by the
+// palette's focus trap to cycle Tab / Shift+Tab among input + result rows.
+function getFocusables(root: HTMLElement | null): HTMLElement[] {
+  if (!root) return [];
+  const selector =
+    'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
+    (el) => !el.hasAttribute("disabled") && el.offsetParent !== null,
   );
 }
