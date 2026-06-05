@@ -4,6 +4,7 @@ import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Nav } from "@/components/Nav";
 import { Pricing } from "@/components/Pricing";
+import { SuggestLoop } from "@/components/SuggestLoop";
 
 export default function HomePage() {
   return (
@@ -13,6 +14,7 @@ export default function HomePage() {
         <Nav />
         <Hero />
         <HowItWorks />
+        <SuggestLoop />
         <Pricing />
         <Footer />
       </div>
