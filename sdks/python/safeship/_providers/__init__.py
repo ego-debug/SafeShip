@@ -8,9 +8,7 @@ customer's HTTP call.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
-
-import httpx
+from typing import Any, Callable
 
 from . import anthropic as _anthropic
 from . import openai as _openai
@@ -22,7 +20,7 @@ _PROVIDERS: dict[str, Callable[..., dict[str, Any]]] = {
 }
 
 
-def match_provider(host: str) -> Optional[Callable[..., dict[str, Any]]]:
+def match_provider(host: str) -> Callable[..., dict[str, Any]] | None:
     """Return the parser for the given host, or None if not an LLM host."""
     if not host:
         return None

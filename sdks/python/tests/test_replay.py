@@ -30,7 +30,6 @@ import safeship
 from safeship import _instrument
 from safeship._testrunner import ManifestEntry, run_test
 
-
 # ---------- shared fixtures ----------
 
 

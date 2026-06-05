@@ -3,7 +3,6 @@ steps without any customer code change, and non-LLM HTTP is untouched."""
 
 from __future__ import annotations
 
-import asyncio
 import time
 
 import httpx
@@ -11,7 +10,6 @@ import pytest
 import respx
 
 import safeship
-from safeship._config import get_config
 
 
 def _wait_until(predicate, timeout=2.0, interval=0.02):
