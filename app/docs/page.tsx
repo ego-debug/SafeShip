@@ -37,6 +37,41 @@ export default function DocsPage() {
               </p>
             </header>
 
+            <Section id="quickstarts" title="Quickstart by tool">
+              <p className="mb-4 text-fg-2">
+                If your agent was built with one of these tools, the
+                quickstart below hands the wiring back to the AI that wrote
+                your code in the first place. Three to five minutes from
+                this page to a green trace on your dashboard.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <QuickstartCard
+                  href="/docs/quickstart/cursor"
+                  name="Cursor"
+                  blurb="Paste one prompt into Cursor's chat — it'll diff in SafeShip."
+                  mins={3}
+                />
+                <QuickstartCard
+                  href="/docs/quickstart/claude-code"
+                  name="Claude Code"
+                  blurb="One prompt, one CLAUDE.md note. Future sessions stay wired."
+                  mins={3}
+                />
+                <QuickstartCard
+                  href="/docs/quickstart/lovable"
+                  name="Lovable"
+                  blurb="Ask Lovable to add SafeShip to your AI route — three messages."
+                  mins={4}
+                />
+                <QuickstartCard
+                  href="/docs/quickstart/n8n"
+                  name="n8n"
+                  blurb="One Code node after the AI Agent. No workflow rewrite."
+                  mins={5}
+                />
+              </div>
+            </Section>
+
             <Section id="prereqs" title="Before you start">
               <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
                 <li>
@@ -909,6 +944,7 @@ def agent(prompt: str) -> str:
               <span className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-fg-4">
                 On this page
               </span>
+              <TocLink href="#quickstarts">Quickstart by tool</TocLink>
               <TocLink href="#prereqs">Before you start</TocLink>
               <TocLink href="#billing">Billing & free trial</TocLink>
               <TocLink href="#install">1 — Install the SDK</TocLink>
@@ -1002,6 +1038,41 @@ function Trouble({
       </summary>
       <div className="mt-2 text-[13.5px] text-fg-2">{children}</div>
     </details>
+  );
+}
+
+function QuickstartCard({
+  href,
+  name,
+  blurb,
+  mins,
+}: {
+  href: string;
+  name: string;
+  blurb: string;
+  mins: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col gap-2 rounded-xl border border-line-strong p-4 transition-all hover:-translate-y-0.5 hover:border-[rgba(255,255,255,0.22)]"
+      style={{
+        background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[15.5px] font-semibold text-fg group-hover:text-fg">
+          {name}
+        </span>
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-fg-4">
+          ~{mins} min
+        </span>
+      </div>
+      <p className="text-[13.5px] leading-relaxed text-fg-2">{blurb}</p>
+      <span className="mt-1 inline-flex items-center gap-1 text-[12.5px] text-accent">
+        Read quickstart <span aria-hidden="true">→</span>
+      </span>
+    </Link>
   );
 }
 
