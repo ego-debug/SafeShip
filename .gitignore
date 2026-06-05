@@ -49,3 +49,6 @@ next-env.d.ts
 
 # project artifacts
 .design-extract/
+
+# eval runner artifacts
+evals/suggest/last-run.json

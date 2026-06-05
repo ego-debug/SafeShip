@@ -1,0 +1,45 @@
+{
+  "id": "schema_extract_missing_email",
+  "failure_type": "schema_violation",
+  "description": "extract_contact was expected to produce { name, email, phone }. It produced { name, phone } — email was missing entirely. Downstream send_welcome_email tool failed because email was undefined.",
+  "run": {
+    "id": "00000000-0000-0000-0000-000000000302",
+    "trigger": "api",
+    "score": 36,
+    "status": "fail",
+    "started_at": "2026-05-18T07:55:33.450Z",
+    "duration_ms": 1840,
+    "model": "claude-sonnet-4-6",
+    "project_id": "00000000-0000-0000-0000-0000000001ff",
+    "project_name": "Eval Fixtures",
+    "project_environment": "prod",
+    "steps": [
+      {
+        "id": "00000000-0000-0000-0000-000000003021",
+        "step_index": 0,
+        "tool_name": "extract_contact",
+        "kind": "llm",
+        "duration_ms": 1410,
+        "status": "warn",
+        "input": { "transcript_excerpt": "Hi I'm Alex, my number is 555-0144, can you call me back?" },
+        "output": { "name": "Alex", "phone": "555-0144" }
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000003022",
+        "step_index": 1,
+        "tool_name": "send_welcome_email",
+        "kind": "tool",
+        "duration_ms": 18,
+        "status": "fail",
+        "input": { "to": "undefined", "name": "Alex" },
+        "output": { "error": "Invalid email address: undefined" }
+      }
+    ]
+  },
+  "gold": {
+    "expected_target_step": "extract_contact",
+    "expected_assertion_kind": "schema",
+    "expected_fields_referenced": ["email", "name"],
+    "expected_severity_min": "medium"
+  }
+}
