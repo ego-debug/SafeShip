@@ -146,9 +146,13 @@ function Comparison() {
         Effective monthly cost by workload
       </h2>
       <p className="text-fg-2">
-        Three workload tiers, four pricing model categories. Numbers are
-        based on the published pricing pages of representative tools in each
-        category as of May 2026 (see methodology below).
+        <b className="text-fg">Managed-middle pricing.</b> You&apos;re not
+        running infra (free OSS CLIs), you&apos;re not paying ML-team rates
+        (enterprise eval platforms), and you&apos;re not paying per seat for
+        a one-person team. Three workload tiers, four pricing-model
+        categories — numbers based on the published pricing pages of
+        representative tools in each category as of June 2026 (see
+        methodology below).
       </p>
 
       <div className="overflow-x-auto rounded-xl border border-line">

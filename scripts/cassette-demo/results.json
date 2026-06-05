@@ -1,0 +1,25 @@
+[
+  {
+    "name": "demo.cassette_replay_returns_cached_text",
+    "status": "skipped",
+    "reason": "no step matched `when: step == 'claude-sonnet-4-6'`",
+    "matched_step": null,
+    "original_trace_id": null,
+    "agent_error": null,
+    "captured_steps": [
+      {
+        "tool_name": "agent",
+        "kind": "llm",
+        "input": {
+          "args": [
+            "hello"
+          ],
+          "kwargs": {}
+        },
+        "output": "",
+        "duration_ms": 651,
+        "status": "ok"
+      }
+    ]
+  }
+]

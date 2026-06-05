@@ -75,8 +75,8 @@ export function HowItWorks() {
         <StepCard
           step="02"
           tag="RUN"
-          title="We trace every run."
-          desc="Every LLM call, every tool, every retry — auto-captured. No safeship.step() boilerplate."
+          title="We catch what breaks."
+          desc="Every silent failure, every hallucinated tool call, every wrong API hit — caught. No instrumentation code."
           icon={
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
               <polyline points="3 12 7 12 9 6 13 18 15 12 21 12" />
@@ -117,9 +117,9 @@ export function HowItWorks() {
 
         <StepCard
           step="03"
-          tag="CATCH"
+          tag="BLOCK"
           title="Block the second time."
-          desc="The first failure is yours to fix. After that, your PR fails any time it would ship the same bug again."
+          desc="The first failure is yours to fix. After that, the same bug never makes it past CI."
           icon={
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
               <path d="M12 3 4 6v6c0 4.5 3.5 8 8 9 4.5-1 8-4.5 8-9V6l-8-3z" />

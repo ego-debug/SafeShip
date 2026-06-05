@@ -1,0 +1,2 @@
+agent: demo_agent:agent
+replay_mode: cached_only

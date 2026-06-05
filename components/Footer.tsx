@@ -49,13 +49,13 @@ export function Footer() {
       <div className="my-10 h-px bg-line md:my-10" />
 
       <div className="flex items-center gap-3.5 font-mono text-[11px] tracking-wide text-fg-4">
-        <a href="#" className="text-fg-4 hover:text-fg-3">
+        <Link href="/privacy" className="text-fg-4 hover:text-fg-3">
           Privacy
-        </a>
+        </Link>
         <span className="opacity-60">·</span>
-        <a href="#" className="text-fg-4 hover:text-fg-3">
+        <Link href="/terms" className="text-fg-4 hover:text-fg-3">
           Terms
-        </a>
+        </Link>
         <span className="opacity-60">·</span>
         <Link href="/security" className="text-fg-4 hover:text-fg-3">
           Security

@@ -1,6 +1,6 @@
 const FEATURES = [
   "Unlimited agent traces",
-  "Auto-suggested regression tests",
+  "Auto-suggested tests from real failures, you accept in one tap",
   "Deploy gating on every PR",
   "Slack + email alerts",
   "All your projects — no seat fees",
@@ -12,10 +12,9 @@ const COMPARE: Array<{
   detail: string;
   us?: boolean;
 }> = [
-  { vendor: "Per-seat eval platforms", tag: "per-seat", detail: "$39+ / user / month + per-trace overage" },
-  { vendor: "Enterprise eval suites", tag: "enterprise", detail: "$249+ / month, designed for ML teams" },
-  { vendor: "Self-hosted observability", tag: "self-host", detail: "Free, but a multi-service stack to run yourself" },
-  { vendor: "SafeShip", tag: "flat", detail: "$29.99 / month flat · no seats", us: true },
+  { vendor: "Enterprise seat platforms", tag: "seats", detail: "$39–$249+ / mo, built for ML teams of 5+" },
+  { vendor: "Free OSS CLIs", tag: "DIY", detail: "Free + you wire it up, run it, write the YAML" },
+  { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat — managed, one-tap, no seats", us: true },
 ];
 
 export function Pricing() {

@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "id": "demo-cassette-1",
+      "name": "demo.cassette_replay_returns_cached_text",
+      "test_yaml": "test: demo.cassette_replay_returns_cached_text\nwhen: step == 'claude-sonnet-4-6'\nassert: output.text contains 'cached_demo_response'\n",
+      "replay_input": "hello",
+      "original_trace_id": null,
+      "created_at": "2026-06-05T00:00:00Z",
+      "cached_llm_calls": [
+        {
+          "index": 0,
+          "host": "api.anthropic.com",
+          "method": "POST",
+          "path": "/v1/messages",
+          "request_body": "eyJtb2RlbCI6ICJjbGF1ZGUtc29ubmV0LTQtNiIsICJtYXhfdG9rZW5zIjogOCwgIm1lc3NhZ2VzIjogW3sicm9sZSI6ICJ1c2VyIiwgImNvbnRlbnQiOiAiaGVsbG8ifV19",
+          "request_hash": "21338c0c4c68f7d21307ceb04e0f328c00dec61f20b36bde6b68227e76ae47cf",
+          "response_status": 200,
+          "response_body": "eyJpZCI6ICJtc2dfY2Fzc2V0dGVfZGVtb18wMSIsICJ0eXBlIjogIm1lc3NhZ2UiLCAicm9sZSI6ICJhc3Npc3RhbnQiLCAibW9kZWwiOiAiY2xhdWRlLXNvbm5ldC00LTYiLCAiY29udGVudCI6IFt7InR5cGUiOiAidGV4dCIsICJ0ZXh0IjogImNhY2hlZF9kZW1vX3Jlc3BvbnNlIn1dLCAic3RvcF9yZWFzb24iOiAiZW5kX3R1cm4iLCAidXNhZ2UiOiB7ImlucHV0X3Rva2VucyI6IDMsICJvdXRwdXRfdG9rZW5zIjogNH19",
+          "response_headers": {
+            "content-type": "application/json"
+          },
+          "duration_ms": 5
+        }
+      ]
+    }
+  ]
+}

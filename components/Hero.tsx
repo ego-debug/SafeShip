@@ -23,26 +23,25 @@ export function Hero() {
           className="mb-[22px] animate-rise text-[clamp(40px,5.6vw,68px)] font-semibold leading-[1.02] tracking-[-0.035em] text-fg [text-wrap:balance]"
           style={{ animationDelay: "0.12s" }}
         >
-          The same bug never{" "}
-          <span className="underline-highlight whitespace-nowrap">ships</span>{" "}
-          twice.
+          Your agent shouldn&apos;t fail in front of{" "}
+          <span className="underline-highlight whitespace-nowrap">users</span>.
         </h1>
 
         <p
-          className="mb-4 max-w-[540px] animate-rise text-lg leading-[1.5] text-fg-2 [text-wrap:pretty]"
+          className="mb-4 max-w-[560px] animate-rise text-lg leading-[1.5] text-fg-2 [text-wrap:pretty]"
           style={{ animationDelay: "0.2s" }}
         >
-          Every production failure becomes a regression test. Drop in a
-          4-line SDK — SafeShip captures the trace, writes the assertion,
-          and blocks any future deploy that would reproduce it.
+          Reliability for the AI agent you built with Cursor, Lovable,
+          Claude Code, or n8n. SafeShip catches the failure the first time
+          it hits production, writes the test in one tap, and blocks every
+          future PR that would reproduce the same bug.
         </p>
 
         <p
           className="mb-8 max-w-[540px] animate-rise text-[13.5px] leading-[1.5] text-fg-3"
           style={{ animationDelay: "0.24s" }}
         >
-          Works with the Anthropic SDK, OpenAI SDK, MCP tool calls, or any
-          Python callable — no framework lock-in.
+          Managed. One-tap approve. <b className="text-fg-2">$29.99 flat</b> — no seats, no metering, no infra to run.
         </p>
 
         <div

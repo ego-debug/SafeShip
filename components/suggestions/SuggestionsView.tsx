@@ -369,6 +369,12 @@ function FocusCard({
       : suggestion.severity === "medium"
       ? "text-[#f5c14a]"
       : "text-fg-3";
+  const severityBg =
+    suggestion.severity === "high"
+      ? "bg-danger/10 border-danger/30"
+      : suggestion.severity === "medium"
+      ? "bg-[#f5c14a]/10 border-[#f5c14a]/30"
+      : "bg-[rgba(255,255,255,0.04)] border-line-strong";
 
   return (
     <article
@@ -390,22 +396,25 @@ function FocusCard({
       }}
     >
       <header className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           {suggestion.run_id && (
             <Link
               href={`/app/runs/${suggestion.run_id}`}
-              className="font-mono text-[11.5px] text-accent hover:text-[#d3ff85]"
+              className="inline-flex w-fit items-center gap-1.5 font-mono text-[11.5px] text-accent hover:text-[#d3ff85]"
             >
-              From run #{suggestion.run_id.slice(0, 8)} ↗
+              <span aria-hidden="true">↗</span>
+              From run #{suggestion.run_id.slice(0, 8)}
             </Link>
           )}
-          <h2 className="font-mono text-[15px] font-medium text-fg">
+          <h2 className="truncate font-mono text-[15px] font-medium text-fg">
             {suggestion.name}
           </h2>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[11px]">
-          <span className={`uppercase tracking-wide ${severityColor}`}>
-            {suggestion.severity ?? "unknown"} severity
+        <div className="flex flex-none items-center gap-2.5 font-mono text-[11px]">
+          <span
+            className={`rounded-full border px-2 py-0.5 uppercase tracking-wide ${severityColor} ${severityBg}`}
+          >
+            {suggestion.severity ?? "unknown"}
           </span>
           <span className="text-fg-4">
             {position}/{total}
@@ -413,28 +422,40 @@ function FocusCard({
         </div>
       </header>
 
-      <div
-        className="rounded-xl border px-4 py-3"
-        style={{
-          background: "rgba(194,249,112,0.06)",
-          borderColor: "rgba(194,249,112,0.28)",
-        }}
-      >
-        <p className="text-[15.5px] leading-relaxed text-fg">
-          {suggestion.plain_english}
-        </p>
-      </div>
+      {/* Side-by-side: human-readable description (left) and the actual
+          machine-checkable test definition (right). On narrow viewports
+          (< md) they stack vertically. The dual-column layout is the
+          centerpiece of the wedge — visitor sees plain English AND the
+          test code at the same time, no clicking required. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.2fr]">
+        <div className="flex flex-col gap-2">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-fg-4">
+            What this test enforces
+          </span>
+          <div
+            className="flex-1 rounded-xl border px-4 py-3"
+            style={{
+              background: "rgba(194,249,112,0.06)",
+              borderColor: "rgba(194,249,112,0.28)",
+            }}
+          >
+            <p className="text-[14.5px] leading-relaxed text-fg">
+              {suggestion.plain_english}
+            </p>
+          </div>
+        </div>
 
-      <div className="flex flex-col gap-2">
-        <span className="font-mono text-[10.5px] uppercase tracking-wide text-fg-4">
-          YAML
-        </span>
-        <pre
-          className="overflow-x-auto rounded-md border border-line px-4 py-3 font-mono text-[12px] leading-[1.55] text-fg"
-          style={{ background: "rgba(0,0,0,0.4)" }}
-        >
-          <code>{suggestion.code_yaml}</code>
-        </pre>
+        <div className="flex flex-col gap-2">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-fg-4">
+            The test SafeShip will add to your suite
+          </span>
+          <pre
+            className="flex-1 overflow-x-auto rounded-xl border border-line px-4 py-3 font-mono text-[12px] leading-[1.55] text-fg"
+            style={{ background: "rgba(0,0,0,0.4)" }}
+          >
+            <code>{suggestion.code_yaml}</code>
+          </pre>
+        </div>
       </div>
 
       {suggestion.rationale && (
