@@ -134,6 +134,8 @@ export function OnboardingView({
 
         <StatusIndicator status={status} />
 
+        {status === "success" && <SuggestionsTeaser />}
+
         <AlertsPanel
           projectId={projectId}
           initialEnabled={alertsEnabled}
@@ -200,12 +202,98 @@ export function OnboardingView({
         <SideCard title="What happens next">
           <ol className="flex flex-col gap-3 text-[13.5px] text-fg-2">
             <li><b className="font-medium text-fg">1.</b> First trace lands → this page flips to success.</li>
-            <li><b className="font-medium text-fg">2.</b> We start watching your runs. Failures show up on the dashboard.</li>
-            <li><b className="font-medium text-fg">3.</b> After a few hundred runs, we&apos;ll suggest regression tests in the queue.</li>
+            <li><b className="font-medium text-fg">2.</b> Every run is watched. Failures land on the dashboard within seconds.</li>
+            <li><b className="font-medium text-fg">3.</b> As soon as a failure lands, SafeShip drafts a regression test from the trace. You accept in one tap — it lands in your suite and runs on every PR.</li>
           </ol>
         </SideCard>
       </aside>
     </main>
+  );
+}
+
+function SuggestionsTeaser() {
+  // Shown on the onboarding SUCCESS state, after the first trace lands.
+  // The brief mandates pointing users at the suggestions queue here —
+  // it's the moment they understand the value loop (failure → drafted
+  // test → one-tap accept → guard on every PR). The preview uses a
+  // realistic-but-sample suggestion so the empty queue at /app/suggestions
+  // doesn't feel like a dead end on a brand-new project.
+  return (
+    <section
+      className="flex flex-col gap-5 rounded-2xl border border-line-strong p-5"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(194,249,112,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+      }}
+    >
+      <header className="flex flex-col gap-2">
+        <span className="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-accent">
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-accent"
+            style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
+          />
+          Next
+        </span>
+        <h3 className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-fg">
+          Regression tests build themselves from your failures.
+        </h3>
+        <p className="text-[13.5px] leading-relaxed text-fg-2">
+          When your agent fails in production, SafeShip drafts a YAML
+          regression test from the trace. You accept in one tap — it lands
+          in your suite and blocks the next PR that reintroduces the bug.
+        </p>
+      </header>
+
+      <div
+        className="rounded-xl border border-line bg-black/30 p-4"
+        aria-label="Sample suggested test preview"
+      >
+        <div className="mb-2.5 flex items-center gap-2">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.1em]"
+            style={{
+              background: "rgba(244,114,114,0.10)",
+              borderColor: "rgba(244,114,114,0.30)",
+              color: "#f47272",
+            }}
+          >
+            <span className="h-1 w-1 rounded-full bg-[#f47272]" />
+            High severity
+          </span>
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-fg-4">
+            sample · what one looks like
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1.1fr]">
+          <p className="text-[13px] leading-relaxed text-fg-2">
+            If the agent calls{" "}
+            <code className="rounded border border-line bg-black/40 px-1 py-0.5 font-mono text-[11px] text-fg">
+              send_email
+            </code>{" "}
+            with an empty subject line, fail the run before it reaches the
+            customer.
+          </p>
+          <pre className="overflow-x-auto rounded-md border border-line bg-black/40 px-3 py-2 font-mono text-[11.5px] leading-[1.55] text-fg">
+            <code>{`test: empty_subject_blocks_send
+when: tool == 'send_email'
+assert: input.subject != ''`}</code>
+          </pre>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href="/app/suggestions"
+          className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-[rgba(255,255,255,0.02)] px-4 py-2.5 text-sm text-fg transition-colors hover:border-[rgba(255,255,255,0.25)]"
+        >
+          See the suggestions queue
+          <span className="text-fg-3">→</span>
+        </Link>
+        <span className="text-[12.5px] text-fg-3">
+          Empty until your first failure lands — that&apos;s the point.
+        </span>
+      </div>
+    </section>
   );
 }
 
