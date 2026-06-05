@@ -1,0 +1,30 @@
+{
+  "id": "loop_retry_on_404",
+  "failure_type": "tool_loop",
+  "description": "fetch_invoice returned 404 on the first call. Agent retried it 4 more times, each returning 404. Should have given up after first attempt and routed to manual review.",
+  "run": {
+    "id": "00000000-0000-0000-0000-000000000403",
+    "trigger": "api",
+    "score": 31,
+    "status": "fail",
+    "started_at": "2026-05-21T20:40:52.110Z",
+    "duration_ms": 8200,
+    "model": "claude-sonnet-4-6",
+    "project_id": "00000000-0000-0000-0000-0000000001ff",
+    "project_name": "Eval Fixtures",
+    "project_environment": "prod",
+    "steps": [
+      { "id": "00000000-0000-0000-0000-000000004201", "step_index": 0, "tool_name": "fetch_invoice", "kind": "tool", "duration_ms": 1480, "status": "warn", "input": { "invoice_id": "INV-2026-77" }, "output": { "status": 404, "body": "not found" } },
+      { "id": "00000000-0000-0000-0000-000000004202", "step_index": 1, "tool_name": "fetch_invoice", "kind": "tool", "duration_ms": 1510, "status": "warn", "input": { "invoice_id": "INV-2026-77" }, "output": { "status": 404, "body": "not found" } },
+      { "id": "00000000-0000-0000-0000-000000004203", "step_index": 2, "tool_name": "fetch_invoice", "kind": "tool", "duration_ms": 1490, "status": "warn", "input": { "invoice_id": "INV-2026-77" }, "output": { "status": 404, "body": "not found" } },
+      { "id": "00000000-0000-0000-0000-000000004204", "step_index": 3, "tool_name": "fetch_invoice", "kind": "tool", "duration_ms": 1500, "status": "warn", "input": { "invoice_id": "INV-2026-77" }, "output": { "status": 404, "body": "not found" } },
+      { "id": "00000000-0000-0000-0000-000000004205", "step_index": 4, "tool_name": "fetch_invoice", "kind": "tool", "duration_ms": 1520, "status": "fail", "input": { "invoice_id": "INV-2026-77" }, "output": { "status": 404, "body": "not found" } }
+    ]
+  },
+  "gold": {
+    "expected_target_step": "fetch_invoice",
+    "expected_assertion_kind": "count",
+    "expected_fields_referenced": ["fetch_invoice"],
+    "expected_severity_min": "low"
+  }
+}
