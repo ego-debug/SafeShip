@@ -189,7 +189,7 @@ function Comparison() {
             />
             <Row
               label="Per-seat eval platforms"
-              detail="Typical posture: ~$39/seat/mo + per-trace overage above included quota"
+              detail="Example: ~$39/seat/mo + per-trace overage above the included quota"
               cells={[
                 "~$39",
                 "~$140",
@@ -198,7 +198,7 @@ function Comparison() {
             />
             <Row
               label="Enterprise eval suites"
-              detail="Typical posture: $0 → $249/mo cliff with no mid-tier; Enterprise on quote"
+              detail="Example: $0 free tier, then a $249/mo jump with nothing in between; Enterprise on quote"
               cells={[
                 "$0 (free tier)",
                 "~$249",
@@ -207,7 +207,7 @@ function Comparison() {
             />
             <Row
               label="Per-event observability (cloud)"
-              detail="Typical posture: ~$50/seat + ~$10/M spans + ~$3/GB payload"
+              detail="Example: ~$50/seat + ~$10 per million spans (sub-steps within a trace) + ~$3/GB payload"
               cells={[
                 "~$0 (within free tier)",
                 "~$60–100",
@@ -310,11 +310,11 @@ function FAQ() {
         period ends.
       </Q>
       <Q q="Why not free forever?">
-        Two reasons. First, it weeds out tire-kickers — the people who get
-        value from a regression-testing tool are the people willing to put
-        a card down. Second, the auto-suggest engine costs us real Anthropic
-        tokens; a free tier large enough to be useful would either be
-        abusable or unsustainable.
+        Two reasons. The auto-suggest engine costs us real Anthropic tokens
+        on every suggestion — a free tier big enough to be useful would be
+        either abusable or unsustainable. And charging from day one keeps
+        us building for people who depend on their agent in production,
+        which is who this tool is for.
       </Q>
       <Q q="Do you offer annual pricing or volume discounts?">
         Not yet. One price, monthly. Once we have ten paying customers

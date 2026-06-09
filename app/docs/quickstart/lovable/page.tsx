@@ -70,21 +70,21 @@ export default function LovableQuickstart() {
 Show me the updated route file as a single block.`}
         />
         <p className="text-[13.5px] text-fg-3">
-          The TypeScript SDK lands on npm shortly — until then, Lovable may
-          need to add the GitHub URL{" "}
+          <b className="text-fg-2">Before you paste:</b> the TypeScript SDK
+          isn&apos;t on npm yet, so step 1 of the prompt will fail as
+          written. Either change it to install from GitHub (
           <Mono>
             github:ego-debug/SafeShip&#123;sdks/typescript&#125;
-          </Mono>{" "}
-          to <Mono>package.json</Mono>. If you hit an install error, ask
-          Lovable to use the Python SDK on a serverless function instead —
-          link the{" "}
+          </Mono>
+          ), or — simpler today — ask Lovable to call the Python SDK from a
+          serverless function instead, using the{" "}
           <Link
             href="/docs#install"
             className="text-accent hover:text-[#d3ff85]"
           >
             main install guide
-          </Link>{" "}
-          and paste it in.
+          </Link>
+          . This note disappears when the npm package ships.
         </p>
       </Step>
 

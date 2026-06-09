@@ -93,7 +93,7 @@ export function BillingView({
           anytime below.
         </Banner>
       )}
-      {err && <Banner tone="error">{err}</Banner>}
+      {err && <Banner tone="error">{humanizeBillingError(err)}</Banner>}
 
       {isOwner ? (
         <OwnerCard />
@@ -376,6 +376,25 @@ function Banner({
       {children}
     </div>
   );
+}
+
+// API routes return short error codes; translate to something a person
+// can act on rather than echoing "checkout_failed" verbatim.
+function humanizeBillingError(code: string): string {
+  switch (code) {
+    case "checkout_failed":
+      return "Couldn't start checkout. Try again in a moment — if it keeps failing, email founder@safeship.dev.";
+    case "portal_failed":
+      return "Couldn't open the customer portal. Try again in a moment — if it keeps failing, email founder@safeship.dev.";
+    case "network_error":
+      return "Network error — check your connection and try again.";
+    case "billing_not_configured":
+      return "Billing isn't configured on this deployment yet.";
+    case "no_customer":
+      return "No subscription found for this account. Start the free trial first.";
+    default:
+      return `Something went wrong (${code}). Try again, or email founder@safeship.dev.`;
+  }
 }
 
 function fmtDate(iso: string): string {

@@ -31,16 +31,14 @@ export function Footer() {
         <FooterCol
           title="Company"
           links={[
-            { label: "About", href: "#" },
-            { label: "Blog", href: "#" },
             { label: "Contact", href: "mailto:founder@safeship.dev" },
+            { label: "Security", href: "/security" },
           ]}
         />
         <FooterCol
           title="Resources"
           links={[
-            { label: "Twitter", href: "#" },
-            { label: "GitHub", href: "#" },
+            { label: "GitHub", href: "https://github.com/ego-debug/SafeShip" },
             { label: "Status", href: "/status" },
           ]}
         />

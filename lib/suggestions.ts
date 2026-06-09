@@ -243,6 +243,18 @@ export async function acceptSuggestion(
   if (!project || project.user_id !== userId) throw new Error("not_found");
   if (row.status !== "pending") throw new Error("not_pending");
 
+  // Claim the suggestion FIRST with a conditional update. Two concurrent
+  // accepts (double-click, two tabs) would otherwise both pass the status
+  // check above and insert duplicate tests. The status guard in the WHERE
+  // clause makes exactly one request win; the loser gets not_pending.
+  const { data: claimed } = await supabase
+    .from("suggested_tests")
+    .update({ status: "accepted" })
+    .eq("id", row.id)
+    .eq("status", "pending")
+    .select("id");
+  if (!claimed || claimed.length === 0) throw new Error("not_pending");
+
   // Pull the top-level input from the originating run so the CI test runner
   // can replay it. step_index=0 is the synthesized "agent" step when the
   // customer didn't add explicit safeship.step() calls; its `input` field
@@ -291,13 +303,14 @@ export async function acceptSuggestion(
     .single();
 
   if (insertErr || !created) {
+    // Release the claim so the suggestion goes back to the queue and the
+    // user can retry, instead of it being stuck "accepted" with no test.
+    await supabase
+      .from("suggested_tests")
+      .update({ status: "pending" })
+      .eq("id", row.id);
     throw new Error(`test_insert_failed: ${insertErr?.message}`);
   }
-
-  await supabase
-    .from("suggested_tests")
-    .update({ status: "accepted" })
-    .eq("id", row.id);
 
   return { test_id: created.id };
 }
@@ -325,10 +338,15 @@ export async function skipSuggestion(
   if (!project || project.user_id !== userId) throw new Error("not_found");
   if (row.status !== "pending") throw new Error("not_pending");
 
-  await supabase
+  // Status guard in the WHERE clause — same atomic-claim pattern as
+  // acceptSuggestion, so a skip racing an accept can't both win.
+  const { data: updated } = await supabase
     .from("suggested_tests")
     .update({ status: "skipped" })
-    .eq("id", row.id);
+    .eq("id", row.id)
+    .eq("status", "pending")
+    .select("id");
+  if (!updated || updated.length === 0) throw new Error("not_pending");
 }
 
 /**

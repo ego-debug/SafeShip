@@ -215,6 +215,10 @@ async function maybeSendSlack(
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
+      // The webhook URL is customer-supplied. Without a timeout, a slow or
+      // never-responding endpoint pins this request open and stalls the
+      // alert path. 5s is generous for Slack's ingest.
+      signal: AbortSignal.timeout(5000),
     });
     if (!resp.ok) {
       console.warn(

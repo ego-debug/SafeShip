@@ -178,5 +178,17 @@ async function updateTestStatus(
     throw new Error("invalid_transition");
   }
 
-  await supabase.from("tests").update({ status: next }).eq("id", r.id);
+  // The status guard is repeated in the WHERE clause so the transition is
+  // atomic — the read above is only for ownership + a friendlier error.
+  // Without it, two concurrent requests could both pass the check and
+  // apply conflicting transitions (e.g. mute racing delete).
+  const { data: updated } = await supabase
+    .from("tests")
+    .update({ status: next })
+    .eq("id", r.id)
+    .in("status", fromStatuses)
+    .select("id");
+  if (!updated || updated.length === 0) {
+    throw new Error("invalid_transition");
+  }
 }

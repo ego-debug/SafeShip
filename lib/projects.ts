@@ -62,7 +62,18 @@ export async function getDashboardSnapshot(
 
   const since = new Date(Date.now() - 7 * DAY_MS).toISOString();
 
-  const [runsRes, failuresRes, countRes] = await Promise.all([
+  // Daily buckets for the 7-day score chart, computed up front so the
+  // weekRuns query can join the parallel batch below instead of running
+  // as a sequential fourth round-trip after it.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const buckets: Array<{ day: string; total: number; count: number }> = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * DAY_MS);
+    buckets.push({ day: d.toISOString().slice(0, 10), total: 0, count: 0 });
+  }
+
+  const [runsRes, failuresRes, countRes, weekRunsRes] = await Promise.all([
     supabase
       .from("runs")
       .select("id, trigger, score, status, started_at, duration_ms, model")
@@ -83,6 +94,11 @@ export async function getDashboardSnapshot(
       .select("id", { count: "exact", head: true })
       .eq("project_id", project.id)
       .gte("started_at", since),
+    supabase
+      .from("runs")
+      .select("started_at, score")
+      .eq("project_id", project.id)
+      .gte("started_at", buckets[0].day),
   ]);
 
   const runs: DashboardRun[] = (runsRes.data ?? []) as DashboardRun[];
@@ -111,22 +127,8 @@ export async function getDashboardSnapshot(
     };
   });
 
-  // Bucket recent runs into 7 daily buckets, average score per day
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const buckets: Array<{ day: string; total: number; count: number }> = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today.getTime() - i * DAY_MS);
-    buckets.push({ day: d.toISOString().slice(0, 10), total: 0, count: 0 });
-  }
-
-  const { data: weekRuns } = await supabase
-    .from("runs")
-    .select("started_at, score")
-    .eq("project_id", project.id)
-    .gte("started_at", buckets[0].day);
-
-  for (const r of weekRuns ?? []) {
+  // Average score per daily bucket
+  for (const r of weekRunsRes.data ?? []) {
     if (r.score == null) continue;
     const d = (r.started_at as string).slice(0, 10);
     const bucket = buckets.find((b) => b.day === d);

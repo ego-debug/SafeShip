@@ -23,7 +23,7 @@ export function OnboardingView({
 }) {
   const [tab, setTab] = useState<Tab>("python");
   const [revealed, setRevealed] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"ok" | "failed" | false>(false);
   const [status, setStatus] = useState<Status>(firstTraceAt ? "success" : "waiting");
   const [sending, setSending] = useState(false);
   const [lastRunId, setLastRunId] = useState<string | null>(null);
@@ -37,6 +37,9 @@ export function OnboardingView({
   useEffect(() => {
     if (status === "success") return;
     const i = setInterval(async () => {
+      // Skip the round-trip while the tab is hidden — the user can't see
+      // the flip anyway, and the interval keeps running until they return.
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
         const r = await fetch(`/api/projects/${projectId}/status`, {
           cache: "no-store",
@@ -51,9 +54,16 @@ export function OnboardingView({
   }, [projectId, status]);
 
   async function copy() {
-    await navigator.clipboard.writeText(snippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    // Clipboard access can be denied (browser privacy settings, insecure
+    // context). Without the catch, the rejection is silent and the UI
+    // would claim "copied" when nothing was.
+    try {
+      await navigator.clipboard.writeText(snippet);
+      setCopied("ok");
+    } catch {
+      setCopied("failed");
+    }
+    setTimeout(() => setCopied(false), 2000);
   }
 
   async function sendTestTrace() {
@@ -533,7 +543,7 @@ function CodeBlock({
   onTab: (t: Tab) => void;
   code: string;
   onCopy: () => void;
-  copied: boolean;
+  copied: "ok" | "failed" | false;
 }) {
   return (
     <div
@@ -565,7 +575,11 @@ function CodeBlock({
           onClick={onCopy}
           className="ml-auto flex items-center gap-1.5 rounded-md px-2.5 py-1 font-mono text-[11px] text-fg-3 transition-colors hover:bg-[rgba(255,255,255,0.06)] hover:text-fg"
         >
-          {copied ? "✓ copied" : "Copy"}
+          {copied === "ok"
+            ? "✓ copied"
+            : copied === "failed"
+            ? "Copy blocked — select the code manually"
+            : "Copy"}
         </button>
       </div>
       <pre className="overflow-x-auto px-5 py-4 font-mono text-[13px] leading-[1.7] text-fg">
@@ -604,7 +618,7 @@ function StatusIndicator({ status }: { status: Status }) {
       >
         ✓
       </span>
-      Connected — your first trace just landed. Showing 1 run, 5 steps.
+      Connected — your first trace just landed. It&apos;s live on your dashboard.
     </div>
   );
 }

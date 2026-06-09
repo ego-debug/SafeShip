@@ -473,8 +473,8 @@ function ActionBar({ runId }: { runId: string }) {
               : `${Math.round(data.retry_after_seconds / 3600)}h`
             : "a moment";
           setSuggestErr(
-            `Rate limit reached (${data.limit ?? "?"}/${
-              data.window ?? "window"
+            `Rate limit reached (${data.limit ?? "?"} per ${
+              data.window ?? "day"
             }). Try again in ${wait}.`,
           );
           return;
@@ -514,13 +514,6 @@ function ActionBar({ runId }: { runId: string }) {
             className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85] disabled:opacity-60"
           >
             {suggesting ? "Generating…" : "✓ Suggest a regression test"}
-          </button>
-          <button
-            disabled
-            title="Coming with the eval set in a follow-up"
-            className="inline-flex items-center gap-2 rounded-[9px] border border-line-strong bg-[rgba(255,255,255,0.02)] px-4 py-2 text-sm text-fg-2 opacity-60"
-          >
-            Mark as expected behavior
           </button>
         </div>
         <button

@@ -73,15 +73,16 @@ export function ScoreChart({ series }: { series: Point[] }) {
         <p className="text-sm text-fg-2">
           {isUnhealthy ? (
             <>
-              Dropped to{" "}
+              Below the 80 deploy-gate line —{" "}
               <span className="text-danger">
                 <b>{latest.score}</b> on {fmtDay(latest.day)}
-              </span>{" "}
-              · investigate recent failures.
+              </span>
+              . Check recent failures below.
             </>
           ) : (
             <>
-              Healthy. Last run {fmtRelative(latest.day)}.
+              Healthy — at or above the 80 deploy-gate line. Last run{" "}
+              {fmtRelative(latest.day)}.
             </>
           )}
         </p>

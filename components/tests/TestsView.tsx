@@ -96,8 +96,8 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
           >
             <b className="text-fg">Heads up:</b> the in-app test runner ships in
             a follow-up. For now this page lists your accepted regression-test
-            definitions; pass/fail history and coverage will populate once the
-            executor lands. CI-side gating already works — see{" "}
+            definitions; pass/fail history will appear once the runner lands.
+            CI-side gating already works — see{" "}
             <Link
               href="https://github.com/ego-debug/SafeShip#cigithub-action"
               className="text-accent hover:text-[#d3ff85]"
@@ -267,14 +267,16 @@ function TestsTable({
         background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)",
       }}
     >
+      {/* Coverage column intentionally absent — it showed a dash for every
+          row until the in-app test runner ships. Re-add it when there's
+          real pass/fail history to put in it. */}
       <div
         className="grid items-center gap-4 border-b border-line px-4 py-2.5 font-mono text-[10.5px] uppercase tracking-wide text-fg-4"
-        style={{ gridTemplateColumns: "20px 1fr 80px 100px 110px 32px" }}
+        style={{ gridTemplateColumns: "20px 1fr 80px 110px 32px" }}
       >
         <span></span>
         <span>Test</span>
         <span className="text-right">Status</span>
-        <span className="text-right">Coverage</span>
         <span className="text-right">Added</span>
         <span></span>
       </div>
@@ -288,7 +290,7 @@ function TestsTable({
           >
             <div
               className="grid items-center gap-4 px-4 py-3"
-              style={{ gridTemplateColumns: "20px 1fr 80px 100px 110px 32px" }}
+              style={{ gridTemplateColumns: "20px 1fr 80px 110px 32px" }}
             >
               <StatusDot status={t.status} />
               <div className="min-w-0">
@@ -304,9 +306,6 @@ function TestsTable({
               </div>
               <span className="text-right font-mono text-[11px] text-fg-3">
                 {t.status}
-              </span>
-              <span className="text-right font-mono text-[11px] text-fg-4">
-                —
               </span>
               <span className="text-right font-mono text-[11px] text-fg-4">
                 {timeAgo(t.created_at)}
