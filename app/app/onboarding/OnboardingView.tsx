@@ -110,7 +110,6 @@ export function OnboardingView({
           <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
             <span
               className="h-1.5 w-1.5 rounded-full bg-accent"
-              style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
             />
             Setup
           </span>
@@ -178,7 +177,7 @@ export function OnboardingView({
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/app/dashboard"
-              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
+              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.35),0_12px_24px_-12px_rgba(0,0,0,0.55)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
             >
               View your dashboard →
             </Link>
@@ -240,7 +239,6 @@ function SuggestionsTeaser() {
         <span className="inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-accent">
           <span
             className="h-1.5 w-1.5 rounded-full bg-accent"
-            style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
           />
           Next
         </span>

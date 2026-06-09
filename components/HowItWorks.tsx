@@ -5,7 +5,6 @@ export function HowItWorks() {
         <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
           <span
             className="h-1.5 w-1.5 rounded-full bg-accent"
-            style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
           />
           How it works
         </span>
@@ -36,12 +35,6 @@ export function HowItWorks() {
           tag="INSTALL"
           title="Drop in 4 lines."
           desc="Install the SDK and wrap your agent. Done."
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <polyline points="9 6 4 12 9 18" />
-              <polyline points="15 6 20 12 15 18" />
-            </svg>
-          }
           visual={
             <div className="overflow-hidden rounded-lg border border-line bg-black/35 px-3.5 py-3 font-mono text-xs leading-[1.6]">
               <div className="flex gap-3">
@@ -77,11 +70,6 @@ export function HowItWorks() {
           tag="RUN"
           title="We catch what breaks."
           desc="Every silent failure, every hallucinated tool call, every wrong API hit. All caught, with no instrumentation code."
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <polyline points="3 12 7 12 9 6 13 18 15 12 21 12" />
-            </svg>
-          }
           visual={
             <div>
               <div className="flex items-center gap-3 px-0.5 py-1">
@@ -120,11 +108,6 @@ export function HowItWorks() {
           tag="BLOCK"
           title="Block the second time."
           desc="The first failure is yours to fix. After that, the same bug never makes it past CI."
-          icon={
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <path d="M12 3 4 6v6c0 4.5 3.5 8 8 9 4.5-1 8-4.5 8-9V6l-8-3z" />
-            </svg>
-          }
           visual={
             <div>
               <div className="mb-2.5 flex items-center gap-2.5 font-mono text-xs">
@@ -183,14 +166,12 @@ function StepCard({
   tag,
   title,
   desc,
-  icon,
   visual,
 }: {
   step: string;
   tag: string;
   title: string;
   desc: string;
-  icon: React.ReactNode;
   visual: React.ReactNode;
 }) {
   return (
@@ -202,15 +183,15 @@ function StepCard({
           "0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 40px -24px rgba(0,0,0,0.5)",
       }}
     >
-      <header className="mb-6 flex items-center justify-between">
-        <span
-          className="grid h-9 w-9 place-items-center rounded-[9px] border border-line-strong text-fg"
-          style={{ background: "rgba(255,255,255,0.02)" }}
-        >
-          {icon}
+      {/* No decorative icon square (the universal AI feature-card template).
+          The oversized step number anchors the card; each card's custom
+          visual at the bottom is the real differentiator. */}
+      <header className="mb-6 flex items-baseline gap-3">
+        <span className="font-mono text-[26px] font-semibold leading-none tracking-[-0.02em] text-fg-3">
+          {step}
         </span>
         <span className="font-mono text-[11px] tracking-[0.16em] text-fg-4">
-          <b className="font-medium text-fg-2">{step}</b> &nbsp;{tag}
+          {tag}
         </span>
       </header>
       <h3 className="mb-2.5 text-[22px] font-semibold leading-[1.15] tracking-[-0.02em]">
