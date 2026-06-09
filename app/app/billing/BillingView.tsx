@@ -110,7 +110,7 @@ export function BillingView({
       <aside className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <InfoCard
           title="What you get on Pro"
-          body="Unlimited agent traces, unlimited projects, auto-suggested regression tests, deploy gating via GitHub Action, email + Slack alerts (Slack coming soon)."
+          body="Unlimited agent traces, unlimited projects, auto-suggested regression tests, deploy gating via GitHub Action, email + Slack alerts."
         />
         <InfoCard
           title="Cancel anytime"

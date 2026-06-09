@@ -6,15 +6,19 @@ const FEATURES = [
   "All your projects, no seat fees",
 ];
 
+// Naming the alternatives is deliberate: a developer already assumes a
+// free CLI exists for everything, so a page that pretends otherwise
+// loses trust. Each row's job is to price the alternative honestly,
+// including the cost that isn't dollars.
 const COMPARE: Array<{
   vendor: string;
   tag: string;
   detail: string;
   us?: boolean;
 }> = [
-  { vendor: "Per-seat eval platforms", tag: "seats", detail: "$39–$249+ / mo, built for ML teams of 5+" },
-  { vendor: "Free OSS CLIs", tag: "DIY", detail: "Free + you wire it up, run it, write the YAML" },
-  { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat. Managed, one-tap, no seats", us: true },
+  { vendor: "Per-seat eval platforms", tag: "seats", detail: "$39–$249+ / mo, priced for ML teams of 5+" },
+  { vendor: "Free OSS CLIs", tag: "DIY", detail: "$0, plus your evenings. You write every test, run every eval, maintain it forever" },
+  { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat. The tests write themselves; you tap accept", us: true },
 ];
 
 export function Pricing() {
