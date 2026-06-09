@@ -100,6 +100,8 @@ await this.helpers.httpRequest({
   method: "POST",
   url: "https://safeship.dev/v1/traces",
   headers: {
+    // "safeship" = the Header Auth credential you created in step 2.
+    // If you named it differently, change the reference here.
     Authorization: "Bearer " + $credentials.safeship.value,
     "Content-Type": "application/json",
   },

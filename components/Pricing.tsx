@@ -12,7 +12,7 @@ const COMPARE: Array<{
   detail: string;
   us?: boolean;
 }> = [
-  { vendor: "Enterprise seat platforms", tag: "seats", detail: "$39–$249+ / mo, built for ML teams of 5+" },
+  { vendor: "Per-seat eval platforms", tag: "seats", detail: "$39–$249+ / mo, built for ML teams of 5+" },
   { vendor: "Free OSS CLIs", tag: "DIY", detail: "Free + you wire it up, run it, write the YAML" },
   { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat — managed, one-tap, no seats", us: true },
 ];

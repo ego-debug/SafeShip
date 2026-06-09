@@ -5,7 +5,8 @@ import type { DashboardFailure, DashboardRun } from "@/lib/projects";
 import { FailureCards } from "./FailureCards";
 import { RunsList } from "./RunsList";
 
-const POLL_MS = 2000;
+const POLL_MS = 4000;
+const HIDDEN_POLL_MS = 20000;
 const FADE_HOLD_MS = 1500;
 
 // Wraps the realtime-changing dashboard panels in a client component that
@@ -49,8 +50,10 @@ export function DashboardLiveSection({
     async function poll() {
       if (cancelled) return;
       // Don't poll a hidden tab — wastes bandwidth + battery on laptops.
+      // Check back at a much slower cadence; the visibilitychange handler
+      // below resumes fast polling the moment the tab is foregrounded.
       if (typeof document !== "undefined" && document.hidden) {
-        timer = setTimeout(poll, POLL_MS);
+        timer = setTimeout(poll, HIDDEN_POLL_MS);
         return;
       }
       try {
@@ -85,8 +88,11 @@ export function DashboardLiveSection({
             );
           }
           // Successful poll — reset failure streak + clear stale state.
+          // Functional update: this closure runs once per projectId, so
+          // reading `staleSince` directly would see the stale initial
+          // value forever and the amber chip would never clear.
           failuresInARowRef.current = 0;
-          if (staleSince !== null) setStaleSince(null);
+          setStaleSince((s) => (s !== null ? null : s));
         } else {
           recordPollFailure();
         }
@@ -98,12 +104,12 @@ export function DashboardLiveSection({
 
     function recordPollFailure() {
       failuresInARowRef.current += 1;
-      // Flip to "stale" once three in a row have failed. Setting
-      // staleSince only when transitioning so the displayed timestamp
-      // is the first failure, not the latest one (more useful for the
-      // "last fresh data Ns ago" copy).
-      if (failuresInARowRef.current >= 3 && staleSince === null) {
-        setStaleSince(Date.now());
+      // Flip to "stale" once three in a row have failed. Functional
+      // update keeps the FIRST failure timestamp (the closure's
+      // `staleSince` is frozen at mount, so a direct check would reset
+      // the timestamp on every subsequent failure).
+      if (failuresInARowRef.current >= 3) {
+        setStaleSince((s) => (s === null ? Date.now() : s));
       }
     }
 

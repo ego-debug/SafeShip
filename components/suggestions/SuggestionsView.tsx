@@ -171,7 +171,7 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
         if (r.status === 429) {
           setError(
             `Rate limit reached. ${data.limit ?? "?"} suggestions allowed per ${
-              data.window ?? "window"
+              data.window ?? "day"
             } — try again in ${humanWait(data.retry_after_seconds)}.`,
           );
           return;
@@ -229,7 +229,9 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
               Suggested tests
             </span>
             <h1 className="text-[clamp(28px,3vw,36px)] font-semibold leading-[1.1] tracking-[-0.025em]">
-              {snapshot.pendingTotal} to review
+              {/* items.length, not the static snapshot total — the count
+                  should tick down live as the user works the queue. */}
+              {items.length} to review
               <span className="ml-3 font-mono text-base text-fg-3">
                 · {acceptedToday} accepted today
               </span>
