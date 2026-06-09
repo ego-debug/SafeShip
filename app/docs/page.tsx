@@ -22,7 +22,6 @@ export default function DocsPage() {
               <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
                 <span
                   className="h-1.5 w-1.5 rounded-full bg-accent"
-                  style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
                 />
                 Setup guide
               </span>

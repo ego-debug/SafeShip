@@ -60,7 +60,6 @@ export function BillingView({
         <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
           <span
             className="h-1.5 w-1.5 rounded-full bg-accent"
-            style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
           />
           Billing
         </span>
@@ -173,7 +172,7 @@ function SubscriptionCard({
           <button
             onClick={onCheckout}
             disabled={busy != null}
-            className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-5 py-2.5 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-5 py-2.5 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.35),0_12px_24px_-12px_rgba(0,0,0,0.55)] transition hover:-translate-y-px hover:bg-[#d3ff85] disabled:opacity-60"
           >
             {busy === "checkout" ? "Redirecting…" : "Start 7-day free trial →"}
           </button>

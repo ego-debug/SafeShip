@@ -25,6 +25,7 @@ export function Footer() {
           links={[
             { label: "Pricing", href: "/pricing" },
             { label: "Docs", href: "/docs" },
+            { label: "Changelog", href: "/changelog" },
             { label: "Migrate from Helicone", href: "/migrate/helicone" },
           ]}
         />

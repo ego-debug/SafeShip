@@ -61,7 +61,6 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
             <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
               <span
                 className="h-1.5 w-1.5 rounded-full bg-accent"
-                style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
               />
               Regression suite
             </span>
@@ -78,7 +77,7 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
           {snapshot.totals.pendingSuggestions > 0 && (
             <Link
               href="/app/suggestions"
-              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
+              className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.35),0_12px_24px_-12px_rgba(0,0,0,0.55)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
             >
               Review {snapshot.totals.pendingSuggestions} suggestion
               {snapshot.totals.pendingSuggestions === 1 ? "" : "s"} →

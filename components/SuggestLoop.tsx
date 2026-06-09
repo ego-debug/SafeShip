@@ -22,7 +22,6 @@ export function SuggestLoop() {
           <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
             <span
               className="h-1.5 w-1.5 rounded-full bg-accent"
-              style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
             />
             The suggest loop
           </span>
@@ -177,7 +176,7 @@ assert: input.subject != ''`}</code>
             type="button"
             disabled
             aria-label="Accept this suggested test (preview only)"
-            className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-3.5 py-2 text-[13px] font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)]"
+            className="inline-flex items-center gap-2 rounded-[9px] bg-accent px-3.5 py-2 text-[13px] font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.35),0_12px_24px_-12px_rgba(0,0,0,0.55)]"
           >
             <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
               <polyline points="2 6 5 9 10 3" />

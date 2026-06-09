@@ -37,7 +37,6 @@ function Hero() {
       <span className="inline-flex items-center gap-2.5 font-mono text-[11.5px] uppercase tracking-[0.14em] text-fg-3">
         <span
           className="h-1.5 w-1.5 rounded-full bg-accent"
-          style={{ boxShadow: "0 0 8px rgba(194,249,112,0.6)" }}
         />
         Pricing
       </span>
@@ -77,7 +76,6 @@ function PlanCard() {
         <div className="flex items-center gap-2 text-sm font-semibold text-fg">
           <span
             className="h-2 w-2 rounded-full bg-accent"
-            style={{ boxShadow: "0 0 10px rgba(194,249,112,0.6)" }}
           />
           Pro
           <span
@@ -103,7 +101,7 @@ function PlanCard() {
         </p>
         <Link
           href="/sign-up"
-          className="mt-1 inline-flex items-center justify-center rounded-[9px] bg-accent px-[18px] py-3 text-[14.5px] font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.4),0_10px_24px_-10px_rgba(194,249,112,0.4)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
+          className="mt-1 inline-flex items-center justify-center rounded-[9px] bg-accent px-[18px] py-3 text-[14.5px] font-semibold text-bg shadow-[0_0_0_1px_rgba(194,249,112,0.35),0_12px_24px_-12px_rgba(0,0,0,0.55)] transition hover:-translate-y-px hover:bg-[#d3ff85]"
         >
           Start 7-day free trial <span aria-hidden="true">→</span>
         </Link>

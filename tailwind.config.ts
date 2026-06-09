@@ -9,8 +9,12 @@ const config: Config = {
         "bg-2": "#101012",
         fg: "#f5f5f6",
         "fg-2": "#b4b4b8",
-        "fg-3": "#76767c",
-        "fg-4": "#4a4a50",
+        // fg-3 carries real reading text (side notes, table cells, footer).
+        // #76767c on #0a0a0b sat around 4.3:1, under the WCAG AA 4.5:1
+        // floor for body sizes. #8a8a90 clears it with margin. fg-4 stays
+        // a decorative/meta tier but gets the same one-notch lift.
+        "fg-3": "#8a8a90",
+        "fg-4": "#5c5c63",
         line: "rgba(255,255,255,0.07)",
         "line-strong": "rgba(255,255,255,0.12)",
         accent: "#c2f970",
