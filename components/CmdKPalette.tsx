@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-// Phase B #6 — Cmd-K palette
+// Phase B #6 - Cmd-K palette
 //
 // Batch 1: shell + global Cmd+K / Ctrl+K + Esc. (Done.)
 // Batch 2: static nav destinations + arrow nav + Enter navigates. (This.)
@@ -108,7 +108,7 @@ export function CmdKPalette() {
   // focus here when the palette closes so the user lands where they were.
   const triggerRef = useRef<HTMLElement | null>(null);
 
-  // Fuzzy(-ish) filter — substring across label, hint, group, keywords.
+  // Fuzzy(-ish) filter - substring across label, hint, group, keywords.
   // Good enough for ~10 destinations; we'll upgrade to true fuzzy ranking
   // if/when the destination list grows past 50.
   const filtered = useMemo(() => {
@@ -148,7 +148,7 @@ export function CmdKPalette() {
   const navigate = useCallback(
     (dest: Destination) => {
       setOpen(false);
-      // External marketing routes can be plain href navigations — they're
+      // External marketing routes can be plain href navigations - they're
       // still inside the Next app though, so router.push works.
       router.push(dest.href);
     },
@@ -385,7 +385,7 @@ export function CmdKPalette() {
           )}
         </div>
 
-        {/* Keyboard hints are noise on touch devices — hide < sm. */}
+        {/* Keyboard hints are noise on touch devices - hide < sm. */}
         <div
           className="hidden items-center justify-end gap-3 border-t border-line px-3 py-2 font-mono text-[10.5px] text-fg-4 sm:flex"
           style={{ background: "rgba(255,255,255,0.015)" }}

@@ -61,7 +61,7 @@ function PlainEnglishSummary() {
       </h2>
       <p className="text-fg-2">
         The full legal Privacy Policy is below. This is what it actually
-        means in practice. If the two ever disagree, the legal text wins —
+        means in practice. If the two ever disagree, the legal text wins,
         but they shouldn&apos;t disagree, and if you spot a gap email{" "}
         <a
           href="mailto:founder@safeship.dev"
@@ -78,8 +78,8 @@ function PlainEnglishSummary() {
           detail={
             <>
               Whatever your agent passes into{" "}
-              <code className="rounded border border-line bg-black/40 px-1 py-0.5 font-mono text-[12px]">safeship.wrap()</code>{" "}
-              — inputs, outputs, step metadata, durations. Plus the
+              <code className="rounded border border-line bg-black/40 px-1 py-0.5 font-mono text-[12px]">safeship.wrap()</code>
+              : inputs, outputs, step metadata, durations. Plus the
               Anthropic / OpenAI HTTP requests + responses your agent
               makes (so we can build regression tests from them). Your
               email via Clerk auth. Billing details via Stripe.
@@ -90,8 +90,8 @@ function PlainEnglishSummary() {
           label="What we never collect"
           detail={
             <>
-              Your LLM provider API keys (Anthropic, OpenAI, etc.) —
-              those stay in your env vars and your agent talks to the
+              Your LLM provider API keys (Anthropic, OpenAI, etc.).
+              Those stay in your env vars and your agent talks to the
               provider directly. Your agent source code. Anything you
               don&apos;t explicitly hand to the SDK.
             </>

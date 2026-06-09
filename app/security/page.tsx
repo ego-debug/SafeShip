@@ -50,7 +50,7 @@ function Hero() {
         SafeShip is built so a breach of our database never gives an attacker
         the ability to run your agent or impersonate your LLM account. This
         page describes exactly what we store, what we don&apos;t, and where
-        the boundary lives — written by the founder, no security-theater
+        the boundary lives. Written by the founder, no security-theater
         vocabulary.
       </p>
     </header>
@@ -65,7 +65,7 @@ function Architecture() {
       </h2>
       <p className="text-fg-2">
         Most observability and eval tools take your LLM provider keys, your
-        agent code, or both — and execute them on the vendor&apos;s
+        agent code, or both, and execute them on the vendor&apos;s
         infrastructure. SafeShip deliberately does neither.
       </p>
 
@@ -88,7 +88,7 @@ function Architecture() {
               <Mono>POST /v1/traces</Mono>.
             </li>
             <li>
-              The auto-suggest engine — Claude reads anonymized trace data
+              The auto-suggest engine: Claude reads anonymized trace data
               and proposes a YAML assertion. <b className="text-fg">No
               re-execution of your code.</b>
             </li>
@@ -125,7 +125,7 @@ function Architecture() {
         Practical implication: if SafeShip&apos;s database is breached
         tomorrow, an attacker gets your historical trace metadata. They do
         not get the ability to call your LLM provider, modify your agent
-        code, or push to your repo. That isolation is structural — by
+        code, or push to your repo. That isolation is structural: by
         design, not by promise.
       </p>
     </section>
@@ -160,11 +160,11 @@ function DataTable() {
             />
             <DataRow
               data="Trace inputs and outputs"
-              stored={<Check>Yes — that's the product.</Check>}
+              stored={<Check>Yes: that's the product.</Check>}
               where={
                 <>
                   Supabase Postgres (US region). You control what your agent
-                  passes to <Mono>safeship.step()</Mono> — redact upstream
+                  passes to <Mono>safeship.step()</Mono>. Redact upstream
                   if the content is sensitive.
                 </>
               }
@@ -176,7 +176,7 @@ function DataTable() {
             />
             <DataRow
               data="Accepted regression tests (YAML + replay fixture)"
-              stored={<Check>Yes — served to your CI on demand.</Check>}
+              stored={<Check>Yes: served to your CI on demand.</Check>}
               where="Supabase Postgres (US region)."
             />
             <DataRow
@@ -213,7 +213,7 @@ function DataTable() {
         explicitly passes into <Mono>safeship.step(...)</Mono> or the wrapped
         function&apos;s arguments. If your agent processes regulated data
         (PII, PHI, payment info), redact at the boundary before calling the
-        SDK — same principle as any other observability tool.
+        SDK. Same principle as any other observability tool.
       </p>
     </section>
   );
@@ -307,7 +307,7 @@ function Incidents() {
         <li>
           <b className="text-fg">If we discover or are notified of a
           security incident affecting customer data, we email every
-          potentially-affected customer within 72 hours</b> — even if the
+          potentially-affected customer within 72 hours</b>, even if the
           investigation is still in progress.
         </li>
         <li>
@@ -317,7 +317,7 @@ function Incidents() {
           dashboard.
         </li>
         <li>
-          <b className="text-fg">We publish a postmortem within 30 days</b> —
+          <b className="text-fg">We publish a postmortem within 30 days</b>:
           public, timestamped, on this page. Includes timeline, scope, root
           cause, and what we changed to prevent recurrence. No spin, no
           deletions of past status updates.
@@ -353,22 +353,22 @@ function Roadmap() {
       </p>
       <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
         <li>
-          <b className="text-fg">At 10 paying customers</b> — engage a
+          <b className="text-fg">At 10 paying customers</b>: engage a
           security auditor and start SOC 2 Type I observation period.
         </li>
         <li>
-          <b className="text-fg">At ~25 paying customers</b> — SOC 2 Type II
+          <b className="text-fg">At ~25 paying customers</b>: SOC 2 Type II
           report available under NDA on request.
         </li>
         <li>
-          <b className="text-fg">When EU customer demand is real</b> — add
+          <b className="text-fg">When EU customer demand is real</b>: add
           Supabase EU + Vercel EU regions for data-residency selection at
           sign-up. Until then, SafeShip data is US-only and we say so
           plainly so EU customers can self-select out instead of being
           surprised mid-buy.
         </li>
         <li>
-          <b className="text-fg">HIPAA / BAA</b> — not on the roadmap.
+          <b className="text-fg">HIPAA / BAA</b>: not on the roadmap.
           Don&apos;t pass PHI through SafeShip; redact at the boundary.
         </li>
       </ul>
@@ -513,7 +513,7 @@ function Check({ children }: { children: React.ReactNode }) {
 function Cross({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-baseline gap-1.5">
-      <span className="text-fg-4">—</span>
+      <span className="text-fg-4">–</span>
       <span>{children}</span>
     </span>
   );

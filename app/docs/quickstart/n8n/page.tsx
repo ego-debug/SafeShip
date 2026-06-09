@@ -9,7 +9,7 @@ import {
 export const metadata = {
   title: "SafeShip quickstart for n8n · SafeShip",
   description:
-    "Wrap your n8n AI Agent node with a SafeShip trace in five minutes — no code changes to the workflow.",
+    "Wrap your n8n AI Agent node with a SafeShip trace in five minutes, with no code changes to the workflow.",
 };
 
 export default function N8nQuickstart() {
@@ -21,7 +21,7 @@ export default function N8nQuickstart() {
     >
       <Step n={1} title="The shape of the integration">
         <p>
-          n8n is a visual workflow editor — there&apos;s no Python file to
+          n8n is a visual workflow editor. There&apos;s no Python file to
           drop SafeShip into. Instead, you add a{" "}
           <b className="text-fg">Code node</b> right after your AI Agent
           node that POSTs the agent&apos;s input/output to SafeShip&apos;s{" "}
@@ -30,7 +30,7 @@ export default function N8nQuickstart() {
         </p>
         <p className="text-[13.5px] text-fg-3">
           A native n8n SafeShip node is on the roadmap. For now, a Code
-          node is the cleanest integration — and it stays declarative inside
+          node is the cleanest integration, and it stays declarative inside
           the n8n editor.
         </p>
       </Step>
@@ -70,7 +70,7 @@ export default function N8nQuickstart() {
           immediately downstream of your <b className="text-fg">AI Agent</b>{" "}
           node. Set it to <Mono>Run Once for All Items</Mono>. Paste:
         </p>
-        <Code>{`// SafeShip — record an AI Agent run as a trace.
+        <Code>{`// SafeShip: record an AI Agent run as a trace.
 // Place this Code node right after your AI Agent node.
 
 const runStart = $node["AI Agent"].context?.startedAt ?? Date.now();
@@ -127,7 +127,7 @@ return items; // pass the AI Agent output through unchanged`}</Code>
           >
             your dashboard
           </Link>{" "}
-          within a couple of seconds. Open it — you should see one run with
+          within a couple of seconds. Open it. You should see one run with
           the AI Agent step. That&apos;s the green-trace moment.
         </p>
       </Step>
@@ -135,14 +135,14 @@ return items; // pass the AI Agent output through unchanged`}</Code>
       <Step n={5} title="From here">
         <ul className="list-disc pl-5 [&>li]:mb-1.5">
           <li>
-            <b className="text-fg">Record individual tool calls</b> — if
+            <b className="text-fg">Record individual tool calls</b>: if
             your AI Agent uses n8n Tool nodes (HTTP, Postgres, etc.), add
             a Code node after each one and append a step to the trace
             instead of replacing it. SafeShip&apos;s auto-suggest engine
             uses per-step inputs/outputs to write tighter assertions.
           </li>
           <li>
-            <b className="text-fg">Block bad deploys</b> — if your workflow
+            <b className="text-fg">Block bad deploys</b>: if your workflow
             ships through n8n&apos;s Git integration or via CI, the
             SafeShip Action works on the repo side.{" "}
             <Link
@@ -153,7 +153,7 @@ return items; // pass the AI Agent output through unchanged`}</Code>
             </Link>
           </li>
           <li>
-            <b className="text-fg">Accept your first test</b> — when the
+            <b className="text-fg">Accept your first test</b>: when the
             agent fails in production, SafeShip drafts a regression test.{" "}
             <Link
               href="/app/suggestions"

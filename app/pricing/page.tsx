@@ -61,7 +61,7 @@ function PlanCard() {
     "Auto-suggested regression tests from real failures",
     "GitHub Action that blocks PRs on regression",
     "Email alerts on failed runs",
-    "Add your whole team — no seat fees",
+    "Add your whole team, no seat fees",
   ];
   return (
     <section
@@ -150,7 +150,7 @@ function Comparison() {
         running infra (free OSS CLIs), you&apos;re not paying ML-team rates
         (enterprise eval platforms), and you&apos;re not paying per seat for
         a one-person team. Three workload tiers, four pricing-model
-        categories — numbers based on the published pricing pages of
+        categories. Numbers are based on the published pricing pages of
         representative tools in each category as of June 2026 (see
         methodology below).
       </p>
@@ -229,7 +229,7 @@ function Comparison() {
 
       <p className="text-[13.5px] text-fg-3">
         For non-SafeShip rows, dollar figures are approximate and assume the
-        most common public posture in each category — exact prices vary by
+        most common public posture in each category. Exact prices vary by
         vendor and change frequently. The shape of the curve is the
         durable point: SafeShip is flat, the others scale with traces, seats,
         spans, or your engineering hours.
@@ -265,7 +265,7 @@ function Methodology() {
         <li>
           Self-hosted figures are <i>cash</i> cost only. We deliberately
           don&apos;t put a dollar figure on the engineering time required
-          to run a multi-service observability stack — that varies too much
+          to run a multi-service observability stack. That varies too much
           to estimate honestly. Plan for your own time as the real cost.
         </li>
         <li>
@@ -287,17 +287,17 @@ function FAQ() {
       <Q q="Is there really no per-seat charge?">
         No. Add your whole team to the same SafeShip account at $29.99
         total. We don&apos;t track or bill on seats. Team features (RBAC,
-        audit logs, shared workspaces) are deliberately not built yet —
-        when they ship, the price stays flat.
+        audit logs, shared workspaces) are deliberately not built yet.
+        When they ship, the price stays flat.
       </Q>
       <Q q="What if my agent goes viral and produces millions of traces?">
         You stay at $29.99/mo. Per-project rate limits exist as an abuse
         and cost-control safety net (5,000 traces per 24h burst-capped at
         100/min by default). If you legitimately need higher caps, email
-        and we&apos;ll raise them — the price doesn&apos;t change.
+        and we&apos;ll raise them. The price doesn&apos;t change.
       </Q>
       <Q q="Are there usage limits on the auto-suggest engine?">
-        Yes — 50 suggestions per project per 24h, burst-capped at 5 per 5
+        Yes: 50 suggestions per project per 24h, burst-capped at 5 per 5
         minutes. This protects the Anthropic spend cap behind the engine.
         For typical solo-dev usage (a few failing runs per day), this is
         invisible. If you need more, email.
@@ -305,13 +305,13 @@ function FAQ() {
       <Q q="What's the trial structure?">
         7-day free trial, card required upfront, $0 charged if you cancel
         before day 7. After day 7 the card is auto-charged $29.99/mo. You
-        can cancel anytime from the customer portal — no email retention
+        can cancel anytime from the customer portal. No email retention
         loop, no phone calls. You keep access until the current billing
         period ends.
       </Q>
       <Q q="Why not free forever?">
         Two reasons. The auto-suggest engine costs us real Anthropic tokens
-        on every suggestion — a free tier big enough to be useful would be
+        on every suggestion. A free tier big enough to be useful would be
         either abusable or unsustainable. And charging from day one keeps
         us building for people who depend on their agent in production,
         which is who this tool is for.
@@ -322,7 +322,7 @@ function FAQ() {
       </Q>
       <Q q="What about refunds?">
         Cancel anytime to stop future charges. We don&apos;t refund partial
-        months — but if something goes genuinely wrong on our end, email
+        months, but if something goes genuinely wrong on our end, email
         the founder and we&apos;ll do the right thing.
       </Q>
     </section>

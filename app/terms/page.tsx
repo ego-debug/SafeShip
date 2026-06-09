@@ -60,7 +60,7 @@ function PlainEnglishSummary() {
       <p className="text-fg-2">
         The full legal Terms of Service is below. This is the actual
         agreement in human language. If the two ever disagree, the legal
-        text wins — but they shouldn&apos;t disagree.
+        text wins, but they shouldn&apos;t disagree.
       </p>
 
       <div className="overflow-hidden rounded-xl border border-line">
@@ -113,8 +113,8 @@ function PlainEnglishSummary() {
               From{" "}
               <Link href="/app/billing" className="text-accent hover:text-[#d3ff85]">
                 /app/billing
-              </Link>{" "}
-              — opens the Stripe customer portal. One click, no
+              </Link>
+              , which opens the Stripe customer portal. One click, no
               retention loop, no email required. You keep access until
               the current billing period ends.
             </>

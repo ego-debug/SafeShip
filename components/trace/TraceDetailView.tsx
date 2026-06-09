@@ -84,7 +84,7 @@ function StatusBanner({
         <p className="font-medium text-fg">
           ❌ Run failed at step{" "}
           <span className="font-mono">
-            {failingStep ? failingStep.step_index : "—"}
+            {failingStep ? failingStep.step_index : "–"}
           </span>{" "}
           {failingStep?.tool_name ? (
             <>
@@ -96,7 +96,7 @@ function StatusBanner({
         <p className="mt-1 font-mono text-xs text-fg-3">
           score{" "}
           <span className="text-danger">
-            {run.score == null ? "—" : `${run.score}/100`}
+            {run.score == null ? "–" : `${run.score}/100`}
           </span>{" "}
           · trigger {run.trigger}
         </p>
@@ -120,7 +120,7 @@ function StatusBanner({
       <p className="mt-1 font-mono text-xs text-fg-3">
         score{" "}
         <span className="text-accent">
-          {run.score == null ? "—" : `${run.score}/100`}
+          {run.score == null ? "–" : `${run.score}/100`}
         </span>{" "}
         · trigger {run.trigger}
       </p>
@@ -135,7 +135,7 @@ function RunMeta({ run }: { run: RunDetail }) {
         {run.project_name}
         <span className="ml-1.5 text-fg-4">{run.project_environment}</span>
       </Meta>
-      <Meta label="Model">{run.model ?? "—"}</Meta>
+      <Meta label="Model">{run.model ?? "–"}</Meta>
       <Meta label="Duration">{fmtDuration(run.duration_ms)}</Meta>
       <Meta label="Started">{fmtDate(run.started_at)}</Meta>
     </dl>
@@ -196,7 +196,7 @@ function StepCard({
       <button
         type="button"
         aria-expanded={open}
-        aria-label={`Step ${step.step_index}: ${step.tool_name ?? "unnamed"} — ${open ? "collapse" : "expand"} details`}
+        aria-label={`Step ${step.step_index}: ${step.tool_name ?? "unnamed"}. ${open ? "Collapse" : "Expand"} details`}
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
       >
@@ -337,7 +337,7 @@ function IoBlock({ label, data }: { label: string; data: unknown }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // older browsers / no permission — silent
+      // older browsers / no permission - silent
     }
   }
 
@@ -481,14 +481,14 @@ function ActionBar({ runId }: { runId: string }) {
         }
         setSuggestErr(
           data.error === "engine_not_configured"
-            ? "ANTHROPIC_API_KEY not set — add it to .env.local."
+            ? "ANTHROPIC_API_KEY not set. Add it to .env.local."
             : data.error ?? "suggest_failed",
         );
         return;
       }
       router.push("/app/suggestions");
     } catch {
-      setSuggestErr("Network error — check your connection and try again.");
+      setSuggestErr("Network error. Check your connection and try again.");
     } finally {
       setSuggesting(false);
     }
@@ -562,7 +562,7 @@ function RawTracePanel({ run }: { run: RunDetail }) {
   );
 }
 
-// Suggest errors that retry can't fix on its own — engine config + rate
+// Suggest errors that retry can't fix on its own - engine config + rate
 // limits both need the user to do something else before retrying.
 function isSuggestRetryable(msg: string): boolean {
   if (/ANTHROPIC_API_KEY|engine_not_configured/i.test(msg)) return false;
@@ -717,7 +717,7 @@ function NoStepsState() {
 }
 
 function fmtDuration(ms: number | null) {
-  if (ms == null) return "—";
+  if (ms == null) return "–";
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(2)}s`;
 }

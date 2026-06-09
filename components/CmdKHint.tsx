@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 // hint changes to ⌘K on Mac vs Ctrl+K elsewhere so the hint matches
 // the actual chord the user can press.
 //
-// Decoupled from the palette via a window custom event — keeps both
+// Decoupled from the palette via a window custom event - keeps both
 // components independently testable and lets us mount the hint anywhere
 // without prop drilling state.
 export function CmdKHint() {

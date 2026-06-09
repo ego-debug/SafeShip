@@ -3,12 +3,12 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SafeShip — The same bug never ships twice.",
+  title: "SafeShip · The same bug never ships twice.",
   description:
-    "Every production failure becomes a regression test. Drop in a 4-line SDK — SafeShip captures the trace, writes the assertion, and blocks any future deploy that would reproduce it.",
+    "Every production failure becomes a regression test. Drop in a 4-line SDK. SafeShip captures the trace, writes the assertion, and blocks any future deploy that would reproduce it.",
   metadataBase: new URL("https://safeship.dev"),
   openGraph: {
-    title: "SafeShip — The same bug never ships twice.",
+    title: "SafeShip · The same bug never ships twice.",
     description:
       "Every production failure becomes a regression test. $29.99/mo flat, no seats.",
     url: "https://safeship.dev",

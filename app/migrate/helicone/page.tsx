@@ -6,7 +6,7 @@ import { Nav } from "@/components/Nav";
 export const metadata = {
   title: "Migrate from Helicone · SafeShip",
   description:
-    "Helicone is in maintenance mode after the Mintlify acquisition. Move to SafeShip in 5 minutes — flat $29.99/mo, auto-generated regression tests, and a GitHub Action that blocks bad deploys.",
+    "Helicone is in maintenance mode after the Mintlify acquisition. Move to SafeShip in 5 minutes: flat $29.99/mo, auto-generated regression tests, and a GitHub Action that blocks bad deploys.",
 };
 
 export default function HeliconeMigrationPage() {
@@ -65,7 +65,7 @@ function StatusBox() {
       </h2>
       <p className="mb-3 text-fg-2">
         In <b className="text-fg">March 2026</b>, Mintlify acquired Helicone
-        and, per their announcement, placed it in maintenance mode — security
+        and, per their announcement, placed it in maintenance mode: security
         patches and bug fixes only, no new features. The team has publicly
         redirected focus to Mintlify, and the self-hosted distribution has
         open issues (Docker, ClickHouse, AzureOpenAI) that are not being
@@ -114,7 +114,7 @@ function Migration() {
       <Step
         n="1"
         title="Remove the Helicone proxy from your LLM client"
-        before={`# Before — Helicone (Anthropic example)
+        before={`# Before: Helicone (Anthropic example)
 import anthropic
 
 client = anthropic.Anthropic(
@@ -123,7 +123,7 @@ client = anthropic.Anthropic(
         "Helicone-Auth": f"Bearer {HELICONE_KEY}",
     },
 )`}
-        after={`# After — talk to your provider directly
+        after={`# After: talk to your provider directly
 import anthropic
 
 client = anthropic.Anthropic()  # standard, no proxy`}
@@ -132,7 +132,7 @@ client = anthropic.Anthropic()  # standard, no proxy`}
       <Step
         n="2"
         title="Install SafeShip and wrap your agent"
-        before={`# (no equivalent in Helicone — the proxy "wrapped" requests
+        before={`# (no equivalent in Helicone: the proxy "wrapped" requests
 #  by sitting between your code and the LLM)`}
         after={`# pip install "git+https://github.com/ego-debug/SafeShip.git#subdirectory=sdks/python"
 import safeship
@@ -158,11 +158,11 @@ def my_agent(message: str) -> str:
             >
               /app/dashboard
             </Link>{" "}
-            — your runs appear in the &quot;Recent runs&quot; panel within
-            seconds. Click into a failed run, hit{" "}
+            and watch your runs appear in the &quot;Recent runs&quot; panel
+            within seconds. Click into a failed run, hit{" "}
             <b className="text-fg">✓ Suggest a regression test</b>, and Claude
             writes a YAML assertion that would have caught it. Accept it (press{" "}
-            <Kbd>Y</Kbd>) and it lands in your regression suite — replayed
+            <Kbd>Y</Kbd>) and it lands in your regression suite, replayed
             against every PR by the SafeShip GitHub Action.
           </p>
         }
@@ -181,7 +181,7 @@ function Comparison() {
   return (
     <section className="flex flex-col gap-5">
       <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em]">
-        Helicone vs SafeShip — what changes
+        Helicone vs SafeShip: what changes
       </h2>
       <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-left text-[13.5px]">
@@ -206,12 +206,12 @@ function Comparison() {
             <Row
               label="Added latency"
               helicone="Per-call proxy hop (third-party teardowns measured ~50–80ms)"
-              safeship="0ms — trace ships from a daemon thread"
+              safeship="0ms: trace ships from a daemon thread"
             />
             <Row
               label="Single point of failure"
-              helicone="Yes — your requests stop if proxy is down"
-              safeship="No — your agent runs even if SafeShip is down"
+              helicone="Yes: your requests stop if proxy is down"
+              safeship="No: your agent runs even if SafeShip is down"
             />
             <Row
               label="Auto-generates regression tests"
@@ -235,7 +235,7 @@ function Comparison() {
             />
             <Row
               label="Cloud bill kill-switch"
-              helicone="None — viral traffic = full provider bill"
+              helicone="None: viral traffic = full provider bill"
               safeship="Per-project rate limits + flat plan = no surprises"
             />
             <Row
@@ -263,13 +263,13 @@ function Honesty() {
       </h2>
       <p className="text-fg-2">
         We&apos;re a 1-person company shipping a focused product. A few things
-        Helicone offered are deliberately not on our roadmap yet — if these are
+        Helicone offered are deliberately not on our roadmap yet. If these are
         load-bearing for you, plan accordingly:
       </p>
       <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
         <li>
           <b className="text-fg">Response caching.</b> Helicone caches identical
-          requests. SafeShip doesn&apos;t — your provider sees every call.
+          requests. SafeShip doesn&apos;t. Your provider sees every call.
         </li>
         <li>
           <b className="text-fg">Prompt management with approval workflows.</b>{" "}
@@ -292,7 +292,7 @@ function Honesty() {
       <p className="mt-1 text-[13.5px] text-fg-3">
         If those are deal-breakers, open-source self-hosted observability
         tools (run from your own infra) are the closest functional successor
-        to late-era Helicone — though plan on standing up a multi-service
+        to late-era Helicone, though plan on standing up a multi-service
         stack and the eng time that entails.
       </p>
     </section>
@@ -309,12 +309,12 @@ function FAQ() {
         Not automatically. SafeShip starts fresh from your first wrapped call.
         If you need historical data preserved, export from Helicone first
         (their export endpoints still work in maintenance mode) and keep the
-        archive — SafeShip&apos;s value is forward-looking: every <i>future</i>{" "}
+        archive. SafeShip&apos;s value is forward-looking: every <i>future</i>{" "}
         failure becomes a regression test.
       </Q>
       <Q q="Do I need to change my Anthropic / OpenAI account?">
         No. SafeShip never sees your LLM provider keys. You go back to calling
-        the provider directly with your own credentials — exactly the
+        the provider directly with your own credentials, exactly the
         pre-Helicone setup.
       </Q>
       <Q q="Will SafeShip slow down my agent?">
@@ -326,18 +326,18 @@ function FAQ() {
         Your agent keeps running. The SDK catches every internal error
         silently, retries 5xx/429 with exponential backoff, and never crashes
         your code. Verified in our pytest suite. (Helicone, being a proxy,
-        couldn&apos;t make this guarantee — proxy down = your LLM call down.)
+        couldn&apos;t make this guarantee: proxy down = your LLM call down.)
       </Q>
-      <Q q="I was using Helicone's prompt management / caching / custom properties — what now?">
-        SafeShip doesn&apos;t replace those features (yet — see &quot;What
+      <Q q="I was using Helicone's prompt management / caching / custom properties. What now?">
+        SafeShip doesn&apos;t replace those features (yet; see &quot;What
         SafeShip does <i>not</i> do&quot; above). If those are load-bearing,
         a self-hosted observability tool is your closest functional path
-        forward. If you can live without them, SafeShip&apos;s wedge —
-        auto-generated tests + deploy gating — is what you actually need to
+        forward. If you can live without them, SafeShip&apos;s wedge
+        (auto-generated tests + deploy gating) is what you actually need to
         ship agents reliably.
       </Q>
       <Q q="Can I run SafeShip alongside Helicone during the cutover?">
-        Yes. They&apos;re completely independent — Helicone proxies your LLM
+        Yes. They&apos;re completely independent: Helicone proxies your LLM
         calls, SafeShip wraps your agent function. Run both for a week if
         you&apos;d like to compare dashboards before pulling the proxy lines.
       </Q>
@@ -353,7 +353,7 @@ function FAQ() {
           published pricing
         </a>{" "}
         for your traffic volume. For most solo devs and small teams, SafeShip
-        comes out at a wash or better on price — and ahead on capability,
+        comes out at a wash or better on price, and ahead on capability,
         since auto-generated regression tests and deploy gating aren&apos;t
         on the Helicone roadmap.
       </Q>
@@ -368,7 +368,7 @@ function CTA() {
         Ready to switch?
       </h2>
       <p className="max-w-[600px] text-fg-2">
-        Start a 7-day free trial — card on file, $0 charged unless you keep
+        Start a 7-day free trial: card on file, $0 charged unless you keep
         it. The first trace lands on your dashboard within 5 seconds of
         wrapping your agent.
       </p>
@@ -435,8 +435,8 @@ function Step({
       {body}
       {before && after && (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <CodeCard label="Before — Helicone">{before}</CodeCard>
-          <CodeCard label="After — SafeShip">{after}</CodeCard>
+          <CodeCard label="Before: Helicone">{before}</CodeCard>
+          <CodeCard label="After: SafeShip">{after}</CodeCard>
         </div>
       )}
     </div>
@@ -493,7 +493,7 @@ function Check({ children }: { children: React.ReactNode }) {
 }
 
 function Cross() {
-  return <span className="text-fg-4">—</span>;
+  return <span className="text-fg-4">–</span>;
 }
 
 function Q({ q, children }: { q: string; children: React.ReactNode }) {

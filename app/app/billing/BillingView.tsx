@@ -66,16 +66,16 @@ export function BillingView({
         </span>
         <h1 className="text-[clamp(28px,3vw,36px)] font-semibold leading-[1.1] tracking-[-0.025em]">
           {isOwner
-            ? "Owner account — billing skipped"
+            ? "Owner account: billing skipped"
             : subscription.cancel_at_period_end &&
               (subscription.status === "trialing" || subscription.status === "active")
-            ? "Subscription canceled — won't renew"
+            ? "Subscription canceled, won't renew"
             : subscription.status === "active"
-            ? "SafeShip Pro — active"
+            ? "SafeShip Pro: active"
             : subscription.status === "trialing"
-            ? "SafeShip Pro — 7-day free trial"
+            ? "SafeShip Pro: 7-day free trial"
             : subscription.status === "past_due"
-            ? "Payment failed — please update your card"
+            ? "Payment failed. Please update your card"
             : subscription.status === "canceled"
             ? "Subscription canceled"
             : "Start your 7-day free trial"}
@@ -84,7 +84,7 @@ export function BillingView({
 
       {checkoutStatus === "success" && (
         <Banner tone="ok">
-          ✓ Card on file. Welcome to SafeShip — your 7-day trial starts now.
+          ✓ Card on file. Welcome to SafeShip. Your 7-day trial starts now.
         </Banner>
       )}
       {checkoutStatus === "canceled" && (
@@ -115,7 +115,7 @@ export function BillingView({
         />
         <InfoCard
           title="Cancel anytime"
-          body="Manage your subscription from the Stripe customer portal — cancel, update card, see invoices. No refunds for partial months but you keep access until current period ends."
+          body="Manage your subscription from the Stripe customer portal: cancel, update card, see invoices. No refunds for partial months but you keep access until current period ends."
         />
         <InfoCard
           title="Trial details"
@@ -203,7 +203,7 @@ function SubscriptionCard({
 
 function Meta({ subscription }: { subscription: Subscription }) {
   // Pending cancellation (user cancelled, period hasn't ended yet) takes
-  // priority over the trial/active default copy — otherwise the page reads
+  // priority over the trial/active default copy - otherwise the page reads
   // like the cancel didn't go through.
   if (
     subscription.cancel_at_period_end &&
@@ -215,7 +215,7 @@ function Meta({ subscription }: { subscription: Subscription }) {
       return (
         <p className="text-[13.5px] text-fg-2">
           You canceled. Access continues until {fmtDate(end)} (
-          {daysUntil(end)}) — your card won&apos;t be charged. Resume anytime
+          {daysUntil(end)}). Your card won&apos;t be charged. Resume anytime
           from the customer portal.
         </p>
       );
@@ -257,8 +257,8 @@ function Meta({ subscription }: { subscription: Subscription }) {
   return (
     <p className="text-[13.5px] text-fg-2">
       Card required upfront. Stripe collects it but doesn&apos;t charge for 7
-      days. Auto-bills $29.99/month after that. Cancel anytime — cancel before
-      day 7 = $0 charged.
+      days. Auto-bills $29.99/month after that. Cancel anytime, and if you
+      cancel before day 7 you pay nothing.
     </p>
   );
 }
@@ -303,7 +303,7 @@ function OwnerCard() {
         <code className="rounded border border-line bg-black/40 px-1.5 py-0.5 font-mono text-[12.5px]">
           SAFESHIP_OWNER_CLERK_IDS
         </code>{" "}
-        — full access without a Stripe subscription. Remove your Clerk user
+        (full access without a Stripe subscription). Remove your Clerk user
         ID from that env var to test the real billing flow.
       </p>
     </section>
@@ -383,11 +383,11 @@ function Banner({
 function humanizeBillingError(code: string): string {
   switch (code) {
     case "checkout_failed":
-      return "Couldn't start checkout. Try again in a moment — if it keeps failing, email founder@safeship.dev.";
+      return "Couldn't start checkout. Try again in a moment. If it keeps failing, email founder@safeship.dev.";
     case "portal_failed":
-      return "Couldn't open the customer portal. Try again in a moment — if it keeps failing, email founder@safeship.dev.";
+      return "Couldn't open the customer portal. Try again in a moment. If it keeps failing, email founder@safeship.dev.";
     case "network_error":
-      return "Network error — check your connection and try again.";
+      return "Network error. Check your connection and try again.";
     case "billing_not_configured":
       return "Billing isn't configured on this deployment yet.";
     case "no_customer":

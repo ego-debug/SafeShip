@@ -23,7 +23,7 @@ export function DashboardLiveSection({
   projectId: string;
   initialRuns: DashboardRun[];
   initialFailures: DashboardFailure[];
-  // Server-rendered ScoreChart slot — passed in as a prop so we don't
+  // Server-rendered ScoreChart slot - passed in as a prop so we don't
   // re-serialize the 7-day time series on every 2s poll. Score chart
   // updates only on full page render.
   scoreChart: React.ReactNode;
@@ -37,7 +37,7 @@ export function DashboardLiveSection({
     new Set(initialRuns.map((r) => r.id)),
   );
   // Show a "polling paused" hint when 3+ consecutive polls fail. Stays a
-  // soft visual (header chip changes color) — no toast, no banner — so a
+  // soft visual (header chip changes color) - no toast, no banner - so a
   // transient blip doesn't yell at the customer.
   const [staleSince, setStaleSince] = useState<number | null>(null);
   const failuresInARowRef = useRef(0);
@@ -49,7 +49,7 @@ export function DashboardLiveSection({
 
     async function poll() {
       if (cancelled) return;
-      // Don't poll a hidden tab — wastes bandwidth + battery on laptops.
+      // Don't poll a hidden tab - wastes bandwidth + battery on laptops.
       // Check back at a much slower cadence; the visibilitychange handler
       // below resumes fast polling the moment the tab is foregrounded.
       if (typeof document !== "undefined" && document.hidden) {
@@ -66,7 +66,7 @@ export function DashboardLiveSection({
             failures: DashboardFailure[];
             totalRuns: number;
           };
-          // Detect runs we haven't seen before — these are the ones to
+          // Detect runs we haven't seen before - these are the ones to
           // flash on next render.
           const fresh = new Set<string>();
           for (const run of data.runs) {
@@ -87,7 +87,7 @@ export function DashboardLiveSection({
               FADE_HOLD_MS,
             );
           }
-          // Successful poll — reset failure streak + clear stale state.
+          // Successful poll - reset failure streak + clear stale state.
           // Functional update: this closure runs once per projectId, so
           // reading `staleSince` directly would see the stale initial
           // value forever and the amber chip would never clear.
@@ -117,7 +117,7 @@ export function DashboardLiveSection({
 
     function onVisibility() {
       if (document.hidden) return;
-      // Resume immediately when tab becomes visible — don't make the user
+      // Resume immediately when tab becomes visible - don't make the user
       // wait the full POLL_MS for fresh data.
       if (timer) clearTimeout(timer);
       timer = setTimeout(poll, 50);
@@ -166,7 +166,7 @@ export function DashboardLiveSection({
 }
 
 // Header chip for the "Recent runs" panel. Pulses green during live
-// polling; switches to amber with a "polling paused — last fresh data
+// polling; switches to amber with a "polling paused - last fresh data
 // Ns ago" hint when 3+ consecutive polls have failed.
 function LiveMeta({
   count,
@@ -210,7 +210,7 @@ function LiveMeta({
   );
 }
 
-// Local Panel duplicate — the original lives inside DashboardView. Tiny
+// Local Panel duplicate - the original lives inside DashboardView. Tiny
 // enough to mirror here rather than refactor.
 function Panel({
   title,
