@@ -29,7 +29,7 @@ export function ScoreChart({ series }: { series: Point[] }) {
     .map((p, i) => `${i === 0 ? "M" : "L"}${p}`)
     .join(" ");
 
-  // Area fill — close path back to baseline at the lowest x
+  // Area fill - close path back to baseline at the lowest x
   const firstIdx = series.findIndex((p) => p.score != null);
   const lastIdx = (() => {
     for (let i = series.length - 1; i >= 0; i--) if (series[i].score != null) return i;
@@ -73,7 +73,7 @@ export function ScoreChart({ series }: { series: Point[] }) {
         <p className="text-sm text-fg-2">
           {isUnhealthy ? (
             <>
-              Below the 80 deploy-gate line —{" "}
+              Below the 80 deploy-gate line:{" "}
               <span className="text-danger">
                 <b>{latest.score}</b> on {fmtDay(latest.day)}
               </span>
@@ -81,7 +81,7 @@ export function ScoreChart({ series }: { series: Point[] }) {
             </>
           ) : (
             <>
-              Healthy — at or above the 80 deploy-gate line. Last run{" "}
+              Healthy. At or above the 80 deploy-gate line. Last run{" "}
               {fmtRelative(latest.day)}.
             </>
           )}

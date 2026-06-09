@@ -48,7 +48,7 @@ export default function DocsPage() {
                 <QuickstartCard
                   href="/docs/quickstart/cursor"
                   name="Cursor"
-                  blurb="Paste one prompt into Cursor's chat — it'll diff in SafeShip."
+                  blurb="Paste one prompt into Cursor's chat and it'll diff in SafeShip."
                   mins={3}
                 />
                 <QuickstartCard
@@ -60,7 +60,7 @@ export default function DocsPage() {
                 <QuickstartCard
                   href="/docs/quickstart/lovable"
                   name="Lovable"
-                  blurb="Ask Lovable to add SafeShip to your AI route — three messages."
+                  blurb="Ask Lovable to add SafeShip to your AI route. Three messages."
                   mins={4}
                 />
                 <QuickstartCard
@@ -75,7 +75,7 @@ export default function DocsPage() {
             <Section id="prereqs" title="Before you start">
               <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
                 <li>
-                  A SafeShip account — create one at{" "}
+                  A SafeShip account: create one at{" "}
                   <Link
                     href="/sign-up"
                     className="text-accent hover:text-[#d3ff85]"
@@ -85,7 +85,7 @@ export default function DocsPage() {
                   and start your 7-day free trial (see below)
                 </li>
                 <li>
-                  Your API key (looks like <Mono>sk_live_…</Mono>) — find it on
+                  Your API key (looks like <Mono>sk_live_…</Mono>): find it on
                   the{" "}
                   <Link
                     href="/app/onboarding"
@@ -111,12 +111,12 @@ export default function DocsPage() {
                 </li>
                 <li>
                   <b className="text-fg">Cancel before day 7 = $0 charged.</b>{" "}
-                  Cancel anytime from the customer portal — no email, no
+                  Cancel anytime from the customer portal. No email, no
                   retention loop.
                 </li>
                 <li>
                   <b className="text-fg">After 7 days</b>, your card is
-                  auto-charged $29.99/mo. Cancel anytime — you keep access until
+                  auto-charged $29.99/mo. Cancel anytime; you keep access until
                   the current period ends. No refunds for partial months.
                 </li>
                 <li>
@@ -127,18 +127,18 @@ export default function DocsPage() {
                   >
                     /app/billing
                   </Link>{" "}
-                  — update card, see invoices, or cancel from the Stripe
+                  to update your card, see invoices, or cancel from the Stripe
                   customer portal.
                 </li>
               </ul>
               <p className="mt-3 text-[13.5px] text-fg-3">
                 You can&apos;t access <Mono>/app/*</Mono> until your card is on
-                file. We don&apos;t take payment details by phone or email —
+                file. We don&apos;t take payment details by phone or email,
                 only through the Stripe checkout link inside the app.
               </p>
             </Section>
 
-            <Section id="install" title="1 — Install the SDK">
+            <Section id="install" title="1. Install the SDK">
               <p className="mb-3 text-fg-2">
                 During beta, install directly from our GitHub:
               </p>
@@ -152,7 +152,7 @@ export default function DocsPage() {
               </p>
             </Section>
 
-            <Section id="wrap" title="2 — Initialize and wrap your agent">
+            <Section id="wrap" title="2. Initialize and wrap your agent">
               <p className="mb-3 text-fg-2">
                 In your agent code, call <Mono>safeship.init()</Mono> once at
                 startup, then wrap your agent callable with{" "}
@@ -163,18 +163,18 @@ export default function DocsPage() {
 safeship.init(api_key="sk_live_...")  # paste your key here
 agent = safeship.wrap(my_agent)        # wraps any callable
 
-# now call your agent normally — every run ships a trace
+# now call your agent normally - every run ships a trace
 result = agent("user message here")`}</CodeBlock>
               <p className="mt-3 text-fg-2">
                 That&apos;s it. Every call to <Mono>agent(...)</Mono> ships a
-                trace to your dashboard from a background daemon thread —{" "}
-                <b className="text-fg">never blocks your code</b>,{" "}
+                trace to your dashboard from a background daemon thread. It{" "}
+                <b className="text-fg">never blocks your code</b>, and{" "}
                 <b className="text-fg">never crashes your agent</b> if our
                 ingest is down.
               </p>
             </Section>
 
-            <Section id="steps" title="3 — (Optional) Record sub-steps">
+            <Section id="steps" title="3. (Optional) Record sub-steps">
               <p className="mb-3 text-fg-2">
                 By default, each wrapped call produces one trace with one
                 step (the agent itself). To get richer step-by-step traces,
@@ -200,7 +200,7 @@ result = agent("user message here")`}</CodeBlock>
               </p>
             </Section>
 
-            <Section id="view" title="4 — See your traces and accept tests">
+            <Section id="view" title="4. See your traces and accept tests">
               <ol className="list-decimal pl-5 text-fg-2 [&>li]:mb-2">
                 <li>
                   Open{" "}
@@ -209,8 +209,8 @@ result = agent("user message here")`}</CodeBlock>
                     className="text-accent hover:text-[#d3ff85]"
                   >
                     your dashboard
-                  </Link>{" "}
-                  — every run your agent does appears in the &quot;Recent
+                  </Link>
+                  . Every run your agent does appears in the &quot;Recent
                   runs&quot; panel within seconds.
                 </li>
                 <li>
@@ -240,7 +240,7 @@ result = agent("user message here")`}</CodeBlock>
               </ol>
             </Section>
 
-            <Section id="ci" title="5 — Block bad deploys (GitHub Action)">
+            <Section id="ci" title="5. Block bad deploys (GitHub Action)">
               <p className="mb-3 text-fg-2">
                 SafeShip ships a GitHub Action that runs on every PR. By
                 default (<Mono>mode: auto</Mono>) it picks one of two
@@ -257,7 +257,7 @@ result = agent("user message here")`}</CodeBlock>
                 failure, the PR fails. Add a <Mono>safeship.yaml</Mono> at
                 the repo root pointing at your agent entry point:
               </p>
-              <CodeBlock language="yaml">{`# safeship.yaml — declare which function the test runner should call
+              <CodeBlock language="yaml">{`# safeship.yaml: declare which function the test runner should call
 agent: src.my_agent:run`}</CodeBlock>
               <p className="mb-3 mt-3 text-fg-2">
                 Then add the Action to your workflow:
@@ -282,7 +282,7 @@ jobs:
           api-key: \${{ secrets.SAFESHIP_API_KEY }}`}</CodeBlock>
               <p className="mt-3 text-[13.5px] text-fg-3">
                 Your workflow is responsible for setting up Python and
-                installing your agent&apos;s dependencies — the SafeShip
+                installing your agent&apos;s dependencies. The SafeShip
                 action installs only the SafeShip SDK on top, then runs{" "}
                 <Mono>safeship test</Mono>. Each replayed test re-invokes
                 your agent with real LLM calls; budget roughly{" "}
@@ -330,7 +330,7 @@ jobs:
               </p>
             </Section>
 
-            <Section id="branch-protection" title="6 — Make the red check actually block the merge">
+            <Section id="branch-protection" title="6. Make the red check actually block the merge">
               <p className="mb-3 text-fg-2">
                 By default, GitHub <i>shows</i> failed status checks on a
                 PR but doesn&apos;t prevent the merge button from being
@@ -341,7 +341,7 @@ jobs:
               </p>
 
               <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
-                Option A — Branch protection rule (classic, available on all plans)
+                Option A: Branch protection rule (classic, available on all plans)
               </h3>
               <ol className="list-decimal pl-5 text-fg-2 [&>li]:mb-1.5">
                 <li>
@@ -367,7 +367,7 @@ jobs:
                   In the search box that appears, type{" "}
                   <Mono>safeship</Mono> and select the SafeShip check.
                   GitHub only lists checks that have <i>run at least once</i>
-                  {" "}on the repo — so open a throwaway PR first and let
+                  {" "}on the repo, so open a throwaway PR first and let
                   the workflow finish if you don&apos;t see the option.
                 </li>
                 <li>
@@ -385,7 +385,7 @@ jobs:
               </ol>
 
               <h3 className="mb-2 mt-6 text-[15.5px] font-semibold text-fg">
-                Option B — Repository ruleset (recommended for new repos)
+                Option B: Repository ruleset (recommended for new repos)
               </h3>
               <p className="mb-3 text-fg-2">
                 GitHub Rulesets are the newer, more flexible replacement
@@ -425,8 +425,8 @@ jobs:
               </h3>
               <p className="mb-3 text-fg-2">
                 The check name GitHub remembers is the{" "}
-                <b className="text-fg">job name</b> from your workflow YAML
-                — <i>not</i> &quot;SafeShip&quot;. So if your workflow
+                <b className="text-fg">job name</b> from your workflow YAML,
+                <i>not</i> &quot;SafeShip&quot;. So if your workflow
                 looks like:
               </p>
               <CodeBlock language="yaml">{`jobs:
@@ -446,8 +446,8 @@ jobs:
 
               <p className="mt-3 text-[13.5px] text-fg-3">
                 If the check doesn&apos;t appear in the dropdown, the
-                workflow hasn&apos;t finished running on this repo yet —
-                open a draft PR, let it run once, then come back.
+                workflow hasn&apos;t finished running on this repo yet.
+                Open a draft PR, let it run once, then come back.
               </p>
             </Section>
 
@@ -463,17 +463,17 @@ jobs:
               </p>
               <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
                 <li>
-                  <b className="text-fg">passed</b> — the assertion held;
+                  <b className="text-fg">passed</b>: the assertion held;
                   this regression won&apos;t recur with your new code.
                 </li>
                 <li>
-                  <b className="text-fg">failed</b> — the assertion was
+                  <b className="text-fg">failed</b>: the assertion was
                   violated; your PR would reproduce the original failure.
                   The PR check fails and the inline comment shows which
                   test broke and why.
                 </li>
                 <li>
-                  <b className="text-fg">skipped</b> — no step in the new
+                  <b className="text-fg">skipped</b>: no step in the new
                   trace matched the test&apos;s <Mono>when:</Mono> clause.
                   The agent likely routed differently for this input;
                   non-blocking.
@@ -482,7 +482,7 @@ jobs:
               <p className="mt-3 text-fg-2">
                 Replays run <i>your</i> code with <i>your</i> credentials
                 inside <i>your</i> CI environment. SafeShip&apos;s servers
-                never execute your agent — they only generate the YAML
+                never execute your agent. They only generate the YAML
                 assertions and serve them via the manifest API.
               </p>
             </Section>
@@ -498,7 +498,7 @@ jobs:
                 Anthropic / OpenAI call when the trace is first recorded;
                 the cached request and response bodies travel with the
                 test. In CI, those cached responses can be replayed
-                verbatim — no provider hit, no LLM bill.
+                verbatim: no provider hit, no LLM bill.
               </p>
               <p className="mb-3 text-fg-2">
                 Opt in by setting the feature flag in your repo secrets:
@@ -508,8 +508,8 @@ jobs:
                 And (optionally) the mode in <Mono>safeship.yaml</Mono>:
               </p>
               <CodeBlock language="yaml">{`agent: src.my_agent:run
-replay_mode: cached_or_live  # default — falls back to live on miss
-# replay_mode: cached_only   # strict — miss = fail with "fixture mismatch"
+replay_mode: cached_or_live  # default: falls back to live on miss
+# replay_mode: cached_only   # strict: miss = fail with "fixture mismatch"
 # replay_mode: live          # ignore cache entirely (Phase-2 behavior)`}</CodeBlock>
 
               <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
@@ -531,13 +531,13 @@ replay_mode: cached_or_live  # default — falls back to live on miss
               </h3>
               <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
                 <li>
-                  <Mono>cached_or_live</Mono> <b className="text-fg">(default)</b>{" "}
-                  — cache miss falls through to a real LLM call. The PR
+                  <Mono>cached_or_live</Mono> <b className="text-fg">(default)</b>:
+                  cache miss falls through to a real LLM call. The PR
                   comment notes which calls fell through, so you can see
                   cost creep over time.
                 </li>
                 <li>
-                  <Mono>cached_only</Mono> — cache miss returns a synthetic
+                  <Mono>cached_only</Mono>: cache miss returns a synthetic
                   HTTP 599 response (no provider hit). The assertion
                   evaluator treats it as a failed step and reports
                   &quot;fixture mismatch&quot;. Use this when you want CI
@@ -545,7 +545,7 @@ replay_mode: cached_or_live  # default — falls back to live on miss
                   fresh re-accepts.
                 </li>
                 <li>
-                  <Mono>live</Mono> — cache is ignored entirely. Every call
+                  <Mono>live</Mono>: cache is ignored entirely. Every call
                   goes to the provider. Identical to Phase-2 behavior;
                   useful as an escape hatch.
                 </li>
@@ -557,15 +557,15 @@ replay_mode: cached_or_live  # default — falls back to live on miss
               <ul className="list-disc pl-5 text-fg-2 [&>li]:mb-1.5">
                 <li>
                   You materially rewrote the prompt for a step the test
-                  targets — the old cached response is now misleading.
+                  targets. The old cached response is now misleading.
                 </li>
                 <li>
-                  You switched providers or models — cache entries are
+                  You switched providers or models. Cache entries are
                   per-host and per-model.
                 </li>
                 <li>
                   You started seeing too many fallthrough warnings in PR
-                  comments — easier to re-accept once than to keep paying
+                  comments. Easier to re-accept once than to keep paying
                   for live calls.
                 </li>
               </ul>
@@ -611,7 +611,7 @@ replay_mode: cached_or_live  # default — falls back to live on miss
                 <li>
                   Re-accept the suggestion (or skip it and let SafeShip
                   generate a fresh one) when you&apos;ve materially
-                  rewritten the prompt — the old fixture may no longer
+                  rewritten the prompt. The old fixture may no longer
                   reproduce the failure even on broken code.
                 </li>
               </ul>
@@ -626,7 +626,7 @@ replay_mode: cached_or_live  # default — falls back to live on miss
             <Section id="async" title="Async agents">
               <p className="mb-3 text-fg-2">
                 <Mono>safeship.wrap()</Mono> detects coroutine functions
-                automatically — the wrapped callable stays awaitable:
+                automatically. The wrapped callable stays awaitable:
               </p>
               <CodeBlock>{`import asyncio
 import safeship
@@ -645,7 +645,7 @@ asyncio.run(agent("hello"))`}</CodeBlock>
                 SafeShip is framework-agnostic by design.{" "}
                 <Mono>safeship.wrap()</Mono> takes any Python callable, and
                 the SDK auto-records calls to common LLM providers as
-                steps — no per-call instrumentation needed. A few common
+                steps, with no per-call instrumentation needed. A few common
                 patterns:
               </p>
 
@@ -675,7 +675,7 @@ def agent(prompt: str) -> str:
                 OpenAI SDK
               </h3>
               <p className="mb-3 text-fg-2">
-                Same story — <Mono>client.chat.completions.create</Mono>{" "}
+                Same story: <Mono>client.chat.completions.create</Mono>{" "}
                 and the legacy <Mono>completions</Mono> endpoint are both
                 captured automatically.
               </p>
@@ -703,13 +703,13 @@ def agent(prompt: str) -> str:
                 as steps on the in-flight run. Everything else (your
                 database, your tools, third-party APIs) passes through
                 untouched. The interceptor runs in your process, on your
-                infra — no requests go through SafeShip.
+                infra; no requests go through SafeShip.
               </p>
               <p className="mb-3 text-[13.5px] text-fg-3">
                 Set <Mono>auto_instrument=False</Mono> in{" "}
                 <Mono>init()</Mono>, or{" "}
                 <Mono>SAFESHIP_AUTO_INSTRUMENT=false</Mono> in your env, to
-                opt out — for the rare stacks that depend on raw httpx
+                opt out, for the rare stacks that depend on raw httpx
                 behavior.
               </p>
 
@@ -753,7 +753,7 @@ def agent(user_message: str) -> str:
 
     return summary["text"]`}</CodeBlock>
               <p className="mt-3 text-[13.5px] text-fg-3">
-                Same pattern for any non-HTTP tool — function calling,
+                Same pattern for any non-HTTP tool: function calling,
                 custom RPC, in-process libraries. SafeShip cares about{" "}
                 <Mono>tool_name</Mono>, <Mono>input</Mono>,{" "}
                 <Mono>output</Mono>, and <Mono>status</Mono>.
@@ -809,7 +809,7 @@ def agent(prompt: str) -> str:
                       <td className="px-3 py-2 font-mono text-xs">
                         SAFESHIP_API_KEY
                       </td>
-                      <td className="px-3 py-2">—</td>
+                      <td className="px-3 py-2">–</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2 font-mono text-[12.5px] text-fg">
@@ -826,21 +826,21 @@ def agent(prompt: str) -> str:
                       <td className="px-3 py-2 font-mono text-[12.5px] text-fg">
                         timeout_seconds
                       </td>
-                      <td className="px-3 py-2">—</td>
+                      <td className="px-3 py-2">–</td>
                       <td className="px-3 py-2">2.0</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2 font-mono text-[12.5px] text-fg">
                         debug
                       </td>
-                      <td className="px-3 py-2">—</td>
+                      <td className="px-3 py-2">–</td>
                       <td className="px-3 py-2">False</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2 font-mono text-[12.5px] text-fg">
                         enabled
                       </td>
-                      <td className="px-3 py-2">—</td>
+                      <td className="px-3 py-2">–</td>
                       <td className="px-3 py-2">True (set False in tests)</td>
                     </tr>
                   </tbody>
@@ -866,7 +866,7 @@ def agent(prompt: str) -> str:
                 </li>
                 <li>
                   <b className="text-fg">No extra LLM calls.</b> SafeShip
-                  never re-prompts your model or makes shadow calls — your
+                  never re-prompts your model or makes shadow calls. Your
                   token spend is unchanged.
                 </li>
                 <li>
@@ -932,8 +932,8 @@ def agent(prompt: str) -> str:
                   className="text-accent hover:text-[#d3ff85]"
                 >
                   founder@safeship.dev
-                </a>{" "}
-                — solo founder, replies usually same-day. Include your
+                </a>
+                . Solo founder, replies usually same-day. Include your
                 project ID (visible on the dashboard) if you have one.
               </p>
             </Section>
@@ -947,12 +947,12 @@ def agent(prompt: str) -> str:
               <TocLink href="#quickstarts">Quickstart by tool</TocLink>
               <TocLink href="#prereqs">Before you start</TocLink>
               <TocLink href="#billing">Billing & free trial</TocLink>
-              <TocLink href="#install">1 — Install the SDK</TocLink>
-              <TocLink href="#wrap">2 — Initialize and wrap</TocLink>
-              <TocLink href="#steps">3 — Record sub-steps</TocLink>
-              <TocLink href="#view">4 — See your traces</TocLink>
-              <TocLink href="#ci">5 — Block bad deploys</TocLink>
-              <TocLink href="#branch-protection">6 — Branch protection</TocLink>
+              <TocLink href="#install">1. Install the SDK</TocLink>
+              <TocLink href="#wrap">2. Initialize and wrap</TocLink>
+              <TocLink href="#steps">3. Record sub-steps</TocLink>
+              <TocLink href="#view">4. See your traces</TocLink>
+              <TocLink href="#ci">5. Block bad deploys</TocLink>
+              <TocLink href="#branch-protection">6. Branch protection</TocLink>
               <TocLink href="#replay">How replay works</TocLink>
               <TocLink href="#free-replay">Free CI replay</TocLink>
               <TocLink href="#determinism">Deterministic agents</TocLink>

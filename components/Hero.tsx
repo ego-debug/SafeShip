@@ -41,7 +41,7 @@ export function Hero() {
           className="mb-8 max-w-[540px] animate-rise text-[13.5px] leading-[1.5] text-fg-3"
           style={{ animationDelay: "0.24s" }}
         >
-          Fully managed — nothing to host, nothing to configure. Each
+          Fully managed: nothing to host, nothing to configure. Each
           suggested test takes one tap to approve.{" "}
           <b className="text-fg-2">$29.99 flat</b>, no seats, no metering.
         </p>

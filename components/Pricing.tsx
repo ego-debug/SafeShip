@@ -3,7 +3,7 @@ const FEATURES = [
   "Auto-suggested tests from real failures, you accept in one tap",
   "Deploy gating on every PR",
   "Slack + email alerts",
-  "All your projects — no seat fees",
+  "All your projects, no seat fees",
 ];
 
 const COMPARE: Array<{
@@ -14,7 +14,7 @@ const COMPARE: Array<{
 }> = [
   { vendor: "Per-seat eval platforms", tag: "seats", detail: "$39–$249+ / mo, built for ML teams of 5+" },
   { vendor: "Free OSS CLIs", tag: "DIY", detail: "Free + you wire it up, run it, write the YAML" },
-  { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat — managed, one-tap, no seats", us: true },
+  { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat. Managed, one-tap, no seats", us: true },
 ];
 
 export function Pricing() {
@@ -32,8 +32,8 @@ export function Pricing() {
           One tier. No seats. No&nbsp;surprises.
         </h2>
         <p className="max-w-[560px] text-[16.5px] text-fg-2">
-          Everything SafeShip does, for one flat price. Add your whole team —
-          we don&apos;t care.
+          Everything SafeShip does, for one flat price. Add your whole team.
+          We don&apos;t care.
         </p>
       </div>
 

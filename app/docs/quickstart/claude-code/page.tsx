@@ -10,7 +10,7 @@ import {
 export const metadata = {
   title: "SafeShip quickstart for Claude Code · SafeShip",
   description:
-    "Claude Code wrote your agent — give it one more prompt and SafeShip is live.",
+    "Claude Code wrote your agent. Give it one more prompt and SafeShip is live.",
 };
 
 export default function ClaudeCodeQuickstart() {
@@ -30,7 +30,7 @@ export default function ClaudeCodeQuickstart() {
             Setup page
           </Link>{" "}
           and copy the <Mono>sk_live_…</Mono> key. Drop it into your{" "}
-          <Mono>.env</Mono> as <Mono>SAFESHIP_API_KEY</Mono> — Claude Code
+          <Mono>.env</Mono> as <Mono>SAFESHIP_API_KEY</Mono>. Claude Code
           picks it up from there.
         </p>
       </Step>
@@ -55,7 +55,7 @@ export default function ClaudeCodeQuickstart() {
 6. For every non-LLM tool call (DB, RPC, MCP, internal services),
    wrap the call site with safeship.step(tool_name=..., kind="tool",
    input=..., output=..., duration_ms=..., status="ok" or "fail").
-   Anthropic and OpenAI SDK calls are captured automatically — leave them alone.
+   Anthropic and OpenAI SDK calls are captured automatically - leave them alone.
 7. Add a CLAUDE.md note so future sessions know SafeShip is wired up
    and to use safeship.step() for any new tool calls.
 
@@ -63,7 +63,7 @@ Show me a single consolidated diff, then apply if I approve.`}
         />
         <p className="text-[13.5px] text-fg-3">
           Claude Code can also propose <Mono>safeship.yaml</Mono> for CI
-          replay — ask it to in a follow-up if you want the GitHub Action
+          replay. Ask it to in a follow-up if you want the GitHub Action
           wired in the same session.
         </p>
       </Step>
@@ -92,14 +92,14 @@ Show me a single consolidated diff, then apply if I approve.`}
 
 This project is wired with SafeShip. Rules for any agent-side changes:
 
-- Never remove safeship.init() or safeship.wrap() — they're how production
+- Never remove safeship.init() or safeship.wrap(). They're how production
   failures become regression tests.
 - For new non-LLM tool calls (DB, RPC, MCP, internal services), wrap the
   call site with safeship.step(tool_name, kind="tool", input, output,
   duration_ms, status). Anthropic / OpenAI SDK calls are auto-captured;
   no manual step needed.
 - When a regression test is accepted under /app/suggestions, keep the
-  test_yaml stable — don't rewrite it casually. The CI replay uses it
+  test_yaml stable - don't rewrite it casually. The CI replay uses it
   verbatim.
 - The dashboard is at safeship.dev/app/dashboard. Failures show up there
   within seconds; the suggest queue is at /app/suggestions.`}</Code>

@@ -22,7 +22,7 @@ export default function LovableQuickstart() {
     >
       <Step n={1} title="Find your AI endpoint">
         <p>
-          Lovable apps usually expose the agent through a single API route —
+          Lovable apps usually expose the agent through a single API route:
           something like <Mono>/api/chat</Mono>, <Mono>/api/agent</Mono>, or
           a Server Action that calls the LLM provider. Open your project in
           Lovable and locate that file. (Ask Lovable &quot;which file
@@ -58,13 +58,13 @@ export default function LovableQuickstart() {
 2. In the API route that calls the LLM provider (the file with the
    OpenAI or Anthropic SDK call), import: import { safeship } from "safeship".
 3. At module scope, call: safeship.init({ apiKey: process.env.SAFESHIP_API_KEY! }).
-4. Wrap the handler function with safeship.wrap() — preserve the
+4. Wrap the handler function with safeship.wrap(). Preserve the
    request and response signatures.
 5. For each non-LLM step the route performs (database query,
    external fetch, embedding lookup), insert a safeship.step() call
    recording tool_name, kind="tool", input, output, duration_ms, and
    status. Provider SDK calls (OpenAI / Anthropic) are captured
-   automatically — leave them.
+   automatically - leave them.
 6. Keep the handler's response shape exactly the same.
 
 Show me the updated route file as a single block.`}
@@ -76,7 +76,7 @@ Show me the updated route file as a single block.`}
           <Mono>
             github:ego-debug/SafeShip&#123;sdks/typescript&#125;
           </Mono>
-          ), or — simpler today — ask Lovable to call the Python SDK from a
+          ), or (simpler today) ask Lovable to call the Python SDK from a
           serverless function instead, using the{" "}
           <Link
             href="/docs#install"
@@ -102,14 +102,14 @@ Show me the updated route file as a single block.`}
           recorded, you&apos;re live.
         </p>
         <Code>{`# tail your Lovable logs while testing
-# you should NOT see SafeShip-related errors — the SDK is fire-and-forget
+# you should NOT see SafeShip-related errors - the SDK is fire-and-forget
 # and never crashes the request even if our ingest is unreachable.`}</Code>
       </Step>
 
       <Step n={5} title="From here">
         <ul className="list-disc pl-5 [&>li]:mb-1.5">
           <li>
-            <b className="text-fg">Block bad deploys</b> — Lovable pushes
+            <b className="text-fg">Block bad deploys</b>: Lovable pushes
             to GitHub for you. Add the SafeShip Action to your repo and
             failed regression tests will block PR merges.{" "}
             <Link
@@ -120,7 +120,7 @@ Show me the updated route file as a single block.`}
             </Link>
           </li>
           <li>
-            <b className="text-fg">Accept your first test</b> — when the
+            <b className="text-fg">Accept your first test</b>: when the
             agent fails in front of a user, SafeShip drafts a YAML
             assertion. One tap and it&apos;s in your suite.{" "}
             <Link
@@ -131,8 +131,8 @@ Show me the updated route file as a single block.`}
             </Link>
           </li>
           <li>
-            <b className="text-fg">Empty queue?</b> That&apos;s normal —
-            it fills the moment a real failure lands. Send a synthetic
+            <b className="text-fg">Empty queue?</b> That&apos;s normal.
+            It fills the moment a real failure lands. Send a synthetic
             failure to see the UI work:{" "}
             <Link
               href="/app/onboarding"

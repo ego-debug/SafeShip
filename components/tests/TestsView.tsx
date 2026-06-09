@@ -45,7 +45,7 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
       router.refresh();
     } catch {
       setErr(
-        `Network error while trying to ${action} "${test.name}" — check your connection and try again.`,
+        `Network error while trying to ${action} "${test.name}". Check your connection and try again.`,
       );
       setLastFailed({ test, action });
     } finally {
@@ -97,7 +97,7 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
             <b className="text-fg">Heads up:</b> the in-app test runner ships in
             a follow-up. For now this page lists your accepted regression-test
             definitions; pass/fail history will appear once the runner lands.
-            CI-side gating already works — see{" "}
+            CI-side gating already works. See{" "}
             <Link
               href="https://github.com/ego-debug/SafeShip#cigithub-action"
               className="text-accent hover:text-[#d3ff85]"
@@ -160,7 +160,7 @@ export function TestsView({ snapshot }: { snapshot: TestsSnapshot }) {
           <p className="mt-2 text-[12.5px] text-fg-3">
             {snapshot.lastRunAt
               ? `Last run ${timeAgo(snapshot.lastRunAt)}`
-              : "No runs yet — send a trace from the Setup page."}
+              : "No runs yet. Send a trace from the Setup page."}
           </p>
         </SideCard>
 
@@ -267,7 +267,7 @@ function TestsTable({
         background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)",
       }}
     >
-      {/* Coverage column intentionally absent — it showed a dash for every
+      {/* Coverage column intentionally absent - it showed a dash for every
           row until the in-app test runner ships. Re-add it when there's
           real pass/fail history to put in it. */}
       <div
@@ -351,7 +351,7 @@ function ReplayBadges({ test }: { test: TestRow }) {
           tone="accent"
           title={`${cachedCount} cached LLM ${
             cachedCount === 1 ? "call" : "calls"
-          } — this test replays for free in CI.`}
+          }. This test replays for free in CI.`}
         >
           <Dot tone="accent" />
           LLM cached ({cachedCount})
@@ -603,7 +603,7 @@ function humanizeTestsError(
     action === "mute" ? "muting" : action === "unmute" ? "unmuting" : "deleting";
   switch (code) {
     case "not_found":
-      return `Couldn't find "${name}". It may have been deleted from another tab — refresh and try again.`;
+      return `Couldn't find "${name}". It may have been deleted from another tab. Refresh and try again.`;
     case "invalid_transition":
       return `Can't ${action} "${name}" from its current state. Refresh and try again.`;
     case "unauthorized":

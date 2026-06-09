@@ -10,7 +10,7 @@ import {
 export const metadata = {
   title: "SafeShip quickstart for Cursor · SafeShip",
   description:
-    "Cursor wrote your agent — now let it wire up SafeShip in three minutes flat.",
+    "Cursor wrote your agent. Now let it wire up SafeShip in three minutes flat.",
 };
 
 export default function CursorQuickstart() {
@@ -47,7 +47,7 @@ export default function CursorQuickstart() {
       <Step n={2} title="Have Cursor do the wiring">
         <p>
           Open the agent file in Cursor (the Python file with your{" "}
-          <Mono>agent</Mono> function — wherever the LLM call lives). Hit{" "}
+          <Mono>agent</Mono> function, wherever the LLM call lives). Hit{" "}
           <Mono>⌘L</Mono> / <Mono>Ctrl+L</Mono> to open the chat panel, paste
           this prompt, and replace the key:
         </p>
@@ -58,15 +58,15 @@ export default function CursorQuickstart() {
 1. pip-install: git+https://github.com/ego-debug/SafeShip.git#subdirectory=sdks/python
 2. At module top, add: import safeship
 3. Right after the imports, add: safeship.init(api_key="sk_live_REPLACE_ME")
-4. Wrap the public agent callable with safeship.wrap() — don't change its signature.
+4. Wrap the public agent callable with safeship.wrap(). Don't change its signature.
 5. For any custom tool calls in the agent (anything not via the Anthropic or OpenAI SDK), insert safeship.step(tool_name=..., kind="tool", input=..., output=..., duration_ms=..., status="ok") right after each call so the trace shows them as separate steps.
-6. Don't add any try/except around SafeShip — the SDK never crashes the agent.
+6. Don't add any try/except around SafeShip - the SDK never crashes the agent.
 
 Show me the full diff before applying.`}
         />
         <p className="text-[13.5px] text-fg-3">
           Cursor will produce a diff. Anthropic and OpenAI SDK calls are
-          captured automatically — you only need explicit{" "}
+          captured automatically. You only need explicit{" "}
           <Mono>safeship.step()</Mono> calls for custom tools (database
           lookups, internal RPC, MCP, etc.).
         </p>
@@ -83,7 +83,7 @@ Show me the full diff before applying.`}
           >
             dashboard
           </Link>
-          . Open it — you should see one run, one or more steps. That&apos;s
+          . Open it and you should see one run, one or more steps. That&apos;s
           the green-trace moment.
         </p>
       </Step>
@@ -91,7 +91,7 @@ Show me the full diff before applying.`}
       <Step n={4} title="From here">
         <ul className="list-disc pl-5 [&>li]:mb-1.5">
           <li>
-            <b className="text-fg">Block bad deploys</b> — wire up the
+            <b className="text-fg">Block bad deploys</b>: wire up the
             SafeShip GitHub Action so your PRs fail when an accepted
             regression test would reproduce a known failure. See{" "}
             <Link
@@ -103,7 +103,7 @@ Show me the full diff before applying.`}
             .
           </li>
           <li>
-            <b className="text-fg">Get free CI replays</b> — set{" "}
+            <b className="text-fg">Get free CI replays</b>: set{" "}
             <Mono>SAFESHIP_REPLAY_LLM_CACHE=true</Mono> in your repo secrets
             and SafeShip will replay cached LLM responses instead of paying
             for live calls.{" "}
@@ -115,7 +115,7 @@ Show me the full diff before applying.`}
             </Link>
           </li>
           <li>
-            <b className="text-fg">Accept your first regression test</b> —
+            <b className="text-fg">Accept your first regression test</b>:
             when a run fails, the auto-suggest engine drafts a YAML test for
             it. One tap to add it to your suite.{" "}
             <Link

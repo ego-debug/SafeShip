@@ -65,8 +65,8 @@ export function QuickstartShell({
                 className="text-accent transition-colors hover:text-[#d3ff85]"
               >
                 founder@safeship.dev
-              </a>{" "}
-              — solo founder, replies same day.
+              </a>
+              . Solo founder, replies same day.
             </p>
           </footer>
         </main>
@@ -124,7 +124,7 @@ export function Mono({ children }: { children: React.ReactNode }) {
 /**
  * The hero element of each quickstart: a paste-ready prompt the user can
  * drop into Cursor / Claude Code / Lovable's AI chat to have *that tool*
- * do the SafeShip wiring. This is the moment the quickstart pays off —
+ * do the SafeShip wiring. This is the moment the quickstart pays off -
  * the user doesn't even have to read code, they hand the work back to
  * the AI tool that wrote their agent in the first place.
  */

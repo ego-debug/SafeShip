@@ -28,7 +28,7 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   // Holds the deferred-commit timer + a flag so we can fire the API call
-  // even if the component unmounts (e.g. customer navigates away) — losing
+  // even if the component unmounts (e.g. customer navigates away) - losing
   // an accept on unmount would silently swallow their click.
   const commitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pendingActionRef = useRef<PendingAction | null>(null);
@@ -81,7 +81,7 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
       setFlash(type);
       setTimeout(() => setFlash(null), 450);
 
-      // If there's already a pending undo-able action, commit it now —
+      // If there's already a pending undo-able action, commit it now -
       // pressing Y/N again means "I'm done deliberating on the previous one."
       const prev = pendingActionRef.current;
       if (prev) {
@@ -172,13 +172,13 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
           setError(
             `Rate limit reached. ${data.limit ?? "?"} suggestions allowed per ${
               data.window ?? "day"
-            } — try again in ${humanWait(data.retry_after_seconds)}.`,
+            }. Try again in ${humanWait(data.retry_after_seconds)}.`,
           );
           return;
         }
         setError(
           data.error === "engine_not_configured"
-            ? "ANTHROPIC_API_KEY not set in .env.local — add it to run the auto-suggest engine."
+            ? "ANTHROPIC_API_KEY not set in .env.local. Add it to run the auto-suggest engine."
             : data.error ?? "generate_failed",
         );
         return;
@@ -229,7 +229,7 @@ export function SuggestionsView({ snapshot }: { snapshot: SuggestionsSummary }) 
               Suggested tests
             </span>
             <h1 className="text-[clamp(28px,3vw,36px)] font-semibold leading-[1.1] tracking-[-0.025em]">
-              {/* items.length, not the static snapshot total — the count
+              {/* items.length, not the static snapshot total - the count
                   should tick down live as the user works the queue. */}
               {items.length} to review
               <span className="ml-3 font-mono text-base text-fg-3">
@@ -427,7 +427,7 @@ function FocusCard({
       {/* Side-by-side: human-readable description (left) and the actual
           machine-checkable test definition (right). On narrow viewports
           (< md) they stack vertically. The dual-column layout is the
-          centerpiece of the wedge — visitor sees plain English AND the
+          centerpiece of the wedge - visitor sees plain English AND the
           test code at the same time, no clicking required. */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.2fr]">
         <div className="flex flex-col gap-2">
@@ -514,7 +514,7 @@ function EmptyQueue({
           ✓
         </span>
         <h2 className="text-xl font-semibold tracking-tight">
-          Queue empty — nice work.
+          Queue empty. Nice work.
         </h2>
         <p className="text-fg-2">
           No suggestions waiting. As new failures land via{" "}
@@ -541,7 +541,7 @@ function humanizeError(code: string): string {
   if (code.startsWith("Rate limit")) return code; // already formatted by handleGenerate
   switch (code) {
     case "network_error":
-      return "Network error — check your connection and try again.";
+      return "Network error. Check your connection and try again.";
     case "engine_not_configured":
       return "Auto-suggest engine isn't configured. Set ANTHROPIC_API_KEY in your environment and redeploy.";
     case "accept_failed":
@@ -558,7 +558,7 @@ function humanizeError(code: string): string {
 function isRetryable(code: string): boolean {
   // Engine-not-configured is a config issue that retry can't fix.
   if (code === "engine_not_configured") return false;
-  // Rate-limit copy already tells the user when to try again — no retry
+  // Rate-limit copy already tells the user when to try again - no retry
   // button (they'd just hit the limit again immediately).
   if (code.startsWith("Rate limit")) return false;
   return true;
@@ -633,7 +633,7 @@ function UndoToast({
   onUndo: () => void;
 }) {
   // Visible progress bar so the customer sees how long they have left
-  // to undo. Pure CSS animation — no per-frame React re-render needed.
+  // to undo. Pure CSS animation - no per-frame React re-render needed.
   const label =
     action.type === "accept" ? "Accepted" : "Skipped";
   const accentColor =

@@ -29,7 +29,7 @@ export function RunsList({
             key={run.id}
             className={i === 0 ? "" : "border-t border-line"}
             // When new, the row fades from an accent background back to
-            // transparent over 1.5s — pure CSS animation, see globals.css.
+            // transparent over 1.5s - pure CSS animation, see globals.css.
             data-is-new={isNew ? "true" : undefined}
             style={
               isNew
@@ -51,10 +51,10 @@ export function RunsList({
                 <TriggerTag trigger={run.trigger} />
               </span>
               <span className="font-mono text-[12.5px] text-fg-3">
-                {run.score == null ? "—" : `${run.score}/100`}
+                {run.score == null ? "–" : `${run.score}/100`}
               </span>
               <span className="font-mono text-[11.5px] text-fg-4">
-                {run.model ?? "—"}
+                {run.model ?? "–"}
               </span>
               <span className="font-mono text-[11.5px] text-fg-4">
                 {timeAgo(run.started_at)}

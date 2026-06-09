@@ -1,5 +1,5 @@
 /**
- * SuggestLoop — landing-page section showing the product's defining
+ * SuggestLoop - landing-page section showing the product's defining
  * moment: a real production failure rendered as a draft regression
  * test, with one-tap accept/skip.
  *
@@ -27,7 +27,7 @@ export function SuggestLoop() {
             The suggest loop
           </span>
           <h2 className="text-[clamp(28px,3.2vw,40px)] font-semibold leading-[1.1] tracking-[-0.025em] [text-wrap:balance]">
-            Real failures become regression tests &mdash; one tap to
+            Real failures become regression tests. One tap to
             accept.
           </h2>
           <p className="max-w-[520px] text-[16.5px] leading-[1.55] text-fg-2">
@@ -37,7 +37,7 @@ export function SuggestLoop() {
             suite. Skip and it&apos;s gone. No writing tests by hand.
           </p>
           <ul className="mt-1 flex flex-col gap-2.5 text-[14.5px] text-fg-2">
-            <Bullet>Drafted from the actual failing trace &mdash; not from a template.</Bullet>
+            <Bullet>Drafted from the actual failing trace, not from a template.</Bullet>
             <Bullet>Runs in CI on every PR. Score drops → deploy blocks.</Bullet>
             <Bullet>You stay in control. Nothing ships without your thumb.</Bullet>
           </ul>
@@ -69,7 +69,7 @@ function Bullet({ children }: { children: React.ReactNode }) {
 /**
  * The visual: a stacked queue with one focused card on top. The two
  * ghost cards behind it communicate "there's a queue waiting" without
- * cluttering. Pure CSS transforms — no images, no animations on load
+ * cluttering. Pure CSS transforms - no images, no animations on load
  * (kept calm for marketing).
  */
 function SuggestionStack() {
@@ -142,7 +142,7 @@ function FocusedSuggestionCard() {
       </header>
 
       <h3 className="mb-3 text-[15.5px] font-semibold leading-snug text-fg">
-        send_email called with empty subject &mdash; reached the customer.
+        send_email called with empty subject. It reached the customer.
       </h3>
 
       <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_1.1fr]">

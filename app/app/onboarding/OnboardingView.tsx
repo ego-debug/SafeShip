@@ -37,7 +37,7 @@ export function OnboardingView({
   useEffect(() => {
     if (status === "success") return;
     const i = setInterval(async () => {
-      // Skip the round-trip while the tab is hidden — the user can't see
+      // Skip the round-trip while the tab is hidden - the user can't see
       // the flip anyway, and the interval keeps running until they return.
       if (typeof document !== "undefined" && document.hidden) return;
       try {
@@ -47,7 +47,7 @@ export function OnboardingView({
         const data = (await r.json()) as { first_trace_at: string | null };
         if (data.first_trace_at) setStatus("success");
       } catch {
-        // silent — keep polling
+        // silent - keep polling
       }
     }, 4000);
     return () => clearInterval(i);
@@ -79,7 +79,7 @@ export function OnboardingView({
         error?: string;
       };
       if (!r.ok) {
-        // Don't silently flip to success if the trace insertion failed —
+        // Don't silently flip to success if the trace insertion failed -
         // earlier code did that and customers got a false "success" state
         // with no actual trace on their dashboard.
         setSendErr(
@@ -213,7 +213,7 @@ export function OnboardingView({
           <ol className="flex flex-col gap-3 text-[13.5px] text-fg-2">
             <li><b className="font-medium text-fg">1.</b> First trace lands → this page flips to success.</li>
             <li><b className="font-medium text-fg">2.</b> Every run is watched. Failures land on the dashboard within seconds.</li>
-            <li><b className="font-medium text-fg">3.</b> As soon as a failure lands, SafeShip drafts a regression test from the trace. You accept in one tap — it lands in your suite and runs on every PR.</li>
+            <li><b className="font-medium text-fg">3.</b> As soon as a failure lands, SafeShip drafts a regression test from the trace. You accept in one tap. It lands in your suite and runs on every PR.</li>
           </ol>
         </SideCard>
       </aside>
@@ -223,7 +223,7 @@ export function OnboardingView({
 
 function SuggestionsTeaser() {
   // Shown on the onboarding SUCCESS state, after the first trace lands.
-  // The brief mandates pointing users at the suggestions queue here —
+  // The brief mandates pointing users at the suggestions queue here -
   // it's the moment they understand the value loop (failure → drafted
   // test → one-tap accept → guard on every PR). The preview uses a
   // realistic-but-sample suggestion so the empty queue at /app/suggestions
@@ -249,7 +249,7 @@ function SuggestionsTeaser() {
         </h3>
         <p className="text-[13.5px] leading-relaxed text-fg-2">
           When your agent fails in production, SafeShip drafts a YAML
-          regression test from the trace. You accept in one tap — it lands
+          regression test from the trace. You accept in one tap; it lands
           in your suite and blocks the next PR that reintroduces the bug.
         </p>
       </header>
@@ -300,7 +300,7 @@ assert: input.subject != ''`}</code>
           <span className="text-fg-3">→</span>
         </Link>
         <span className="text-[12.5px] text-fg-3">
-          Empty until your first failure lands — that&apos;s the point.
+          Empty until your first failure lands. That&apos;s by design.
         </span>
       </div>
     </section>
@@ -360,7 +360,7 @@ function AlertsPanel({
       setErrMsg(
         err instanceof Error
           ? `Network error: ${err.message}`
-          : "Network error — check your connection and try again.",
+          : "Network error. Check your connection and try again.",
       );
       setLastFailedBody({ body, kind });
       return false;
@@ -379,7 +379,7 @@ function AlertsPanel({
   async function onSaveSlack() {
     const trimmed = slack.trim();
     if (trimmed && !trimmed.startsWith("https://hooks.slack.com/")) {
-      // Client-side validation — not a network failure, no retry needed.
+      // Client-side validation - not a network failure, no retry needed.
       setErrMsg("Slack webhook URL must start with https://hooks.slack.com/");
       setLastFailedBody(null);
       return;
@@ -578,7 +578,7 @@ function CodeBlock({
           {copied === "ok"
             ? "✓ copied"
             : copied === "failed"
-            ? "Copy blocked — select the code manually"
+            ? "Copy blocked. Select the code manually"
             : "Copy"}
         </button>
       </div>
@@ -618,7 +618,7 @@ function StatusIndicator({ status }: { status: Status }) {
       >
         ✓
       </span>
-      Connected — your first trace just landed. It&apos;s live on your dashboard.
+      Connected. Your first trace just landed. It&apos;s live on your dashboard.
     </div>
   );
 }

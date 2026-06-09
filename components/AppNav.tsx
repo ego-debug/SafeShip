@@ -26,7 +26,7 @@ export function AppNav() {
         <Link
           href="/designs/dashboard.html"
           className="hidden text-xs text-fg-3 hover:text-fg-2 md:inline"
-          title="HTML prototypes — not yet React-ported"
+          title="HTML prototypes, not yet React-ported"
         >
           Prototype gallery →
         </Link>

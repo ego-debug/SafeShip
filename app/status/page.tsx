@@ -45,7 +45,7 @@ async function pingSupabase(): Promise<CheckResult> {
       detail:
         elapsed < 1500
           ? `Live round-trip measured at ${elapsed}ms.`
-          : `Live round-trip measured at ${elapsed}ms — slower than target (1.5s).`,
+          : `Live round-trip measured at ${elapsed}ms, slower than target (1.5s).`,
       measuredMs: elapsed,
     };
   } catch (err) {
@@ -64,7 +64,7 @@ async function pingSupabase(): Promise<CheckResult> {
 async function pingAnthropic(): Promise<CheckResult> {
   // Verifies (a) we have an API key configured, and (b) Anthropic's
   // platform is itself reachable. Uses Anthropic's public Statuspage
-  // JSON endpoint — no API call, no spend.
+  // JSON endpoint - no API call, no spend.
   const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
   try {
     const start = performance.now();
@@ -411,7 +411,7 @@ function SLA({ metrics }: { metrics: IngestMetrics }) {
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[20px] font-semibold leading-tight tracking-[-0.02em]">
-          SLA — target vs measured
+          SLA: target vs measured
         </h2>
         <RunCheckNow />
       </div>
@@ -455,7 +455,7 @@ function SLA({ metrics }: { metrics: IngestMetrics }) {
       <p className="text-[13.5px] text-fg-3">
         {metrics.state === "ok"
           ? `Measured values come from synthetic ingest pings recorded in health_checks. Last sample at ${metrics.latestAt} UTC.`
-          : "No synthetic pings recorded yet — the Vercel cron runs hourly, or you can trigger a check manually with the button above."}{" "}
+          : "No synthetic pings recorded yet. The Vercel cron runs hourly, or you can trigger a check manually with the button above."}{" "}
         Customers experiencing latency outside these targets should email{" "}
         <a
           href="mailto:founder@safeship.dev"
@@ -507,7 +507,7 @@ function SLACard({
           {target}
         </span>
         <span className={`text-[15px] font-mono ${measuredColor}`}>
-          {measured ?? "—"}
+          {measured ?? "–"}
         </span>
       </div>
       <span className="font-mono text-[11px] text-fg-3">{period}</span>
@@ -558,7 +558,7 @@ function Methodology({ metrics }: { metrics: IngestMetrics }) {
           up.
         </li>
         <li>
-          The auto-suggest latency SLA is still target-only — we&apos;ll
+          The auto-suggest latency SLA is still target-only. We&apos;ll
           add a synthetic suggestion cron once we&apos;re comfortable with
           the Anthropic spend that creates.
         </li>
@@ -599,7 +599,7 @@ function Incidents() {
       </h2>
       <div className="rounded-xl border border-line bg-[rgba(255,255,255,0.015)] p-6 text-[13.5px] text-fg-3">
         No incidents recorded. When one happens, it gets a timestamped
-        postmortem here within 30 days — including timeline, scope, root
+        postmortem here within 30 days, including timeline, scope, root
         cause, and what changed to prevent recurrence. We never silently
         edit past entries.
       </div>

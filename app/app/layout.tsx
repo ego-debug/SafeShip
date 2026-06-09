@@ -5,7 +5,7 @@ import { AppNav } from "@/components/AppNav";
 import { CmdKPalette } from "@/components/CmdKPalette";
 
 // Auth-only here. Subscription gating happens per-page via requireAccess()
-// in lib/access.ts — layouts persist across sibling navigations in the
+// in lib/access.ts - layouts persist across sibling navigations in the
 // App Router, so a redirect placed here would only fire on initial route
 // load, not when a user clicks from /app/billing to /app/dashboard.
 
