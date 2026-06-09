@@ -78,11 +78,16 @@ const runEnd = Date.now();
 const items = $input.all();
 const first = items[0]?.json ?? {};
 
+// Run metadata MUST be nested under "run" - a flat payload still
+// stores the steps, but the run's status silently defaults to "ok",
+// so failures would never trigger alerts or suggested tests.
 const payload = {
-  trigger: "n8n",
-  status: first.error ? "fail" : "ok",
-  model: first.model ?? null,
-  duration_ms: runEnd - runStart,
+  run: {
+    trigger: "production",
+    status: first.error ? "fail" : "ok",
+    model: first.model ?? null,
+    duration_ms: runEnd - runStart,
+  },
   steps: [
     {
       step_index: 0,
@@ -98,7 +103,9 @@ const payload = {
 
 await this.helpers.httpRequest({
   method: "POST",
-  url: "https://safeship.dev/v1/traces",
+  // www is required: the apex domain redirects and some HTTP clients
+  // drop the Authorization header when they follow it.
+  url: "https://www.safeship.dev/v1/traces",
   headers: {
     // "safeship" = the Header Auth credential you created in step 2.
     // If you named it differently, change the reference here.

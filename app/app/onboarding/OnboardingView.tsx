@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { maskApiKey } from "@/lib/apiKey";
 import { ErrorBanner } from "@/components/ErrorBanner";
 
-type Tab = "python" | "ts" | "node";
+type Tab = "python" | "curl";
 type Status = "waiting" | "success";
 
 export function OnboardingView({
@@ -556,7 +556,7 @@ function CodeBlock({
         className="flex items-center gap-1.5 border-b border-line px-3 py-2"
         style={{ background: "rgba(255,255,255,0.015)" }}
       >
-        {(["python", "ts", "node"] as Tab[]).map((t) => (
+        {(["python", "curl"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => onTab(t)}
@@ -664,34 +664,34 @@ function SideLink({
 
 function labelForTab(t: Tab) {
   if (t === "python") return "python";
-  if (t === "ts") return "typescript";
-  return "node";
+  return "curl (any language)";
 }
 
+// The Python snippet installs from GitHub because the PyPI package isn't
+// published yet; a "pip install safeship" that fails on the user's very
+// first command is the fastest way to lose a trial. The curl tab gives
+// TypeScript / n8n / everything-else users a real, working path on day
+// one instead of an npm package that doesn't exist.
 function buildSnippet(tab: Tab, apiKey: string): string {
   if (tab === "python") {
     return [
-      "pip install safeship",
+      'pip install "git+https://github.com/ego-debug/SafeShip.git#subdirectory=sdks/python"',
       "",
       "import safeship",
       `safeship.init(api_key="${apiKey}")`,
-      "safeship.wrap(my_agent)",
-    ].join("\n");
-  }
-  if (tab === "ts") {
-    return [
-      "npm install safeship",
-      "",
-      "import { safeship } from 'safeship'",
-      `safeship.init({ apiKey: '${apiKey}' })`,
-      "const tracedAgent = safeship.wrap(myAgent)",
+      "agent = safeship.wrap(my_agent)",
     ].join("\n");
   }
   return [
-    "npm install safeship",
-    "",
-    "const { safeship } = require('safeship')",
-    `safeship.init({ apiKey: '${apiKey}' })`,
-    "const tracedAgent = safeship.wrap(myAgent)",
+    "# Send a trace from any language with one HTTP call.",
+    "curl -X POST https://www.safeship.dev/v1/traces \\",
+    `  -H "Authorization: Bearer ${apiKey}" \\`,
+    '  -H "Content-Type: application/json" \\',
+    "  -d '{",
+    '    "run":   { "status": "ok", "duration_ms": 1200 },',
+    '    "steps": [{ "tool_name": "my_agent", "kind": "llm",',
+    '                "input": "user message", "output": "agent reply",',
+    '                "status": "ok" }]',
+    "  }'",
   ].join("\n");
 }
