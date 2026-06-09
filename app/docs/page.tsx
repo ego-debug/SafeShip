@@ -818,7 +818,7 @@ def agent(prompt: str) -> str:
                         SAFESHIP_ENDPOINT
                       </td>
                       <td className="px-3 py-2 font-mono text-xs">
-                        https://safeship.dev/v1/traces
+                        https://www.safeship.dev/v1/traces
                       </td>
                     </tr>
                     <tr>

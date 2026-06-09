@@ -174,7 +174,7 @@ Enforced by the SDK and verified by the test suite:
 | Param | Env var | Default | What |
 |---|---|---|---|
 | `api_key` | `SAFESHIP_API_KEY` | — | Project key, looks like `sk_live_*` |
-| `endpoint` | `SAFESHIP_ENDPOINT` | `https://safeship.dev/v1/traces` | Ingest URL — override for self-host / local dev |
+| `endpoint` | `SAFESHIP_ENDPOINT` | `https://www.safeship.dev/v1/traces` | Ingest URL — override for self-host / local dev |
 | `project_name` | — | — | Display label on the dashboard |
 | `environment` | — | `prod` | `prod` / `staging` / `dev` |
 | `timeout_seconds` | — | `2.0` | Per-request HTTP timeout |
