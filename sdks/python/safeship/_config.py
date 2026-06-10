@@ -17,7 +17,11 @@ class _Config:
     endpoint: str = "https://www.safeship.dev/v1/traces"
     project_name: str | None = None
     environment: str = "prod"
-    timeout_seconds: float = 2.0
+    # Generous on purpose: delivery is fire-and-forget on a daemon
+    # thread, so a long timeout never blocks the agent. A tight one
+    # silently drops traces when the ingest API is slow (cold start,
+    # cross-region round-trip).
+    timeout_seconds: float = 10.0
     queue_max: int = 1000
     debug: bool = False
     enabled: bool = True

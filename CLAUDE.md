@@ -50,7 +50,7 @@ The only product that:
 - **Database:** Supabase (Postgres) — free tier covers MVP
 - **API:** Next.js API routes; no separate backend service yet
 - **Hosting:** Vercel
-- **SDKs:** Python (PyPI) first, TypeScript (npm) second
+- **SDKs:** Python (`sdks/python`, PyPI publish pending) + TypeScript (`sdks/typescript`, npm publish pending)
 - **Email:** Resend
 - **Domain:** safeship.dev
 
@@ -97,7 +97,6 @@ test_runs       (id, test_id, run_id, passed, duration_ms, created_at)
 - Team accounts, multi-seat
 - Slack/Discord integrations (email alerts only at first)
 - Custom dashboards, advanced filtering
-- TypeScript SDK (Python first)
 - White-label, on-prem, SSO
 - Mobile apps
 - Settings beyond billing + API keys

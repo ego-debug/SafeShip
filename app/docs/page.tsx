@@ -692,11 +692,50 @@ def agent(prompt: str) -> str:
     return resp.choices[0].message.content`}</CodeBlock>
 
               <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
+                TypeScript / Node
+              </h3>
+              <p className="mb-3 text-fg-2">
+                The TypeScript SDK mirrors the Python one:{" "}
+                <Mono>init</Mono>, <Mono>wrap</Mono>, <Mono>step</Mono>,
+                with the same auto-capture of Anthropic and OpenAI calls
+                (via a <Mono>fetch</Mono> interceptor) and the same
+                never-crash guarantees. Node 18+. On serverless, call{" "}
+                <Mono>await safeship.flush()</Mono> before your handler
+                returns.
+              </p>
+              <CodeBlock>{`import { safeship } from "safeship";
+
+safeship.init({ apiKey: process.env.SAFESHIP_API_KEY! });
+
+const agent = safeship.wrap(async (prompt: string) => {
+  // Anthropic / OpenAI SDK calls in here are captured automatically.
+  // Record custom tools with safeship.step({...}).
+  return await myAgent(prompt);
+});`}</CodeBlock>
+              <p className="mb-3 mt-3 text-[13.5px] text-fg-3">
+                The npm publish is the last step on our checklist. Until it
+                lands, install from the repo (see the{" "}
+                <a
+                  href="https://github.com/ego-debug/SafeShip/tree/main/sdks/typescript"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent hover:text-[#d3ff85]"
+                >
+                  SDK README →
+                </a>
+                ), or send traces with one HTTP call (curl tab on the Setup
+                page). CI test replay is Python-side today; TypeScript
+                agents get deploy gating via the Action&apos;s score-gate
+                mode.
+              </p>
+
+              <h3 className="mb-2 mt-5 text-[15.5px] font-semibold text-fg">
                 How auto-instrumentation works
               </h3>
               <p className="mb-3 text-fg-2">
-                <Mono>safeship.init()</Mono> installs a small httpx
-                transport interceptor. Outbound requests to{" "}
+                <Mono>safeship.init()</Mono> installs a small interceptor
+                (an httpx transport in Python, a <Mono>fetch</Mono> wrapper
+                in TypeScript). Outbound requests to{" "}
                 <Mono>api.anthropic.com</Mono> and{" "}
                 <Mono>api.openai.com</Mono> are timed, parsed, and recorded
                 as steps on the in-flight run. Everything else (your
@@ -826,7 +865,7 @@ def agent(prompt: str) -> str:
                         timeout_seconds
                       </td>
                       <td className="px-3 py-2">–</td>
-                      <td className="px-3 py-2">2.0</td>
+                      <td className="px-3 py-2">10.0</td>
                     </tr>
                     <tr>
                       <td className="px-3 py-2 font-mono text-[12.5px] text-fg">

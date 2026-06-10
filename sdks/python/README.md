@@ -177,7 +177,7 @@ Enforced by the SDK and verified by the test suite:
 | `endpoint` | `SAFESHIP_ENDPOINT` | `https://www.safeship.dev/v1/traces` | Ingest URL — override for self-host / local dev |
 | `project_name` | — | — | Display label on the dashboard |
 | `environment` | — | `prod` | `prod` / `staging` / `dev` |
-| `timeout_seconds` | — | `2.0` | Per-request HTTP timeout |
+| `timeout_seconds` | — | `10.0` | Per-delivery timeout (never blocks the agent) |
 | `debug` | — | `False` | Log dropped traces to stderr |
 | `enabled` | — | `True` | Set `False` in tests to disable shipping |
 | `auto_instrument` | `SAFESHIP_AUTO_INSTRUMENT` | `True` | Auto-record LLM HTTP calls |
