@@ -16,7 +16,7 @@ const COMPARE: Array<{
   detail: string;
   us?: boolean;
 }> = [
-  { vendor: "Per-seat eval platforms", tag: "seats", detail: "$39–$249+ / mo, priced for ML teams of 5+" },
+  { vendor: "Per-seat eval platforms", tag: "seats", detail: "$20–$249+ / seat / mo, plus trace caps. Built for teams that write their own evals" },
   { vendor: "Free OSS CLIs", tag: "DIY", detail: "$0, plus your evenings. You write every test, run every eval, maintain it forever" },
   { vendor: "SafeShip", tag: "managed", detail: "$29.99 / mo flat. The tests write themselves; you tap accept", us: true },
 ];
