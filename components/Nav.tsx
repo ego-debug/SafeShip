@@ -12,7 +12,9 @@ export function Nav() {
       </Link>
 
       <div className="hidden items-center gap-7 md:flex">
-        <a href="#how" className="text-sm text-fg-2 transition-colors hover:text-fg">
+        {/* /#how, not bare #how: this nav renders on every page, and a
+            bare fragment is a dead click anywhere but the landing page. */}
+        <a href="/#how" className="text-sm text-fg-2 transition-colors hover:text-fg">
           Product
         </a>
         <a href="/docs" className="text-sm text-fg-2 transition-colors hover:text-fg">
