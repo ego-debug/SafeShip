@@ -1,0 +1,50 @@
+{
+  "name": "safeship",
+  "version": "0.1.0",
+  "description": "Every production failure becomes a regression test. The same bug never ships twice.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ego-debug/SafeShip.git",
+    "directory": "sdks/typescript"
+  },
+  "homepage": "https://safeship.dev",
+  "keywords": [
+    "ai",
+    "agents",
+    "reliability",
+    "tracing",
+    "evals",
+    "regression"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.0"
+  }
+}

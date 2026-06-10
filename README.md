@@ -196,4 +196,6 @@ Per the plan in CLAUDE.md:
 10. ✅ **Marketing pages** — `/pricing`, `/security`, `/status`, `/migrate/helicone`
 11. ✅ **UX polish** — real-time dashboard, trace-detail readability, undo on suggestion accept/skip
 
-Items still deferred per CLAUDE.md until 10 paying customers exist: TypeScript SDK, multi-seat teams, custom dashboards, BYOK fallback, in-product test executor, EU data residency.
+**TypeScript SDK (done)** - `sdks/typescript/`: init/wrap/step with fetch-level auto-capture of Anthropic/OpenAI calls, AsyncLocalStorage run isolation, flush() for serverless, 14 vitest cases + a live integration script. npm publish pending.
+
+Items still deferred per CLAUDE.md until 10 paying customers exist: multi-seat teams, custom dashboards, BYOK fallback, in-product test executor, EU data residency.

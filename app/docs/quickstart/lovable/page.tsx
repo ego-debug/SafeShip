@@ -71,20 +71,18 @@ Show me the updated route file as a single block.`}
         />
         <p className="text-[13.5px] text-fg-3">
           <b className="text-fg-2">Before you paste:</b> the TypeScript SDK
-          isn&apos;t on npm yet, so step 1 of the prompt will fail as
-          written. Either change it to install from GitHub (
-          <Mono>
-            github:ego-debug/SafeShip&#123;sdks/typescript&#125;
-          </Mono>
-          ), or (simpler today) ask Lovable to call the Python SDK from a
-          serverless function instead, using the{" "}
+          is built and tested; publishing it to npm is the last step on our
+          checklist. If <Mono>npm install safeship</Mono> fails in the
+          meantime, tell Lovable to skip the SDK and send the trace with
+          one <Mono>fetch()</Mono> POST instead. The exact request shape is
+          the curl example on the{" "}
           <Link
-            href="/docs#install"
+            href="/app/onboarding"
             className="text-accent hover:text-[#d3ff85]"
           >
-            main install guide
+            Setup page
           </Link>
-          . This note disappears when the npm package ships.
+          . Works today, no dependency.
         </p>
       </Step>
 

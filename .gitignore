@@ -52,3 +52,6 @@ next-env.d.ts
 
 # eval runner artifacts
 evals/suggest/last-run.json
+
+# TypeScript SDK build output
+sdks/typescript/dist/
