@@ -87,7 +87,7 @@ export function WaitlistForm() {
         {status === "submitting" ? "Adding…" : "Get early access →"}
       </button>
       <a
-        href="#how"
+        href="/#how"
         className="inline-flex items-center gap-1.5 rounded-[9px] border border-line-strong px-[18px] py-3 text-[14.5px] text-fg transition-colors hover:border-[rgba(255,255,255,0.25)] hover:bg-[rgba(255,255,255,0.03)]"
       >
         See how it works
