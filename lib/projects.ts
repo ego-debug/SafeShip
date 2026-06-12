@@ -57,7 +57,17 @@ export async function getDashboardSnapshot(
 ): Promise<DashboardSnapshot | null> {
   const project = await getDefaultProject(userId);
   if (!project) return null;
+  return getDashboardSnapshotForProject(project);
+}
 
+/**
+ * Same snapshot, keyed by project instead of user. Used by the public
+ * /demo page (which reads a designated demo project) in addition to the
+ * signed-in dashboard.
+ */
+export async function getDashboardSnapshotForProject(
+  project: ProjectSummary,
+): Promise<DashboardSnapshot> {
   const supabase = getServiceSupabase();
 
   const since = new Date(Date.now() - 7 * DAY_MS).toISOString();

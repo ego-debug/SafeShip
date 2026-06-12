@@ -17,6 +17,9 @@ export function Nav() {
         <a href="/#how" className="text-sm text-fg-2 transition-colors hover:text-fg">
           Product
         </a>
+        <a href="/demo" className="text-sm text-fg-2 transition-colors hover:text-fg">
+          Live demo
+        </a>
         <a href="/docs" className="text-sm text-fg-2 transition-colors hover:text-fg">
           Docs
         </a>

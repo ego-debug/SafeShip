@@ -65,6 +65,23 @@ suggestion. Two failed runs are deliberately
 left without suggestions so the "Generate suggestions" button does a live
 Claude call on stage. Re-run with `--reset` to wipe and reseed.
 
+## 2.5 New since first draft: /demo and /admin
+
+- **Public demo page** at `/demo` (linked as "Live demo" in the site nav).
+  Shows the seeded week, the refund failure step by step, and the
+  suggested test — no signup needed. This is where the QR code should
+  point. It reads the project in `DEMO_PROJECT_ID`.
+- **Owner metrics** moved to `/admin` with its own login at
+  `/admin/login` (credentials in env: `ADMIN_LOGIN_USER` /
+  `ADMIN_LOGIN_PASS`), so you can always see signups even if app
+  sign-in is acting up. It includes the activation funnel: signed up ->
+  created project -> sent trace -> got suggestion -> accepted test.
+  Watch the biggest drop after the summit and fix that first.
+- **Vercel env vars to add** for these to work in prod:
+  `ADMIN_USER_IDS`, `ADMIN_LOGIN_USER`, `ADMIN_LOGIN_PASS`,
+  `ADMIN_SESSION_SECRET` (any long random string), `DEMO_PROJECT_ID`
+  (copy the values from `.env.local`).
+
 ## 3. The 6-minute demo script
 
 The positioning line (say it early): **"SafeShip is the eval tool for

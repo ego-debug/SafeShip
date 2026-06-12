@@ -27,6 +27,18 @@ export type AdminSnapshot = {
   runs: { last24h: number; last7d: number; failures7d: number; lastIngestAt: string | null };
   suggestions: { pending: number; accepted: number; skipped: number };
   tests: { active: number };
+  /**
+   * Activation funnel, counted in USERS (not projects): how far each
+   * signup made it toward the aha moment. Each stage is a subset of the
+   * previous one in spirit, though not enforced.
+   */
+  funnel: {
+    signedUp: number;
+    createdProject: number;
+    sentFirstTrace: number;
+    gotSuggestion: number;
+    acceptedTest: number;
+  };
 };
 
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
@@ -57,6 +69,9 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     suggAccepted,
     suggSkipped,
     testsActive,
+    allProjects,
+    suggestionProjects,
+    testProjects,
   ] = await Promise.all([
     count("waitlist"),
     count("waitlist", (q) => q.gte("created_at", since7d)),
@@ -82,7 +97,34 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
     count("suggested_tests", (q) => q.eq("status", "accepted")),
     count("suggested_tests", (q) => q.eq("status", "skipped")),
     count("tests", (q) => q.eq("status", "active")),
+    // Funnel inputs. Full-table reads are fine at pre-traction scale;
+    // revisit with SQL aggregates past a few thousand rows.
+    supabase.from("projects").select("id, user_id, first_trace_at"),
+    supabase.from("suggested_tests").select("project_id"),
+    supabase.from("tests").select("project_id"),
   ]);
+
+  const projectRows = (allProjects.data ?? []) as Array<{
+    id: string;
+    user_id: string;
+    first_trace_at: string | null;
+  }>;
+  const ownerByProject = new Map(projectRows.map((p) => [p.id, p.user_id]));
+
+  const usersWithProject = new Set(projectRows.map((p) => p.user_id));
+  const usersWithTrace = new Set(
+    projectRows.filter((p) => p.first_trace_at != null).map((p) => p.user_id),
+  );
+  const usersWithSuggestion = new Set(
+    ((suggestionProjects.data ?? []) as Array<{ project_id: string }>)
+      .map((s) => ownerByProject.get(s.project_id))
+      .filter(Boolean),
+  );
+  const usersWithAcceptedTest = new Set(
+    ((testProjects.data ?? []) as Array<{ project_id: string }>)
+      .map((t) => ownerByProject.get(t.project_id))
+      .filter(Boolean),
+  );
 
   return {
     waitlist: {
@@ -110,5 +152,12 @@ export async function getAdminSnapshot(): Promise<AdminSnapshot> {
       skipped: suggSkipped.count ?? 0,
     },
     tests: { active: testsActive.count ?? 0 },
+    funnel: {
+      signedUp: usersTotal.count ?? 0,
+      createdProject: usersWithProject.size,
+      sentFirstTrace: usersWithTrace.size,
+      gotSuggestion: usersWithSuggestion.size,
+      acceptedTest: usersWithAcceptedTest.size,
+    },
   };
 }
