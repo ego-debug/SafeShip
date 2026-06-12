@@ -43,7 +43,7 @@ export const SYSTEM_PROMPT = `You are SafeShip's regression-test author. Your jo
 
 1. **Specific to the failure mode, not the failure**. If draft_reply produced "$249.00" when the correct order total was "$24.99", a good test asserts "the refund amount in draft_reply.output must equal order.total", not "draft_reply must equal '$24.99'".
 2. **Mechanically checkable**. Express the assertion as a relation between fields in the trace (input → output equality, regex matches, value-in-set, value-must-not-contain). Don't ask the test runner to "use judgment".
-3. **Targets the step that broke**, not the entire run. The YAML test should pin a \`when: step == "<tool_name>"\` clause to the failing step.
+3. **Targets the root-cause step**, not the entire run. The YAML test should pin a \`when: step == "<tool_name>"\` clause to the step that caused the failure. Important: the step marked FAILED in the trace is where the failure *surfaced*, which is often NOT the root cause. When a tool crashes because an earlier step handed it malformed or empty data, the root cause is that earlier step (often marked warn or even ok). Pin \`when:\` to the step that *produced* the bad output, not the downstream victim.
 4. **Stable name**. Short snake_case with a dot separator. Format: \`<tool_name>.<rule>\`, e.g. \`draft_reply.refund_matches_order\`, \`classify_intent.confidence_above_threshold\`, \`lookup_order.no_silent_404\`.
 
 # Pick the assertion shape that fits the failure
@@ -51,8 +51,8 @@ export const SYSTEM_PROMPT = `You are SafeShip's regression-test author. Your jo
 The trace shows you which of these failure modes happened. Pick the matching shape:
 
 - **Hallucinated value**: an LLM step output contains a value that contradicts a fact from an earlier tool step. → \`output contains <earlier_step>.<field>\` (or \`==\`). Pin \`when:\` to the LLM step that hallucinated.
-- **Silent empty result**: a tool returned empty list / null / zero matches and the agent proceeded as if it had data. → \`output.<results_field> != [] and output.<results_field> != null\` (or \`or output.status == "not_found"\` if a fallback status is reasonable). Pin \`when:\` to the tool that silently returned empty.
-- **Schema violation**: output is missing a required field or has the wrong type. → presence checks: \`output.<field_a> != null and output.<field_b> != null\`. Pin \`when:\` to the step that produced the malformed output. Severity is usually medium-to-high because downstream steps crash.
+- **Silent empty result**: a tool returned empty list / null / zero matches and the agent proceeded as if it had data. → \`output.<results_field> != [] and output.<results_field> != null\` (or \`or output.status == "not_found"\` if a fallback status is reasonable). Pin \`when:\` to the tool that silently returned empty — NOT the downstream LLM step that consumed the emptiness, even if that's the step marked failed. The contract being enforced is "this tool must not return empty without saying so".
+- **Schema violation**: output is missing a required field or has the wrong type. → presence checks: \`output.<field_a> != null and output.<field_b> != null\`. Assert EVERY required field of the schema, including ones that happened to be present in this run — the test pins the whole contract, so always at least two presence checks. Use plain \`!= null\` checks only; don't mix in regex or count, which dilute the schema shape. Pin \`when:\` to the step that produced the malformed output, not the downstream step that crashed reading it. Severity is usually medium-to-high because downstream steps crash.
 - **Tool loop**: the same tool was called repeatedly without converging. → \`count(steps where step == "<tool_name>") <= <budget>\`. Pin \`when:\` to that tool. Pick a budget that's clearly above legitimate retry (e.g. 2 or 3) but well below the observed runaway count.
 
 # Output format
@@ -148,6 +148,7 @@ Failing step pattern: lookup_order called 8 times with the same input, each retu
 
 - Output ONE tool call, no prose before or after.
 - Never reference a step or field that isn't in the provided trace.
+- Never hardcode literal values copied from this run's outputs when the value can be referenced by field path. Write \`output.text contains lookup_order.output.total\`, not \`output.text contains "$24.99"\`; write \`output.text contains list_availability.output.slots\`, not an or-chain of the slot strings from this run. Hardcoded literals only match this exact run and won't catch the regression on the next one.
 - Never invent test infrastructure ("call function X"). Assertions must read directly off trace fields.
 - If the trace doesn't contain enough information to write a meaningful test (no failing step, no observable wrong output), still call the tool, set severity=low, and explain in rationale why the trace is insufficient. Don't refuse.`;
 
@@ -275,7 +276,7 @@ function renderRunAsPrompt(run: RunDetail): string {
     lines.push(
       `# Focus`,
       ``,
-      `The failing step is step ${failingStep.step_index} (${failingStep.tool_name}). Write a test that targets that step.`,
+      `The failure surfaced at step ${failingStep.step_index} (${failingStep.tool_name}). That is where the run broke, but it is not necessarily the root cause: check whether an earlier step (even one marked ok or warn) produced the malformed, empty, or wrong output that made this step fail. Pin the test's \`when:\` to the root-cause step per the failure-mode guidance.`,
     );
   } else {
     lines.push(
