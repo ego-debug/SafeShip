@@ -9,7 +9,9 @@
  *       refund hallucination ($24.99 -> $249.00)  <- open this one on stage
  *       tool loop (lookup_order called 6x)
  *       silent empty KB result -> fabricated policy
- *   - 5 accepted regression tests with pass/fail history (sparklines)
+ *   - 5 accepted regression tests (the Tests screen intentionally shows
+ *     no pass/fail history yet - the in-app runner is a follow-up and the
+ *     screen says so in a banner)
  *   - 1 pending suggestion as a wifi-dies fallback; the other 2 failures
  *     are left unsuggested so "Generate suggestions" makes a LIVE Claude
  *     call during the demo.
@@ -94,31 +96,26 @@ const ACCEPTED_TESTS = [
     name: "draft_reply.refund_matches_order",
     plain_english: "Refund amounts in draft_reply output must exactly match the order total returned by lookup_order. No invented numbers.",
     code_yaml: 'test: draft_reply.refund_matches_order\nwhen: step == "draft_reply"\nassert: output.text contains lookup_order.output.total',
-    failSlots: [9, 10],
   },
   {
     name: "lookup_order.call_count_budget",
     plain_english: "lookup_order must not be called more than 2 times in a single run.",
     code_yaml: 'test: lookup_order.call_count_budget\nwhen: step == "lookup_order"\nassert: count(steps where step == "lookup_order") <= 2',
-    failSlots: [6],
   },
   {
     name: "search_kb.no_silent_empty",
     plain_english: "search_kb must either return matches or raise an explicit not_found status, never a silent empty list.",
     code_yaml: 'test: search_kb.no_silent_empty\nwhen: step == "search_kb"\nassert: (output.results != [] and output.results != null) or output.status == "not_found"',
-    failSlots: [],
   },
   {
     name: "classify_intent.returns_object_with_confidence",
     plain_english: "classify_intent must return an object with both intent and confidence fields, not a bare string.",
     code_yaml: 'test: classify_intent.returns_object_with_confidence\nwhen: step == "classify_intent"\nassert: output.intent != null and output.confidence != null',
-    failSlots: [4],
   },
   {
     name: "draft_reply.order_id_matches_lookup",
     plain_english: "Order IDs mentioned in replies must exactly match the ID returned by lookup_order.",
     code_yaml: 'test: draft_reply.order_id_matches_lookup\nwhen: step == "draft_reply"\nassert: output.text contains lookup_order.output.id',
-    failSlots: [],
   },
 ];
 
@@ -282,22 +279,10 @@ async function main() {
       process.exit(1);
     }
     testCount += 1;
-
-    // 12 executions over the week against seeded runs.
-    const execRows = Array.from({ length: 12 }, (_, i) => ({
-      test_id: test.id,
-      run_id: allRunIds[Math.min(allRunIds.length - 1, 2 + i * 2)],
-      passed: !t.failSlots.includes(i),
-      duration_ms: 180 + rnd(600),
-      created_at: new Date(now - (11 - i) * 14 * HOUR).toISOString(),
-    }));
-    const { error: execErr } = await supabase.from("test_runs").insert(execRows);
-    if (execErr) {
-      console.error("test_runs insert failed:", execErr.message);
-      process.exit(1);
-    }
   }
-  console.log(`inserted ${testCount} accepted tests with execution history`);
+  // No test_runs rows: the Tests screen deliberately ships without the
+  // in-app runner (it shows a banner saying so) and never reads them.
+  console.log(`inserted ${testCount} accepted tests`);
 
   // One pending suggestion (wifi-dies fallback) attached to the loop failure.
   // The kb_fail and refund_fail runs stay unsuggested so the live
@@ -324,7 +309,7 @@ async function main() {
   console.log("  dashboard: 7-day score chart with a dip 2 days ago, 28 runs, 3 failures");
   console.log(`  trace detail: open the refund failure (run ${runIdByTag["refund_fail"]})`);
   console.log("  suggestions: 1 pending now; click Generate for live Claude suggestions");
-  console.log("  tests: 5 active tests with sparkline history");
+  console.log("  tests: 5 active tests (history banner is expected - runner is a follow-up)");
 }
 
 main().catch((e) => {

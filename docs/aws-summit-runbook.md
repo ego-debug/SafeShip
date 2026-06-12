@@ -60,8 +60,8 @@ $env:NODE_OPTIONS='--conditions=react-server'; npx tsx scripts/seed-demo.ts --em
 ```
 
 This gives the dashboard a believable week: 28 runs, a score dip two days
-ago, three production failures, five regression tests with sparkline
-history, and one pending suggestion. Two failed runs are deliberately
+ago, three production failures, five regression tests, and one pending
+suggestion. Two failed runs are deliberately
 left without suggestions so the "Generate suggestions" button does a live
 Claude call on stage. Re-run with `--reset` to wipe and reseed.
 
@@ -83,9 +83,12 @@ regression test. The same bug never ships twice."**
    regression test from that exact trace: plain English on the left,
    runnable YAML on the right. "I didn't write this test. I just said
    yes." Hit Accept.
-4. **Tests list** (60s). The new test is live alongside the others, with
-   pass/fail history. "These all came from real failures. My eval suite
-   writes itself from production."
+4. **Tests list** (60s). The new test is live alongside the others.
+   "These all came from real failures. My eval suite writes itself from
+   production." Note: the screen shows a banner saying the in-app runner
+   ships in a follow-up — that's deliberate and honest. If asked, the
+   line is: "tests run in CI today via the GitHub Action; the in-app
+   runner is next." Don't promise sparklines.
 5. **Close** (30s). "Four lines of SDK, $29.99 flat, and the deploy
    blocks if a regression comes back. The same bug never ships twice."
 
