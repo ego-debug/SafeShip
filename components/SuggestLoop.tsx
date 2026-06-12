@@ -40,6 +40,14 @@ export function SuggestLoop() {
             <Bullet>Runs in CI on every PR. Score drops → deploy blocks.</Bullet>
             <Bullet>You stay in control. Nothing ships without your thumb.</Bullet>
           </ul>
+          <p className="mt-2 inline-flex w-fit max-w-[520px] items-center gap-2.5 rounded-full border border-line-strong bg-[rgba(255,255,255,0.02)] px-4 py-2 text-[13px] leading-snug text-fg-2">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+            <span>
+              Suggested tests score <b className="text-fg">96.7%</b> on our
+              offline eval set: hallucinated values, schema violations,
+              silent-empty results, tool loops.
+            </span>
+          </p>
         </div>
 
         <SuggestionStack />
