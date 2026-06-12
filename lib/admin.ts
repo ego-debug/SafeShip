@@ -41,6 +41,86 @@ export type AdminSnapshot = {
   };
 };
 
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  created_at: string;
+  subscription_status: string;
+  projects: number;
+  runs: number;
+  isAdmin: boolean;
+};
+
+/** Every registered user with how much data they own. Owner-page only. */
+export async function listAdminUsers(): Promise<AdminUserRow[]> {
+  const supabase = getServiceSupabase();
+  const [usersRes, projectsRes] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, email, created_at, subscription_status")
+      .order("created_at", { ascending: false }),
+    supabase.from("projects").select("id, user_id"),
+  ]);
+
+  const projects = (projectsRes.data ?? []) as Array<{ id: string; user_id: string }>;
+  const projectIds = projects.map((p) => p.id);
+
+  // Per-project run counts in one query, aggregated in JS (fine pre-traction).
+  const runCountByProject = new Map<string, number>();
+  if (projectIds.length) {
+    const { data: runRows } = await supabase
+      .from("runs")
+      .select("project_id")
+      .in("project_id", projectIds);
+    for (const r of (runRows ?? []) as Array<{ project_id: string }>) {
+      runCountByProject.set(r.project_id, (runCountByProject.get(r.project_id) ?? 0) + 1);
+    }
+  }
+
+  return ((usersRes.data ?? []) as Array<{
+    id: string;
+    email: string;
+    created_at: string;
+    subscription_status: string;
+  }>).map((u) => {
+    const owned = projects.filter((p) => p.user_id === u.id);
+    return {
+      ...u,
+      projects: owned.length,
+      runs: owned.reduce((acc, p) => acc + (runCountByProject.get(p.id) ?? 0), 0),
+      isAdmin: isAdmin(u.id),
+    };
+  });
+}
+
+/**
+ * Deletes a user and everything they own. The schema cascades:
+ * users -> projects -> runs/traces/suggested_tests/tests/test_runs.
+ * Refuses to delete an admin account. Does NOT touch Clerk — if the
+ * person signs in again they get a fresh, empty account.
+ */
+export async function deleteUserEverywhere(
+  userId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (isAdmin(userId)) {
+    return { ok: false, error: "refusing to delete an admin account" };
+  }
+  const supabase = getServiceSupabase();
+  const { error } = await supabase.from("users").delete().eq("id", userId);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Removes one email from the waitlist. */
+export async function deleteWaitlistEmail(
+  email: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = getServiceSupabase();
+  const { error } = await supabase.from("waitlist").delete().ilike("email", email);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 export async function getAdminSnapshot(): Promise<AdminSnapshot> {
   const supabase = getServiceSupabase();
   const now = Date.now();

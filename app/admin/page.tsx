@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { getAdminSnapshot, isAdmin } from "@/lib/admin";
+import { getAdminSnapshot, isAdmin, listAdminUsers } from "@/lib/admin";
 import { hasAdminSession } from "@/lib/adminAuth";
+import { UsersSection } from "@/components/admin/UsersSection";
+import { deleteUserAction, deleteWaitlistAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,7 @@ export default async function AdminPage() {
     if (!userId || !isAdmin(userId)) redirect("/admin/login");
   }
 
-  const s = await getAdminSnapshot();
+  const [s, users] = await Promise.all([getAdminSnapshot(), listAdminUsers()]);
 
   const funnelStages = [
     { label: "Signed up", value: s.funnel.signedUp },
@@ -99,6 +101,8 @@ export default async function AdminPage() {
         </ol>
       </section>
 
+      <UsersSection users={users} deleteUser={deleteUserAction} />
+
       <section
         className="rounded-2xl border border-line-strong p-5"
         style={{ background: "linear-gradient(180deg, #111114 0%, #0c0c0e 100%)" }}
@@ -116,12 +120,21 @@ export default async function AdminPage() {
             {s.waitlist.recent.map((w, i) => (
               <li
                 key={`${w.email}-${w.created_at}`}
-                className={`flex items-baseline justify-between gap-4 py-2 ${i === 0 ? "" : "border-t border-line"}`}
+                className={`flex items-baseline gap-4 py-2 ${i === 0 ? "" : "border-t border-line"}`}
               >
-                <span className="truncate font-mono text-[13px] text-fg">{w.email}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-fg">{w.email}</span>
                 <span className="shrink-0 font-mono text-[11px] text-fg-4">
                   {new Date(w.created_at).toLocaleString()}
                 </span>
+                <form action={deleteWaitlistAction}>
+                  <input type="hidden" name="email" value={w.email} />
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-[7px] border border-line-strong px-2 py-0.5 text-[11px] text-fg-3 transition-colors hover:border-[rgba(255,99,99,0.3)] hover:text-[#ff9c9c]"
+                  >
+                    Remove
+                  </button>
+                </form>
               </li>
             ))}
           </ul>
