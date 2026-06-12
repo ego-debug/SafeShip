@@ -9,6 +9,12 @@ const clerkConfigured = Boolean(
 );
 
 const realClerkMiddleware = clerkMiddleware((auth, req) => {
+  // The owner metrics page moved to /admin (own login, outside Clerk).
+  // Redirect the old path BEFORE the auth gate so a signed-out founder
+  // isn't bounced to the customer sign-in form.
+  if (req.nextUrl.pathname.startsWith("/app/admin")) {
+    return NextResponse.redirect(new URL("/admin", req.url));
+  }
   if (isProtectedRoute(req)) {
     const session = auth();
     if (!session.userId) return session.redirectToSignIn();
