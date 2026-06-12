@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { deleteUserEverywhere, deleteWaitlistEmail, isAdmin } from "@/lib/admin";
-import { hasAdminSession } from "@/lib/adminAuth";
+import { ADMIN_COOKIE, hasAdminSession } from "@/lib/adminAuth";
 
 function requireOwner(): void {
   if (hasAdminSession()) return;
@@ -26,4 +28,9 @@ export async function deleteWaitlistAction(formData: FormData): Promise<void> {
   if (!email) return;
   await deleteWaitlistEmail(email);
   revalidatePath("/admin");
+}
+
+export async function logoutAction(): Promise<void> {
+  cookies().delete(ADMIN_COOKIE);
+  redirect("/admin/login");
 }

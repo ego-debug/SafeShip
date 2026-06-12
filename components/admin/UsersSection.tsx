@@ -49,14 +49,18 @@ export function UsersSection({
                     </span>
                   )}
                 </div>
-                <div className="font-mono text-[11px] text-fg-4">
-                  {u.id} · joined {new Date(u.created_at).toLocaleDateString()} ·{" "}
-                  {u.subscription_status}
+                <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-fg-4">
+                  <span>{u.id}</span>
+                  <span>· joined {new Date(u.created_at).toLocaleDateString()}</span>
+                  <StatusPill status={u.subscription_status} />
                 </div>
               </div>
-              <span className="shrink-0 font-mono text-[11.5px] tabular-nums text-fg-3">
+              <span className="shrink-0 text-right font-mono text-[11.5px] tabular-nums text-fg-3">
                 {u.projects} project{u.projects === 1 ? "" : "s"} · {u.runs} run
                 {u.runs === 1 ? "" : "s"}
+                <span className="block text-[10.5px] text-fg-4">
+                  {u.lastActiveAt ? `active ${timeAgo(u.lastActiveAt)}` : "no traces yet"}
+                </span>
               </span>
               {!u.isAdmin && (
                 <form
@@ -93,6 +97,33 @@ function isTestEmail(email: string): boolean {
     email.endsWith("@test.invalid") ||
     email.endsWith("@example.com") ||
     email.includes("+clerk_test") ||
-    email.startsWith("e2e-")
+    email.startsWith("e2e-") ||
+    email.startsWith("health-checks@")
   );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const tone =
+    status === "active"
+      ? "border-[rgba(194,249,112,0.35)] bg-[rgba(194,249,112,0.08)] text-accent"
+      : status === "trialing"
+        ? "border-[rgba(245,193,74,0.3)] bg-[rgba(245,193,74,0.08)] text-[#f5c14a]"
+        : status === "canceled" || status === "past_due"
+          ? "border-[rgba(255,99,99,0.3)] bg-[rgba(255,99,99,0.06)] text-[#ff9c9c]"
+          : "border-line-strong bg-[rgba(255,255,255,0.02)] text-fg-4";
+  return (
+    <span className={`rounded-full border px-2 py-[1px] text-[10px] uppercase ${tone}`}>
+      {status}
+    </span>
+  );
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
